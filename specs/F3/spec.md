@@ -27,6 +27,12 @@
 
 ## План від агента (plan mode)
 <!-- Агент вставляє сюди план T1…Tn з посиланнями на AC. Людина пише «затверджено, дата». -->
+**#9 — плавне поле й легенда:**
+- T1 (AC1) `layers/colors.ts`: шкали §7.6 (`SCALES`), неперервна рампа `layerRGBA`.
+- T2 (AC1, AC2) `map/field.ts`: `sampleLayer` (лише core: windAt, bilinear, weatherAt, evaluate, isIcing), `fieldPixels`, `projection`.
+- T3 (AC1) `MapView.tsx`: поле рахується кожні 3 px → ImageData → згладжений drawImage замість квадратів 0.25°.
+- T4 (AC1) `layers/Legend.tsx`: градієнт + мін/середина/макс з одиницею; для «Можна летіти» й «Обмерзання» — колір + текст.
+- T5 тести: `colors.test.ts`, `field.test.ts` (без квадратів, ≤ 300 мс на шар), `Legend.test.tsx`.
 
 ## Відкриті питання
 | Питання | Хто | Коли | План Б |
