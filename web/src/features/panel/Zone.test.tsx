@@ -104,3 +104,12 @@ describe('§7.5b: картка зони', () => {
     expect(modes).toEqual(['oneway']);
   });
 });
+
+describe('§7.5b: картка не конфліктує з шаром зони на карті (F0 #22, клас .zone)', () => {
+  it('секція картки без класу zone', () => {
+    view();
+    const sec = screen.getByRole('region', { name: 'Зона польоту' });
+    expect(sec.classList.contains('zone')).toBe(false);
+    expect(sec.classList.contains('pzone')).toBe(true);
+  });
+});
