@@ -71,7 +71,9 @@ export type Energy = 'battery' | 'fuel';
 export interface DroneProfile {
   id: string;
   name: string;
+  nameEn?: string; // назва англійською (issue #108); немає — показ name
   use: string;
+  useEn?: string;
   massKg: number;
   energy: Energy;
   enduranceMin: number;
