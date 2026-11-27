@@ -8,6 +8,7 @@ import type { DroneProfile } from '../../contracts';
 import { Route } from '../route/Route';
 import { arrowDeg, coordText, nearestCity } from './place';
 import { Zone } from './Zone';
+import { HeightTable } from './HeightTable';
 import { pt } from './strings';
 import './panel.css';
 
@@ -81,6 +82,7 @@ export function Panel() {
       </div>
       <PointView city={city} lat={s.lat} lon={s.lon} altM={s.altM} wx={wx} verdict={now} windowText={win} prof={prof} lang={lang} />
       <Zone prof={prof} hourLabel={time ? kyivDayHM(time) : '—'} />
+      <HeightTable prof={prof} />
       <Route />
     </section>
   );
