@@ -1,8 +1,9 @@
-/* F3: легенда шару. Компактно, щоб на 400 px не давати горизонтального скролу; під кнопкою «Підкладка» (F0, top 8px + 44px). */
-.legend{position:absolute;top:60px;right:8px;max-width:min(220px,calc(100% - 16px));padding:6px 8px;background:rgba(28,33,23,.88);border:1px solid var(--rule);font-size:13px;line-height:1.2;pointer-events:none}
-.legend .lg-title{font-weight:700;margin-bottom:4px}
-.legend .lg-bar{height:10px;width:180px;max-width:100%}
-.legend .lg-ticks{display:flex;justify-content:space-between;gap:6px;font-variant-numeric:tabular-nums;color:var(--dim);margin-top:2px}
-.legend .lg-classes{list-style:none;padding:0;display:flex;flex-wrap:wrap;gap:4px 10px}
-.legend .lg-classes li{display:flex;align-items:center;gap:4px;white-space:nowrap}
-.legend .lg-classes i{display:inline-block;width:12px;height:12px;border:1px solid var(--rule)}
+/* F3: легенда шару — смужка ≤ 32 px унизу карти (issue #85 AC3). Унизу рамки України на телефоні порожньо, тож міста не накриває. */
+.legend{position:absolute;left:8px;right:8px;bottom:8px;z-index:1;display:flex;align-items:center;gap:8px;max-width:520px;height:28px;padding:0 8px;background:rgba(28,33,23,.88);border:1px solid var(--rule);font-size:12px;line-height:1;white-space:nowrap;overflow:hidden;pointer-events:none}
+.legend .lg-title{flex:0 1 auto;font-weight:700;overflow:hidden;text-overflow:ellipsis}
+.legend .lg-ramp{flex:1 1 auto;display:flex;align-items:center;gap:6px;min-width:0;font-variant-numeric:tabular-nums;color:var(--dim)}
+.legend .lg-bar{flex:1 1 auto;height:10px;min-width:40px}
+.legend .lg-mid{display:none}
+.legend .lg-classes{flex:1 1 auto;list-style:none;padding:0;display:flex;gap:8px;min-width:0;overflow:hidden}
+.legend .lg-classes li{display:flex;align-items:center;gap:4px}
+.legend .lg-classes i{display:inline-block;width:10px;height:10px;border:1px solid var(--rule)}

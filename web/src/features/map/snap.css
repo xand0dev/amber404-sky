@@ -1,4 +1,4 @@
-/* F3-AC7: кнопка 📷 ліворуч під «Малювання» (F0, top 8px + 44px). */
-.snapbtn{position:absolute;top:60px;left:8px;z-index:1;min-width:44px;min-height:44px;padding:0;font-size:20px;line-height:1;background:rgba(28,33,23,.88);border:1px solid var(--rule)}
+/* F3-AC7: кнопка 📷 у ряду інструментів над картою (issue #85). */
+.snapbtn{min-width:44px;min-height:44px;padding:0;font-size:20px;line-height:1}
 .snapbtn:disabled{opacity:.6;cursor:progress}
-.snapmsg{position:absolute;top:66px;left:60px;z-index:1;padding:4px 8px;font-size:13px;background:rgba(17,21,14,.92);border:1px solid var(--rule);pointer-events:none}
+.snapmsg{position:absolute;top:8px;left:8px;z-index:1;padding:4px 8px;font-size:13px;background:rgba(17,21,14,.92);border:1px solid var(--rule);pointer-events:none}

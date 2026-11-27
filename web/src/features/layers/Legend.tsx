@@ -15,10 +15,13 @@ export function Legend() {
     <figure className="legend" aria-label={`Легенда: ${title}`}>
       <figcaption className="lg-title">{title}</figcaption>
       {sc.kind === 'ramp' ? (
-        <>
+        // Смужка в один рядок (issue #85): мінімум · градієнт · максимум з одиницею; середину ховає CSS, щоб не тіснити смужку.
+        <div className="lg-ramp">
+          <span className="lg-lo">{num(sc.min)}</span>
           <div className="lg-bar" aria-hidden="true" style={{ background: `linear-gradient(90deg, ${[0, 0.25, 0.5, 0.75, 1].map((t) => css(layerRGBA(s.layer, sc.min + (sc.max - sc.min) * t))).join(',')})` }} />
-          <div className="lg-ticks"><span className="lg-lo">{num(sc.min)}</span><span className="lg-mid">{num((sc.min + sc.max) / 2)}</span><span className="lg-hi">{`${num(sc.max)} ${sc.unit}`}</span></div>
-        </>
+          <span className="lg-mid">{num((sc.min + sc.max) / 2)}</span>
+          <span className="lg-hi">{`${num(sc.max)} ${sc.unit}`}</span>
+        </div>
       ) : (
         <ul className="lg-classes">
           {sc.items.map((i) => <li key={String(i.value)}><i style={{ background: css(i.rgba) }} aria-hidden="true" />{i.text}</li>)}

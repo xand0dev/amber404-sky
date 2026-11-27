@@ -5,6 +5,7 @@ import { fromUV, makeProjection } from '../../core';
 import { useApp } from '../state';
 import { useTheme } from '../theme';
 import { useView } from '../view/view';
+import { InBar } from '../../ui/MapFrame';
 import { zoneFor, zoneShapes, type ZoneState } from './model';
 import './zone.css';
 
@@ -21,6 +22,7 @@ const km = (m: number) => (m >= 10_000 ? `${Math.round(m / 1000)} км` : `${+(m
 export function ZoneLayer() {
   const ref = useRef<HTMLCanvasElement>(null);
   const [on, setOn] = useState(true);
+  const [full, setFull] = useState(false);
   const [size, setSize] = useState<[number, number]>([0, 0]);
   const z = useZone();
   const { colors } = useTheme();
@@ -88,13 +90,16 @@ export function ZoneLayer() {
   return (
     <>
       <canvas ref={ref} className="zone" aria-hidden="true" hidden={!on} />
-      <button type="button" className="zonebtn" aria-pressed={on} onClick={() => setOn(!on)}>Зона</button>
+      <InBar slot="more"><button type="button" className="zonebtn" aria-pressed={on} onClick={() => setOn(!on)}>Зона</button></InBar>
+      {/* Issue #85 AC4: підпис згорнутий до одного рядка, деталі — тапом. */}
       {on && z && (
-        <p className="zonecap">
+        <p className={full ? 'zonecap open' : 'zonecap'}>
+          <button type="button" aria-expanded={full} onClick={() => setFull(!full)}><span className="zonetxt">
           <b>Зона туди й назад</b> {z.maxDistM > 0 ? `до ${km(z.maxDistM)}` : 'відсутня'} · {z.enduranceMin.toFixed(1)} хв ({z.why}) − резерв 20% · {z.prof.cruiseMs} м/с
           {' · '}{ws == null ? 'немає даних про вітер' : `вітер ${ws.toFixed(1)} м/с`}
           {z.cut.length > 0 && <> · <span className="zonedot" aria-hidden="true" /> вітер понад ліміт {z.prof.windMs} м/с</>}
           {' · '}assumption
+          </span></button>
         </p>
       )}
     </>

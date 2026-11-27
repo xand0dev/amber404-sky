@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { fromGeoJSON, makeProjection, newId, toGeoJSON, toKML, type Shape, type ShapeKind } from '../../core';
 import { useView } from '../view/view';
+import { InBar } from '../../ui/MapFrame';
 import { draw, initDraw, loadShapes, saveShapes } from './store';
 import './draw.css';
 
@@ -127,7 +128,11 @@ export function Draw() {
           </g>
         )}
       </svg>
-      <button type="button" className="drawbtn" aria-expanded={open} onClick={() => { if (open) { finish(); setTool(null); } setOpen(!open); }}>Малювання</button>
+      <InBar>
+        <button type="button" className="drawbtn" title="Малювання" aria-expanded={open} onClick={() => { if (open) { finish(); setTool(null); } setOpen(!open); }}>
+          <span className="tb-ico" aria-hidden="true">✎</span><span className="tb-txt">Малювання</span>
+        </button>
+      </InBar>
       {open && (
         // Поки інструмент обрано, панель згорнута в один рядок, щоб карта під нею лишалась доступною для дотиків.
         <section className={tool ? 'drawpanel active' : 'drawpanel'} aria-label="Малювання на карті">

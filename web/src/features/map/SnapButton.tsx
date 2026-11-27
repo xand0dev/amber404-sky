@@ -4,6 +4,7 @@ import { useApp } from '../../app/state';
 import { useT } from '../../app/lang';
 import { useVerdicts } from '../../app/useVerdict';
 import { useView } from '../../app/view/view';
+import { InBar, useMapWrap } from '../../ui/MapFrame';
 import { composeSnapshot } from './compose';
 import { browserDownload, deliver, fileName, stampLines, type Delivered } from './snapshot';
 import './snap.css';
@@ -18,13 +19,14 @@ export function SnapButton({ reduce }: { reduce: boolean }) {
   const { lang } = useT();
   const { now, prof } = useVerdicts();
   const { view } = useView();
+  const frame = useMapWrap();
   const ref = useRef<HTMLButtonElement>(null);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState('');
   const tx = TXT[lang];
 
   const snap = async () => {
-    const wrap = ref.current?.closest<HTMLElement>('.mapwrap');
+    const wrap = frame ?? ref.current?.closest<HTMLElement>('.mapwrap');
     if (!wrap || busy) return;
     setBusy(true); setMsg('');
     try {
@@ -37,9 +39,11 @@ export function SnapButton({ reduce }: { reduce: boolean }) {
 
   return (
     <>
-      <button ref={ref} type="button" className="snapbtn" aria-label={tx.label} title={tx.label} disabled={busy} onClick={() => void snap()}>
-        <span aria-hidden="true">📷</span>
-      </button>
+      <InBar>
+        <button ref={ref} type="button" className="snapbtn" aria-label={tx.label} title={tx.label} disabled={busy} onClick={() => void snap()}>
+          <span aria-hidden="true">📷</span>
+        </button>
+      </InBar>
       <p role="status" className="snapmsg" hidden={!msg}>{msg}</p>
     </>
   );
