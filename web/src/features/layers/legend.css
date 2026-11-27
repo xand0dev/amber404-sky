@@ -1,0 +1,8 @@
+/* F3: легенда шару. Компактно, щоб на 400 px не закривати карту й не давати горизонтального скролу. */
+.legend{position:absolute;top:8px;right:8px;max-width:min(220px,calc(100% - 16px));padding:6px 8px;background:rgba(28,33,23,.88);border:1px solid var(--rule);font-size:13px;line-height:1.2;pointer-events:none}
+.legend .lg-title{font-weight:700;margin-bottom:4px}
+.legend .lg-bar{height:10px;width:180px;max-width:100%}
+.legend .lg-ticks{display:flex;justify-content:space-between;gap:6px;font-variant-numeric:tabular-nums;color:var(--dim);margin-top:2px}
+.legend .lg-classes{list-style:none;padding:0;display:flex;flex-wrap:wrap;gap:4px 10px}
+.legend .lg-classes li{display:flex;align-items:center;gap:4px;white-space:nowrap}
+.legend .lg-classes i{display:inline-block;width:12px;height:12px;border:1px solid var(--rule)}
