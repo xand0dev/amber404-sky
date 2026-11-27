@@ -1,0 +1,8 @@
+.route{margin-top:14px;border-top:1px solid var(--rule);padding-top:10px}
+.route h3{margin:0 0 8px;font-size:15px}
+.routebtns{display:flex;gap:8px;flex-wrap:wrap}
+.routebtns button{min-height:44px;padding:0 12px;background:var(--base);color:var(--ink);border:1px solid var(--rule)}
+.route .cut{width:100%;height:auto;display:block;margin:8px 0;background:var(--base)}
+.route .cutlbl{font-size:9px;fill:var(--dim)}
+.route .battery{border-left:4px solid;padding:6px 8px;background:var(--base);margin:8px 0}
+.route .hint{color:var(--dim);font-size:14px}
