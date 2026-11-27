@@ -9,3 +9,4 @@ export * from './time';
 export * from './age';
 export * from './mgrs';
 export * from './theme';
+export * from './i18n';
