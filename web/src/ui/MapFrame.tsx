@@ -3,7 +3,15 @@
 // тож карта нічим не закрита згори. Без рамки (окремі тести компонентів) InBar рендерить кнопку на місці.
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
+import { useT } from '../app/lang';
+import type { Lang } from '../core';
 import './mapframe.css';
+
+// Доступні імена ряду uk/en (issue #116).
+const S: Record<Lang, { bar: string; more: string }> = {
+  uk: { bar: 'Інструменти карти', more: 'Ще інструменти' },
+  en: { bar: 'Map tools', more: 'More tools' },
+};
 
 interface Slots { bar: HTMLElement | null; more: HTMLElement | null; wrap: HTMLElement | null }
 const SlotsCtx = createContext<Slots>({ bar: null, more: null, wrap: null });
@@ -22,6 +30,7 @@ export function MapFrame({ children }: { children: ReactNode }) {
   const [more, setMore] = useState<HTMLDivElement | null>(null);
   const [wrap, setWrap] = useState<HTMLElement | null>(null);
   const [open, setOpen] = useState(false);
+  const L = S[useT().lang];
 
   // Вибір у меню закриває його (портал: React-події йдуть деревом компонентів, тож слухаємо DOM).
   useEffect(() => {
@@ -34,8 +43,8 @@ export function MapFrame({ children }: { children: ReactNode }) {
   return (
     <SlotsCtx.Provider value={{ bar, more, wrap }}>
       <div className="mapbarwrap">
-        <div ref={setBar} className="mapbar" role="toolbar" aria-label="Інструменти карти">
-          <button type="button" className="morebtn" aria-label="Ще інструменти" title="Ще інструменти" aria-expanded={open} onClick={() => setOpen(!open)}>
+        <div ref={setBar} className="mapbar" role="toolbar" aria-label={L.bar}>
+          <button type="button" className="morebtn" aria-label={L.more} title={L.more} aria-expanded={open} onClick={() => setOpen(!open)}>
             <span aria-hidden="true">⋯</span>
           </button>
         </div>

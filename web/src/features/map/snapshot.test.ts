@@ -1,6 +1,6 @@
 // F3-AC7: штамп знімка (час, висота, дрон, вердикт, джерело, «AMBER Sky») і доставка — share або завантаження.
 import { describe, expect, it, vi } from 'vitest';
-import { kyivDayHM } from '../../core';
+import { kyivDayHM, type Verdict } from '../../core';
 import { deliver, fileName, stampLines } from './snapshot';
 import { bundle, state } from './fixture.test-util';
 
@@ -78,5 +78,15 @@ describe('Given PNG; When доставляємо (§7.12)', () => {
     expect(await deliver(blob, 'a.png', { nav: {}, download })).toBe('downloaded');
     expect(await deliver(blob, 'a.png', { nav: { canShare: () => false, share: vi.fn() }, download })).toBe('downloaded');
     expect(download).toHaveBeenCalledTimes(2);
+  });
+});
+
+// Issue #116: у штампі EN — англійська назва дрона (nameEn, #108).
+describe('Given EN і дрон з nameEn (issue #116)', () => {
+  it('Then у штампі nameEn; uk — name', () => {
+    const p = { ...prof, name: 'Квадрокоптер розвідки', nameEn: 'Recon quadcopter' } as typeof prof;
+    const v: Verdict = { level: 'GO', reasons: [] };
+    expect(stampLines(data, state(), v, p, 'en').join('\n')).toContain('Recon quadcopter');
+    expect(stampLines(data, state(), v, p, 'uk').join('\n')).toContain('Квадрокоптер розвідки');
   });
 });

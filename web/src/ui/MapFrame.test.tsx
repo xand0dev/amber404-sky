@@ -2,6 +2,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { InBar, MapFrame, useMapWrap } from './MapFrame';
+import { LANG_KEY, LangProvider } from '../app/lang';
 
 afterEach(cleanup);
 
@@ -53,5 +54,17 @@ describe('Given карта в рамці (AC2)', () => {
   it('Given без рамки (окремий тест компонента); Then кнопка рендериться на місці', () => {
     render(<InBar><button type="button">Знімок</button></InBar>);
     expect(screen.getByRole('button', { name: 'Знімок' })).toBeTruthy();
+  });
+});
+
+// Issue #116: EN — доступні імена ряду й «⋯» англійською.
+describe('Given EN (issue #116)', () => {
+  afterEach(() => localStorage.clear());
+  it('Then toolbar «Map tools», кнопка «More tools»', async () => {
+    localStorage.setItem(LANG_KEY, 'en');
+    render(<LangProvider><MapFrame><canvas className="map" /></MapFrame></LangProvider>);
+    await act(async () => {});
+    expect(screen.getByRole('toolbar', { name: 'Map tools' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'More tools' })).toBeTruthy();
   });
 });
