@@ -1,9 +1,11 @@
-// F3 (Іван): карта — плавне поле шару, кордони, міста, стрілки вітру, вибір точки, легенда.
+// F3 (Іван): карта — плавне поле шару, кордони, міста, частинки вітру (reduced motion → стрілки), вибір точки, легенда.
 import { useEffect, useRef } from 'react';
 import { useApp } from '../../app/state';
 import { makeProjection, windAt } from '../../core';
 import { Legend } from '../layers/Legend';
 import { fieldPixels, nodeStep } from './field';
+import { WindParticles } from './WindParticles';
+import { useReducedMotion } from './useReducedMotion';
 
 /** Поле рахуємо в сітці кожні FIELD_PX css-пікселів і згладжуємо при масштабуванні (≤ 300 мс, F3-AC2). */
 const FIELD_PX = 3;
@@ -12,6 +14,7 @@ type MapCanvas = HTMLCanvasElement & { unproject?: (x: number, y: number) => [nu
 export function MapView() {
   const { data, s, set } = useApp();
   const ref = useRef<MapCanvas>(null);
+  const reduce = useReducedMotion();
 
   useEffect(() => {
     const cv = ref.current;
@@ -43,9 +46,10 @@ export function MapView() {
       ctx.lineWidth = f.iso === 'UKR' ? 1.6 : 0.8;
       for (const ring of f.rings) { ctx.beginPath(); ring.forEach(([lo, la], i) => { const [x, y] = px(la, lo); if (i) ctx.lineTo(x, y); else ctx.moveTo(x, y); }); ctx.stroke(); }
     }
+    // prefers-reduced-motion (§7.10): замість частинок — статичні стрілки вітру обраної висоти.
     const g = data.meta.grid, P = data.profile, h = s.hour;
     ctx.strokeStyle = 'rgba(230,226,204,.75)'; ctx.lineWidth = 1.2;
-    for (let lat = 44.5; lat < 52.5; lat += 1) for (let lon = 22.5; lon < 40.5; lon += 1) {
+    if (reduce) for (let lat = 44.5; lat < 52.5; lat += 1) for (let lon = 22.5; lon < 40.5; lon += 1) {
       const w = windAt(g, P, s.altM, h, lat, lon); if (!w) continue;
       const [x, y] = px(lat, lon), len = Math.min(18, 4 + Math.hypot(w[0], w[1]) * 1.2), a = Math.atan2(-w[1], w[0]);
       const ex = x + Math.cos(a) * len, ey = y + Math.sin(a) * len;
@@ -64,7 +68,7 @@ export function MapView() {
     const [cx, cy] = px(s.lat, s.lon);
     ctx.strokeStyle = '#e2a72e'; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.arc(cx, cy, 9, 0, Math.PI * 2); ctx.moveTo(cx - 16, cy); ctx.lineTo(cx + 16, cy); ctx.moveTo(cx, cy - 16); ctx.lineTo(cx, cy + 16); ctx.stroke();
-  }, [data, s]);
+  }, [data, s, reduce]);
 
   return (
     <>
@@ -75,6 +79,7 @@ export function MapView() {
           const [lat, lon] = cv.unproject?.(e.clientX - r.left, e.clientY - r.top) ?? [s.lat, s.lon];
           if (lat >= 44 && lat <= 52.5 && lon >= 22 && lon <= 40.5) set({ lat, lon });
         }} />
+      {!reduce && <WindParticles />}
       <Legend />
     </>
   );

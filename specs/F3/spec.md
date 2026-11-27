@@ -34,6 +34,12 @@
 - T4 (AC1) `layers/Legend.tsx`: градієнт + мін/середина/макс з одиницею; для «Можна летіти» й «Обмерзання» — колір + текст.
 - T5 тести: `colors.test.ts`, `field.test.ts` (без квадратів, ≤ 300 мс на шар), `Legend.test.tsx`.
 
+**#10 — частинки вітру; reduced motion → стрілки:**
+- T1 (AC1) `map/particles.ts`: `windSampler` (core.windAt на `s.altM`, `s.hour`), `seed`, `step`, `particleCount`; екранна швидкість `K = 3 px/с на 1 м/с` (assumption), не залежить від масштабу.
+- T2 (AC5) `map/useReducedMotion.ts`: matchMedia + подія `change`.
+- T3 (AC1, AC5) `map/WindParticles.tsx` — окремий canvas зі слідами, колір з теми; `MapView.tsx`: reduce → стрілки замість частинок.
+- T4 тести: `particles.test.ts`, `MapView.test.tsx`.
+
 ## Відкриті питання
 | Питання | Хто | Коли | План Б |
 |---|---|---|---|
