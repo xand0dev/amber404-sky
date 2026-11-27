@@ -101,11 +101,19 @@ while [ ! -f "$RUNS/STOP" ]; do
     git worktree remove --force "$wd"; continue
   fi
 
+  sleep $((RANDOM % 10))
   issue=$(pick_issue) || { log "queue empty — sleep 3m"; sleep 180; continue; }
   num=$(jq -r .number <<<"$issue"); title=$(jq -r .title <<<"$issue")
   feat=$(echo "$title $(jq -r '[.labels[].name] | join(" ")' <<<"$issue")" | grep -oE 'F[0-4]' | head -1); feat=${feat:-F0}
+  # захист від гонки двох воркерів: мітка вже стоїть → задачу взяв інший
+  if gh issue view "$num" --json labels --jq '[.labels[].name] | index("in-progress")' | grep -q '[0-9]'; then
+    log "#$num already taken — skip"; sleep $((RANDOM % 15)); continue
+  fi
   gh issue edit "$num" --add-label in-progress >/dev/null
   gh issue comment "$num" --body "runner: взяв $WORKER ($AGENT)" >/dev/null
+  sleep 3
+  first=$(gh issue view "$num" --json comments --jq '[.comments[].body | select(startswith("runner: взяв"))] | last')
+  case "$first" in *"$WORKER "*) ;; *) log "#$num taken by another worker — skip"; continue ;; esac
   br="feat/$feat-$num"; wd="$RUNS/issue-$num"
   rm -rf "$wd"; git worktree prune
   git worktree add -q -B "$br" "$wd" origin/main
