@@ -48,7 +48,7 @@ jobs:
           fi
           # номери задач беремо ДО мержу: після мержу closingIssuesReferences порожній
           closes=$( (gh pr view "$num" --json closingIssuesReferences --jq '.closingIssuesReferences[].number'; \
-                     gh pr view "$num" --json body --jq .body | grep -oiE '(closes|fixes|resolves) #[0-9]+' | grep -oE '[0-9]+') | sort -u)
+                     gh pr view "$num" --json body --jq .body | grep -oiE '(closes|fixes|resolves) #[0-9]+' | grep -oE '[0-9]+' || true) | sort -u)
           if ! gh pr merge "$num" --squash --delete-branch; then
             gh pr edit "$num" --add-label fix || true
             echo "Merge failed (conflict?) — label fix"; exit 0
