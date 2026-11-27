@@ -2,7 +2,7 @@
 // Лише власні Canvas/SVG шари й локальні Blob URL, без мережі й сторонніх сервісів.
 import type { Bundle } from '../../app/data';
 import type { AppState } from '../../app/state';
-import { makeProjection } from '../../core';
+import { makeProjection, type View } from '../../core';
 import { drawWindArrows } from './arrows';
 
 const LINE = 16, PAD = 8;
@@ -27,7 +27,7 @@ async function svgImage(svg: SVGSVGElement, W: number, H: number): Promise<HTMLI
   } finally { URL.revokeObjectURL(url); }
 }
 
-export async function composeSnapshot(wrap: HTMLElement, data: Bundle, s: AppState, reduce: boolean, lines: string[]): Promise<Blob> {
+export async function composeSnapshot(wrap: HTMLElement, data: Bundle, s: AppState, reduce: boolean, lines: string[], view?: View): Promise<Blob> {
   const map = wrap.querySelector<HTMLCanvasElement>('canvas.map');
   if (!map) throw new Error('немає карти');
   const W = map.clientWidth, H = map.clientHeight, dpr = window.devicePixelRatio || 1;
@@ -45,7 +45,7 @@ export async function composeSnapshot(wrap: HTMLElement, data: Bundle, s: AppSta
   ctx.globalAlpha = Number(getComputedStyle(map).opacity) || 1;
   ctx.drawImage(map, 0, 0, W, H);
   ctx.globalAlpha = 1;
-  if (!reduce) drawWindArrows(ctx, data, s, makeProjection(W, H).project); // частинки → стрілки (§7.12)
+  if (!reduce) drawWindArrows(ctx, data, s, makeProjection(W, H, view).project); // частинки → стрілки (§7.12)
   const zone = wrap.querySelector<HTMLCanvasElement>('canvas.zone');
   if (visible(zone) && zone.width > 0) ctx.drawImage(zone, 0, 0, W, H);
   const svg = wrap.querySelector<SVGSVGElement>('svg.drawlayer');

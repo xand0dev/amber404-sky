@@ -3,6 +3,7 @@ import { useRef, useState } from 'react';
 import { useApp } from '../../app/state';
 import { useT } from '../../app/lang';
 import { useVerdicts } from '../../app/useVerdict';
+import { useView } from '../../app/view/view';
 import { composeSnapshot } from './compose';
 import { browserDownload, deliver, fileName, stampLines, type Delivered } from './snapshot';
 import './snap.css';
@@ -16,6 +17,7 @@ export function SnapButton({ reduce }: { reduce: boolean }) {
   const { data, s } = useApp();
   const { lang } = useT();
   const { now, prof } = useVerdicts();
+  const { view } = useView();
   const ref = useRef<HTMLButtonElement>(null);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState('');
@@ -26,7 +28,7 @@ export function SnapButton({ reduce }: { reduce: boolean }) {
     if (!wrap || busy) return;
     setBusy(true); setMsg('');
     try {
-      const blob = await composeSnapshot(wrap, data, s, reduce, stampLines(data, s, now, prof, lang));
+      const blob = await composeSnapshot(wrap, data, s, reduce, stampLines(data, s, now, prof, lang), view);
       const r: Delivered = await deliver(blob, fileName(data.meta.times[s.hour] ?? data.meta.generatedAt), { nav: navigator, download: browserDownload });
       setMsg(tx[r]);
       setTimeout(() => setMsg(''), 3000);

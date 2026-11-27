@@ -1,6 +1,7 @@
 // F3 (Іван): карта — плавне поле шару, кордони, міста, частинки вітру (reduced motion → стрілки), вибір точки, легенда.
 import { useEffect, useRef, useState } from 'react';
 import { useApp } from '../../app/state';
+import { useView } from '../../app/view/view';
 import { makeProjection } from '../../core';
 import { Legend } from '../layers/Legend';
 import { drawWindArrows } from './arrows';
@@ -18,6 +19,7 @@ export function MapView() {
   const { data, s, set } = useApp();
   const ref = useRef<MapCanvas>(null);
   const reduce = useReducedMotion();
+  const { view } = useView();
   const [hover, setHover] = useState<HoverPos | null>(null);
 
   useEffect(() => {
@@ -29,7 +31,7 @@ export function MapView() {
     const ctx = cv.getContext('2d');
     if (!ctx) return;
     ctx.scale(dpr, dpr);
-    const { project: px, unproject } = makeProjection(W, H);
+    const { project: px, unproject } = makeProjection(W, H, view);
     cv.unproject = unproject;
 
     ctx.fillStyle = '#1c2117'; ctx.fillRect(0, 0, W, H);
@@ -63,7 +65,7 @@ export function MapView() {
     const [cx, cy] = px(s.lat, s.lon);
     ctx.strokeStyle = '#e2a72e'; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.arc(cx, cy, 9, 0, Math.PI * 2); ctx.moveTo(cx - 16, cy); ctx.lineTo(cx + 16, cy); ctx.moveTo(cx, cy - 16); ctx.lineTo(cx, cy + 16); ctx.stroke();
-  }, [data, s, reduce]);
+  }, [data, s, reduce, view]);
 
   return (
     <>
@@ -78,7 +80,7 @@ export function MapView() {
           // F3-AC6: підказка лише для миші/пера; на дотик тап обирає точку.
           if (e.pointerType === 'touch') { setHover(null); return; }
           const r = e.currentTarget.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
-          const [lat, lon] = makeProjection(r.width, r.height).unproject(x, y);
+          const [lat, lon] = makeProjection(r.width, r.height, view).unproject(x, y);
           setHover({ x, y, lat, lon, W: r.width, H: r.height });
         }}
         onPointerLeave={() => setHover(null)} />

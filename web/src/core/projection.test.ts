@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { MAP_BOX, makeProjection } from './projection';
+import { FULL_VIEW, MAP_BOX, MIN_VIEW_KM, clampView, fitView, gestureStep, makeProjection, panBy, viewWidthKm, zoomAt } from './projection';
 
 describe('Given спільна проєкція карти (lat/lon ↔ екран, cos широти)', () => {
   const p = makeProjection(800, 400);
@@ -35,5 +35,88 @@ describe('Given спільна проєкція карти (lat/lon ↔ екра
     const [x, y] = p.project(46.5, 33.2);
     expect(a * 46.5 + b * 33.2 + c).toBeCloseTo(x, 9);
     expect(d * 46.5 + e * 33.2 + f).toBeCloseTo(y, 9);
+  });
+});
+
+describe('Given вигляд карти (центр, масштаб) — issue #64', () => {
+  const W = 400, H = 300;
+
+  it('Then без вигляду і з FULL_VIEW — та сама «вся Україна»', () => {
+    const a = makeProjection(W, H), b = makeProjection(W, H, FULL_VIEW);
+    expect(b.project(50, 30)[0]).toBeCloseTo(a.project(50, 30)[0], 9);
+    expect(b.project(50, 30)[1]).toBeCloseTo(a.project(50, 30)[1], 9);
+  });
+
+  it('Then центр вигляду — у центрі екрана, масштаб ×2 подвоює відстані', () => {
+    const v = { lat: 50, lon: 30, zoom: 2 };
+    const p = makeProjection(W, H, v), p1 = makeProjection(W, H, { ...v, zoom: 1 });
+    expect(p.project(50, 30)[0]).toBeCloseTo(W / 2, 9);
+    expect(p.project(50, 30)[1]).toBeCloseTo(H / 2, 9);
+    const d = (q: typeof p) => q.project(50, 31)[0] - q.project(50, 30)[0];
+    expect(d(p)).toBeCloseTo(2 * d(p1), 9);
+    const [lat, lon] = p.unproject(...p.project(46.1, 35.2));
+    expect(lat).toBeCloseTo(46.1, 9); expect(lon).toBeCloseTo(35.2, 9);
+  });
+
+  it('Then найбільший масштаб — ~5 км по ширині екрана, найменший — уся Україна', () => {
+    const z = clampView({ lat: 50, lon: 30, zoom: 1e9 }, W, H);
+    expect(viewWidthKm(z, W, H)).toBeCloseTo(MIN_VIEW_KM, 6);
+    expect(clampView({ lat: 50, lon: 30, zoom: 0.01 }, W, H).zoom).toBe(1);
+  });
+
+  it('When колесо / pinch у точці; Then точка під пальцем лишається на місці', () => {
+    const v0 = { lat: 49, lon: 31, zoom: 1.5 };
+    const at = makeProjection(W, H, v0).unproject(100, 80);
+    const v1 = zoomAt(v0, W, H, 2, 100, 80);
+    expect(v1.zoom).toBeCloseTo(3, 9);
+    const [x, y] = makeProjection(W, H, v1).project(...at);
+    expect(x).toBeCloseTo(100, 6); expect(y).toBeCloseTo(80, 6);
+  });
+
+  it('When перетягування на (dx, dy); Then та сама точка зсувається на (dx, dy)', () => {
+    const v0 = { lat: 49, lon: 31, zoom: 4 };
+    const [x0, y0] = makeProjection(W, H, v0).project(49.1, 31.2);
+    const [x1, y1] = makeProjection(W, H, panBy(v0, W, H, 30, -20)).project(49.1, 31.2);
+    expect(x1 - x0).toBeCloseTo(30, 6); expect(y1 - y0).toBeCloseTo(-20, 6);
+  });
+
+  it('Then центр вигляду не виходить за рамку України', () => {
+    const v = clampView({ lat: 70, lon: 0, zoom: 3 }, W, H);
+    expect(v.lat).toBeLessThanOrEqual(MAP_BOX.lat0); expect(v.lon).toBeGreaterThanOrEqual(MAP_BOX.lon0);
+  });
+
+  it('When «До зони»; Then контур вміщено з полями 15% з кожного боку по обмежувальній стороні', () => {
+    const pts: [number, number][] = [[50.6, 30.3], [50.3, 30.8], [50.45, 30.1]];
+    const v = fitView(pts, W, H, 0.15);
+    const xy = pts.map(([la, lo]) => makeProjection(W, H, v).project(la, lo));
+    const xs = xy.map((q) => q[0]), ys = xy.map((q) => q[1]);
+    for (const x of xs) { expect(x).toBeGreaterThanOrEqual(W * 0.15 - 1e-6); expect(x).toBeLessThanOrEqual(W * 0.85 + 1e-6); }
+    for (const y of ys) { expect(y).toBeGreaterThanOrEqual(H * 0.15 - 1e-6); expect(y).toBeLessThanOrEqual(H * 0.85 + 1e-6); }
+    const fill = Math.max((Math.max(...xs) - Math.min(...xs)) / (W * 0.7), (Math.max(...ys) - Math.min(...ys)) / (H * 0.7));
+    expect(fill).toBeCloseTo(1, 6);
+  });
+
+  it('Given зона-точка (радіус 0); Then «До зони» — найбільший масштаб із центром у точці', () => {
+    const v = fitView([[50.45, 30.52]], W, H);
+    expect(viewWidthKm(v, W, H)).toBeCloseTo(MIN_VIEW_KM, 6);
+    expect(v.lat).toBeCloseTo(50.45, 9); expect(v.lon).toBeCloseTo(30.52, 9);
+  });
+});
+
+describe('Given жест на карті (pinch / перетягування) — issue #64', () => {
+  const W = 400, H = 300, v0 = { lat: 49, lon: 31, zoom: 2 };
+
+  it('When два пальці розходяться вдвічі; Then масштаб ×2, точка під серединою на місці', () => {
+    const at = makeProjection(W, H, v0).unproject(200, 150);
+    const v1 = gestureStep(v0, W, H, [[150, 150], [250, 150]], [[100, 150], [300, 150]]);
+    expect(v1.zoom).toBeCloseTo(4, 9);
+    const [x, y] = makeProjection(W, H, v1).project(...at);
+    expect(x).toBeCloseTo(200, 6); expect(y).toBeCloseTo(150, 6);
+  });
+
+  it('When один палець; Then лише перетягування, масштаб той самий', () => {
+    const v1 = gestureStep(v0, W, H, [[100, 100]], [[130, 90]]);
+    expect(v1.zoom).toBe(2);
+    expect(v1).toEqual(panBy(v0, W, H, 30, -10));
   });
 });

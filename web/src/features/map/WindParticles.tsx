@@ -2,6 +2,7 @@
 import { useEffect, useRef } from 'react';
 import { useApp } from '../../app/state';
 import { useTheme } from '../../app/theme';
+import { useView } from '../../app/view/view';
 import { makeProjection } from '../../core';
 import { particleCount, seed, step, windSampler, type WindFn } from './particles';
 import './wind.css';
@@ -9,13 +10,15 @@ import './wind.css';
 export function WindParticles() {
   const { data, s } = useApp();
   const { colors } = useTheme();
+  const { view } = useView();
   const ref = useRef<HTMLCanvasElement>(null);
   const wind = useRef<{ fn: WindFn; W: number; H: number } | null>(null);
   const ink = useRef(colors.ink);
   useEffect(() => { ink.current = colors.ink; }, [colors.ink]);
 
-  // Нова година, висота чи дані — лише новий семплер; цикл анімації не перезапускається.
-  useEffect(() => { wind.current = null; }, [data, s.altM, s.hour]);
+  // Нова година, висота, дані чи вигляд карти — лише новий семплер; цикл анімації не перезапускається.
+  const viewRef = useRef(view);
+  useEffect(() => { viewRef.current = view; wind.current = null; }, [data, s.altM, s.hour, view]);
 
   useEffect(() => {
     const cv = ref.current, ctx = cv?.getContext('2d');
@@ -29,7 +32,7 @@ export function WindParticles() {
         ps = seed(particleCount(W, H), W, H, Math.random); wind.current = null;
       }
       if (!wind.current || wind.current.W !== W || wind.current.H !== H) {
-        wind.current = { fn: windSampler(data, s, makeProjection(W, H).unproject), W, H };
+        wind.current = { fn: windSampler(data, s, makeProjection(W, H, viewRef.current).unproject), W, H };
       }
       const dt = last ? (t - last) / 1000 : 0; last = t;
       const x0 = ps.map((p) => p.x), y0 = ps.map((p) => p.y);
