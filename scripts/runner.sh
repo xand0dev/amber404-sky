@@ -53,9 +53,9 @@ P
 run_agent() { # $1 workdir, $2 prompt file, $3 output file
   local rc
   if [ "$AGENT" = "codex" ]; then
-    ( timeout "${TIMEOUT_MIN}m" codex exec -s workspace-write --approve-for-me --add-dir "$REPO_DIR/.git" -C "$1" -o "$3" "$(cat "$2")" ) >>"$RUNS/logs/$WORKER.log" 2>&1; rc=$?
+    ( timeout "${TIMEOUT_MIN}m" codex exec --approve-for-me --add-dir "$REPO_DIR/.git" -C "$1" -o "$3" "$(cat "$2")" </dev/null ) >>"$RUNS/logs/$WORKER.log" 2>&1; rc=$?
   else
-    ( cd "$1" && timeout "${TIMEOUT_MIN}m" claude -p "$(cat "$2")" --permission-mode bypassPermissions --output-format text ) >"$3" 2>>"$RUNS/logs/$WORKER.log"; rc=$?
+    ( cd "$1" && timeout "${TIMEOUT_MIN}m" claude -p "$(cat "$2")" --permission-mode bypassPermissions --output-format text </dev/null ) >"$3" 2>>"$RUNS/logs/$WORKER.log"; rc=$?
   fi
   if grep -qiE "usage limit|rate limit|limit reached|quota" "$3" "$RUNS/logs/$WORKER.log" 2>/dev/null && [ $rc -ne 0 ]; then return 75; fi
   return $rc
@@ -114,7 +114,7 @@ while [ ! -f "$RUNS/STOP" ]; do
   if [ "$(cd "$wd" && git rev-list --count origin/main..HEAD)" -gt 0 ]; then
     (cd "$wd" && git push -q -u origin "$br")
     body="$(cat "$wd.out")"$'\n\n'"Closes #$num"
-    gh pr create --base main --head "$br" --title "$feat: $title (#$num)" --body "$body" >/dev/null && log "#$num PR opened"
+    gh pr create --base main --head "$br" --title "$feat: ${title#F[0-4]: } (#$num)" --body "$body" >/dev/null && log "#$num PR opened"
   else
     gh issue edit "$num" --add-label stuck --remove-label in-progress >/dev/null
     gh issue comment "$num" --body "runner: $WORKER нічого не закомітив (код $rc). Хвіст логу:"$'\n```\n'"$(tail -30 "$wd.out")"$'\n```' >/dev/null
