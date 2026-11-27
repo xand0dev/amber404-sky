@@ -36,11 +36,11 @@ Presenter notes: Nastia and Maksym present in English. This outline describes th
 
 - The proposed model keeps access free for emergency services, demining teams and defence crews.
 - Agricultural drone operators and service companies would pay a subscription; this remains a business hypothesis without a validated price or revenue claim.
-- The repository treats the current Open-Meteo use as non-commercial; ECMWF Open Data is the planned commercial forecast path, with its licence still to be checked.
+- The free Open-Meteo API we use today is non-commercial. For the commercial version, ECMWF Open Data (IFS) is licensed CC BY 4.0 and allows commercial use with attribution; switching needs a GRIB decoder, 3-hour → hourly interpolation and a separate visibility source.
 
 **What to show:** A two-column model: “Free — DSNS, demining, defence” and “Paid hypothesis — agriculture and service companies”. Add “Planned commercial data transition — licence review required”; omit market-size, price and revenue figures.
 
-**Sources:** [Submission, business proposal](submission.md#description); [Demo, business and licence answer](demo.md#3-who-pays-and-can-these-data-be-used-commercially).
+**Sources:** [Submission, business proposal](submission.md#description); [Demo, business and licence answer](demo.md#3-who-pays-and-can-these-data-be-used-commercially); [F1, plan B: ECMWF Open Data](../../specs/F1/spec.md#план-б-ecmwf-open-data-t6-перевірено-2026-11-27).
 
 ## Slide 5: Team — AMBER//404
 
