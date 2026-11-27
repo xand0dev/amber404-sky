@@ -74,13 +74,15 @@ export function Panel() {
   const last = data.meta.times[data.meta.times.length - 1];
   const win = windowLabel(window, last, lang);
   const time = data.meta.times[s.hour] ?? '';
+  const terrain = terrainAt(relief, s.lat, s.lon);
+  const reliefRange = cellRange(relief, data.meta.grid, s.lat, s.lon);
   // Знімок для «Зберегти погоду» / «Копіювати звіт» (F4-AC4): лише в браузері.
   const snapshot = (): SavedWx => ({
     id: `${s.lat.toFixed(3)},${s.lon.toFixed(3)},${s.altM},${time},${prof.id}`, savedAt: new Date().toISOString(),
     place: placeText(data.cities, s.lat, s.lon), lat: s.lat, lon: s.lon, altM: s.altM, time, drone: prof.name,
     ws: wx.ws, dir: wx.dir, g: wx.g, cb: wx.cb, t: wx.t, level: now.level, reasons: now.reasons, window: win,
     source: data.meta.sources.map((x) => x.name).join(', ') || data.profile.sources.join(', '),
-    generatedAt: data.meta.generatedAt, mock: data.meta.mock,
+    generatedAt: data.meta.generatedAt, mock: data.meta.mock, terrain, reliefRange,
   });
   return (
     <section className="panel" aria-label="Точка">
@@ -95,7 +97,7 @@ export function Panel() {
         </label>
       </div>
       <PointView city={city} lat={s.lat} lon={s.lon} altM={s.altM} wx={wx} verdict={now} windowText={win} prof={prof} lang={lang} />
-      <TerrainView terrain={terrainAt(relief, s.lat, s.lon)} range={cellRange(relief, data.meta.grid, s.lat, s.lon)} lang={lang} />
+      <TerrainView terrain={terrain} range={reliefRange} lang={lang} />
       <Saved current={snapshot} />
       <Zone prof={prof} hourLabel={time ? dayHM(time, lang) : '—'} />
       <HeightTable prof={prof} />

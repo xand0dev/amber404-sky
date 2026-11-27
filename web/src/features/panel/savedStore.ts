@@ -1,6 +1,7 @@
 // F4-AC4 (SPEC §7.5a): збережена погода — лише localStorage (OPSEC, Конституція 8), до 12 записів; текст звіту для чату екіпажу.
 import { t as coreT, type Lang, type Level } from '../../core';
 import { pt } from './strings';
+import { isMountain, type Terrain } from './relief';
 
 export const SAVED_KEY = 'amber404.saved';
 export const MAX_SAVED = 12;
@@ -11,6 +12,8 @@ export interface SavedWx {
   ws: number | null; dir: number | null; g: number | null; cb: number | null; t: number | null;
   level: Level; reasons: string[]; window: string;
   source: string; generatedAt: string; mock: boolean;
+  /** Рельєф у точці (#101). Необов'язкові: записи, збережені до #101, їх не мають. */
+  terrain?: Terrain; reliefRange?: number | null;
 }
 
 type Store = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>;
@@ -33,13 +36,25 @@ export const removeSaved = (list: SavedWx[], id: string): SavedWx[] => list.filt
 
 const f = (x: number | null, d = 1) => (x == null ? '—' : x.toFixed(d));
 
-/** Текст для чату екіпажу: місце, час (Київ), висота, дрон, вітер, хмари, вердикт, вікно, джерело. */
+/** Рядки рельєфу для звіту: місцевість і, в горах, плашка assumption (#101, §7.6a). */
+function terrainLines(e: SavedWx, lang: Lang): string[] {
+  if (!e.terrain) return [];
+  const L = (k: Parameters<typeof pt>[0], p?: Record<string, string | number>) => pt(k, lang, p);
+  const t = e.terrain;
+  const val = t.kind === 'land' ? L('terrain.val', { m: Math.round(t.elevM) }) : t.kind === 'sea' ? L('terrain.sea') : L('terrain.nodata');
+  const out = [`${L('terrain')} ${val} · ${L('terrain.agl')}`];
+  if (isMountain(e.reliefRange ?? null)) out.push(`assumption · ${L('terrain.mtn')} (${L('terrain.range', { m: Math.round(e.reliefRange as number) })})`);
+  return out;
+}
+
+/** Текст для чату екіпажу: місце, час (Київ), висота, дрон, рельєф, вітер, хмари, вердикт, вікно, джерело. */
 export function reportText(e: SavedWx, lang: Lang, kyivTime: string): string {
   const L = (k: Parameters<typeof pt>[0], p?: Record<string, string | number>) => pt(k, lang, p);
   return [
     L('r.title') + (e.mock ? ' · MOCK' : ''),
     L('r.place', { place: e.place }),
     L('r.when', { time: kyivTime, alt: e.altM, drone: e.drone }),
+    ...terrainLines(e, lang),
     L('r.wind', { ws: f(e.ws), dir: f(e.dir, 0), g: f(e.g) }),
     L('r.wx', { cb: f(e.cb, 0), t: f(e.t) }),
     L('r.verdict', { level: coreT(`lv.${e.level}`, lang), reasons: e.reasons.join('; ') }),
