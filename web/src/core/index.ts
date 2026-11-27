@@ -7,3 +7,4 @@ export * from './route';
 export * from './shear';
 export * from './time';
 export * from './age';
+export * from './mgrs';
