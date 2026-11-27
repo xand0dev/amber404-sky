@@ -1,5 +1,6 @@
 // F4 зона польоту (SPEC §7.5b): обгортка над core/zone.ts і core/energy.ts + геометрія картки. Чистий TS без DOM.
-import { effectiveEndurance, usableSeconds, zoneCalc, type EnergyInput, type WindFn, type ZonePoint } from '../../core';
+import { effectiveEndurance, kCold, kPayload, usableSeconds, zoneCalc, type EnergyInput, type Lang, type WindFn, type ZonePoint } from '../../core';
+import { pt } from './strings';
 import type { DroneProfile } from '../../contracts';
 
 /** Додаткові поля «свого дрона» (§7.3a), яких немає в каталозі. */
@@ -9,6 +10,19 @@ export type AnyProfile = DroneProfile & EnergyExtras;
 /** Вхід для effectiveEndurance з профілю (каталог або свій дрон) і температури в точці старту. */
 export function energyInput(p: AnyProfile, t: number | null): EnergyInput {
   return { energy: p.energy, enduranceMin: p.enduranceMin, fuelL: p.fuelL, burnLh: p.burnLh, massKg: p.massKg, payloadKg: p.payloadKg ?? 0, kind: p.kind, t };
+}
+
+/**
+ * З чого порахований час польоту — мовою інтерфейсу. Числа ті самі, що в core/energy.ts (effectiveEndurance):
+ * українською рядок збігається з core дослівно (перевірено тестом).
+ */
+export function energyWhy(e: EnergyInput, lang: Lang): string {
+  if (e.energy === 'fuel') {
+    return e.fuelL && e.burnLh ? pt('why.fuel', lang, { l: e.fuelL, b: e.burnLh }) : pt('why.fuelPass', lang, { base: String(e.enduranceMin) });
+  }
+  return pt('why.batt', lang, {
+    base: e.enduranceMin ?? 0, kc: kCold(e.t).toFixed(2), kp: kPayload(e.massKg, e.payloadKg ?? 0, e.kind).toFixed(2),
+  });
 }
 
 export interface ZoneResult {
@@ -24,8 +38,9 @@ export function stepFor(tasMs: number, usableS: number): number {
   return Math.max(250, Math.ceil((tasMs * usableS) / 200 / 250) * 250);
 }
 
-export function zoneFor(p: AnyProfile, lat: number, lon: number, t: number | null, wind: WindFn, mode: 'roundtrip' | 'oneway'): ZoneResult {
-  const e = effectiveEndurance(energyInput(p, t));
+export function zoneFor(p: AnyProfile, lat: number, lon: number, t: number | null, wind: WindFn, mode: 'roundtrip' | 'oneway', lang: Lang = 'uk'): ZoneResult {
+  const ei = energyInput(p, t);
+  const e = { ...effectiveEndurance(ei), why: energyWhy(ei, lang) };
   const usableS = usableSeconds(e.min);
   const pts = zoneCalc({ lat, lon, tasMs: p.cruiseMs, windLimitMs: p.windMs, usableS, mode, stepM: stepFor(p.cruiseMs, usableS) }, wind);
   const counts = { energy: 0, 'wind-limit': 0, 'too-strong': 0, 'no-data': 0, max: 0 } as ZoneResult['counts'];

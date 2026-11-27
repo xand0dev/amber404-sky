@@ -56,7 +56,7 @@ export function HeightTableView({ cells, times, limit, hour, altM, total, onPick
       <div className="hgrid">
         <table ref={ref} aria-label={L('tbl.aria')}>
           <thead>
-            <tr><th scope="col">м</th>{cells[0]?.map((x) => <th key={x.hour} scope="col">{kyivHM(times[x.hour]).slice(0, 2)}</th>)}</tr>
+            <tr><th scope="col">{L('unit.m')}</th>{cells[0]?.map((x) => <th key={x.hour} scope="col">{kyivHM(times[x.hour]).slice(0, 2)}</th>)}</tr>
           </thead>
           <tbody>
             {cells.map((row, r) => (
