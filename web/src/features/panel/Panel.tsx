@@ -13,6 +13,8 @@ import { Saved } from './Saved';
 import { OwnDrone } from './OwnDrone';
 import type { SavedWx } from './savedStore';
 import { pt } from './strings';
+import { TerrainView, useRelief } from './Terrain';
+import { cellRange, terrainAt } from './relief';
 import './panel.css';
 
 const n = (x: number | null, d = 1) => (x == null ? '—' : x.toFixed(d));
@@ -67,6 +69,7 @@ export function Panel() {
   const { data, s, set } = useApp();
   const { wx, now, window, prof } = useVerdicts();
   const { lang } = useT();
+  const relief = useRelief();
   const city = nearestCity(data.cities, s.lat, s.lon);
   const last = data.meta.times[data.meta.times.length - 1];
   const win = windowLabel(window, last, lang);
@@ -92,6 +95,7 @@ export function Panel() {
         </label>
       </div>
       <PointView city={city} lat={s.lat} lon={s.lon} altM={s.altM} wx={wx} verdict={now} windowText={win} prof={prof} lang={lang} />
+      <TerrainView terrain={terrainAt(relief, s.lat, s.lon)} range={cellRange(relief, data.meta.grid, s.lat, s.lon)} lang={lang} />
       <Saved current={snapshot} />
       <Zone prof={prof} hourLabel={time ? kyivDayHM(time) : '—'} />
       <HeightTable prof={prof} />
