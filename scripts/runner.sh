@@ -82,6 +82,10 @@ pick_issue() {
 while [ ! -f "$RUNS/STOP" ]; do
   git fetch -q origin main
   if [ "$MODE" = "fix" ]; then
+    # PR з конфліктом з main не отримує CI, тож і мітку fix — ставимо її самі
+    for c in $(gh pr list --state open --json number,mergeable,labels --jq '.[] | select(.mergeable=="CONFLICTING") | select([.labels[].name] | (index("fix") or index("stuck")) | not) | .number'); do
+      gh pr edit "$c" --add-label fix >/dev/null && log "PR #$c conflicts with main → fix"
+    done
     pr=$(gh pr list --state open --label fix --json number,headRefName,labels --jq '[.[] | select([.labels[].name] | index("stuck") | not)][0] // empty')
     [ -z "$pr" ] && { sleep 120; continue; }
     num=$(jq -r .number <<<"$pr"); br=$(jq -r .headRefName <<<"$pr")
