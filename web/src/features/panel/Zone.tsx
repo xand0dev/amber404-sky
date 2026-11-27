@@ -30,7 +30,7 @@ export function ZoneView({ zone, lat, lon, mode, onMode, wind, altM, hourLabel, 
   const ax = Math.sin(a) * 28, ay = -Math.cos(a) * 28;
   return (
     <section className="psec pzone" aria-label={L('zone')}>
-      <h3>{L('zone')} · {altM} м</h3>
+      <h3>{L('zone')} · {altM} {L('unit.m')}</h3>
       <div className="pbtns" role="group" aria-label={L('zone')}>
         <button type="button" aria-pressed={mode === 'roundtrip'} onClick={() => onMode('roundtrip')}>{L('zone.rt')}</button>
         <button type="button" aria-pressed={mode === 'oneway'} onClick={() => onMode('oneway')}>{L('zone.ow')}</button>
@@ -40,7 +40,7 @@ export function ZoneView({ zone, lat, lon, mode, onMode, wind, altM, hourLabel, 
         {rings.map((r) => (
           <g key={r} data-testid="zone-ring">
             <circle className="ring" cx={C} cy={C} r={r * 1000 * sc} />
-            <text className="ringlbl" x={C + 2} y={C - r * 1000 * sc - 2}>{r} км</text>
+            <text className="ringlbl" x={C + 2} y={C - r * 1000 * sc - 2}>{r} {L('unit.km')}</text>
           </g>
         ))}
         <text className="north" x={C - 3} y={10}>N</text>
@@ -74,9 +74,9 @@ export function Zone({ prof, hourLabel }: { prof: AnyProfile; hourLabel: string 
     const src = { meta: data.meta, profile: data.profile, kp: data.kp, galileo: data.galileo };
     const t = weatherAt(src, s.lat, s.lon, 10, s.hour).t;
     const w0 = windAt(data.meta.grid, data.profile, s.altM, s.hour, s.lat, s.lon);
-    const zone = zoneFor(prof, s.lat, s.lon, t, (la, lo) => windAt(data.meta.grid, data.profile, s.altM, s.hour, la, lo), mode);
+    const zone = zoneFor(prof, s.lat, s.lon, t, (la, lo) => windAt(data.meta.grid, data.profile, s.altM, s.hour, la, lo), mode, lang);
     const [ws, dir] = w0 ? fromUV(w0[0], w0[1]) : [0, 0];
     return { zone, wind: w0 ? { ws, dir } : null };
-  }, [data, prof, s.lat, s.lon, s.altM, s.hour, mode]);
+  }, [data, prof, s.lat, s.lon, s.altM, s.hour, mode, lang]);
   return <ZoneView {...calc} lat={s.lat} lon={s.lon} mode={mode} onMode={setMode} altM={s.altM} hourLabel={hourLabel} lang={lang} />;
 }

@@ -2,8 +2,9 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import type { DroneProfile } from '../../contracts';
 import { ZoneView } from './Zone';
-import { energyInput, ringsKm, stepFor, zoneFor, type AnyProfile } from './zoneLogic';
-import { effectiveEndurance } from '../../core';
+import { dayHM } from './place';
+import { energyInput, energyWhy, ringsKm, stepFor, zoneFor, type AnyProfile } from './zoneLogic';
+import { effectiveEndurance, type EnergyInput } from '../../core';
 
 afterEach(cleanup);
 
@@ -111,5 +112,39 @@ describe('§7.5b: картка не конфліктує з шаром зони 
     const sec = screen.getByRole('region', { name: 'Зона польоту' });
     expect(sec.classList.contains('zone')).toBe(false);
     expect(sec.classList.contains('pzone')).toBe(true);
+  });
+});
+
+describe('uk/en: розкладка часу польоту (§7.3a)', () => {
+  const cases: EnergyInput[] = [
+    { energy: 'battery', enduranceMin: 30, massKg: 1, kind: 'multirotor', t: 20 },
+    { energy: 'battery', enduranceMin: 12, massKg: 2, payloadKg: 2, kind: 'multirotor', t: -20 },
+    { energy: 'battery', enduranceMin: 150, massKg: 5, payloadKg: 1, kind: 'wing', t: -5 },
+    { energy: 'fuel', fuelL: 2, burnLh: 1.5, massKg: 20, kind: 'wing', t: -30 },
+    { energy: 'fuel', enduranceMin: 300, massKg: 20, kind: 'wing', t: 0 },
+  ];
+  it('українською — дослівно як core/effectiveEndurance', () => {
+    for (const e of cases) expect(energyWhy(e, 'uk')).toBe(effectiveEndurance(e).why);
+  });
+  it('англійською — ті самі числа', () => {
+    expect(energyWhy(cases[1], 'en')).toBe('datasheet 12 min × cold 0.70 × payload 0.35');
+    expect(energyWhy(cases[3], 'en')).toBe('2 L / 1.5 L/h');
+    expect(energyWhy(cases[4], 'en')).toBe('datasheet 300 min (fuel)');
+  });
+  it('картка зони англійською: заголовок, км, розкладка без кирилиці', () => {
+    const z = zoneFor(P, 50, 30, 20, north5, 'roundtrip', 'en');
+    view(z, { lang: 'en', hourLabel: dayHM('2026-11-28T08:00:00Z', 'en') });
+    expect(screen.getByRole('heading').textContent).toBe('Flight zone · 120 m');
+    expect(screen.getAllByTestId('zone-ring')[0].textContent).toMatch(/ km$/);
+    expect(screen.getByTestId('zone-time').textContent).toBe('T = datasheet 30 min × cold 1.00 × payload 1.00 = 30.0 min · with 20% reserve — 24.0 min');
+    expect(screen.getByRole('region', { name: 'Flight zone' }).textContent).not.toMatch(/[А-Яа-яІіЇїЄє]/);
+  });
+});
+
+describe('uk/en: година в київському часі', () => {
+  it('сб 10:00 / Sat 10:00', () => {
+    expect(dayHM('2026-11-28T08:00:00Z', 'uk')).toBe('сб 10:00');
+    expect(dayHM('2026-11-28T08:00:00Z', 'en')).toBe('Sat 10:00');
+    expect(dayHM('oops', 'en')).toBe('—');
   });
 });

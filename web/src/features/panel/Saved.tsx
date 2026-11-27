@@ -27,7 +27,7 @@ export function SavedView({ list, lang, msg, fallback, onSave, onCopy, onDelete,
             {list.map((e) => (
               <li key={e.id} className={`lv-${e.level}`}>
                 <span className="txt">
-                  <b>{e.place}</b> · {kyivStamp(e.time)} · {e.altM} м · {e.drone}<br />
+                  <b>{e.place}</b> · {kyivStamp(e.time)} · {e.altM} {L('unit.m')} · {e.drone}<br />
                   {e.ws == null ? '—' : e.ws.toFixed(1)} {L('unit.ms')} · {e.level}
                 </span>
                 <span className="pbtns">
