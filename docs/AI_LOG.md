@@ -19,7 +19,7 @@
 | 2026-11-27 21:40–22:10 Київ | Максим | Claude Code / Claude Opus 5.5 | #3 живий `make data`, контроль Києва; план Б ECMWF | `pipeline/sky/forecast/fetch.py`, `pipeline/tests/forecast/test_control.py`, `specs/F1/spec.md` | 31 тест F1; живий `make data`: 100 % не null, `openmeteo ok`; `check-web` локально — tsc падав через #84 (F4), у CI зелений | #82 |
 | 2026-11-27 22:15–22:24 Київ | Максим | Claude Code / Claude Opus 5.5 | #4 шаблон розмов з операторами: OPSEC, питання, картки (розмови — людина) | `docs/pitch/interviews.md` | guard: own F1; CI зелений; жодних вигаданих розмов | #90 |
 | 2026-11-27 22:30–22:54 Київ | Максим | Claude Code / Claude Opus 5.5 | #93 план Б §12: цілий попередній прогноз з Pages ≤ 12 год, `_fetchedAt`; рішення F0 — #95 | `pipeline/sky/forecast/fetch.py`, `pipeline/tests/forecast/test_fallback.py` | 7 тестів (наскрізно через `build()`); pytest 105 passed; живі Pages → OK; CI зелений | #96 |
-| 2026-11-27 22:55–23:15 Київ | Максим | Claude Code / Claude Opus 5.5 | аудит F1 за Конституцією: spec ← план Б і #4, пропущені рядки AI_LOG, точний час рядків, питання F0 про назву файлу в AC | `specs/F1/spec.md`, `docs/AI_LOG.md` | повний `make check` локально (Windows) зелений: pytest 105, vitest 350, build | цей PR |
+| 2026-11-27 22:55–23:15 Київ | Максим | Claude Code / Claude Opus 5.5 | аудит F1 за Конституцією: spec ← план Б і #4, пропущені рядки AI_LOG, точний час рядків, питання F0 про назву файлу в AC | `specs/F1/spec.md`, `docs/AI_LOG.md` | повний `make check` локально (Windows) зелений: pytest 105, vitest 350, build | #106 |
 
 ## F2
 
