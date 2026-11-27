@@ -3,10 +3,11 @@
 import { useApp } from '../../app/state';
 import { useVerdicts } from '../../app/useVerdict';
 import { useT, windowLabel } from '../../app/lang';
-import { t as coreT, type Lang, type Verdict, type Weather } from '../../core';
+import { kyivDayHM, t as coreT, type Lang, type Verdict, type Weather } from '../../core';
 import type { DroneProfile } from '../../contracts';
 import { Route } from '../route/Route';
 import { arrowDeg, coordText, nearestCity } from './place';
+import { Zone } from './Zone';
 import { pt } from './strings';
 import './panel.css';
 
@@ -65,6 +66,7 @@ export function Panel() {
   const city = nearestCity(data.cities, s.lat, s.lon);
   const last = data.meta.times[data.meta.times.length - 1];
   const win = windowLabel(window, last, lang);
+  const time = data.meta.times[s.hour] ?? '';
   return (
     <section className="panel" aria-label="Точка">
       <div className="row">
@@ -78,6 +80,7 @@ export function Panel() {
         </label>
       </div>
       <PointView city={city} lat={s.lat} lon={s.lon} altM={s.altM} wx={wx} verdict={now} windowText={win} prof={prof} lang={lang} />
+      <Zone prof={prof} hourLabel={time ? kyivDayHM(time) : '—'} />
       <Route />
     </section>
   );
