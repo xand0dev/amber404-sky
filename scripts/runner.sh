@@ -5,13 +5,15 @@
 #   AGENT=codex scripts/runner.sh w3
 #   MODE=fix scripts/runner.sh w3   # лагодить PR з міткою fix
 #   ONCE=1 scripts/runner.sh w1     # одна задача й вихід (перевірка конвеєра)
+#   ONLY=codex AGENT=codex scripts/runner.sh w3   # бере лише задачі з міткою codex
+#   SKIP=codex scripts/runner.sh w1               # не бере задачі з міткою codex
 # Зупинити: touch ~/amber-runs/STOP   (або pkill -f runner.sh)
 set -uo pipefail
 
 WORKER="${1:?worker name, e.g. w1}"
 AGENT="${AGENT:-claude}"
 MODE="${MODE:-issues}"
-REPO_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+REPO_DIR="${REPO_DIR:-$(cd "$(dirname "$0")/.." && pwd)}"
 RUNS="${RUNS:-$HOME/amber-runs}"
 TIMEOUT_MIN="${TIMEOUT_MIN:-45}"
 mkdir -p "$RUNS/logs"
@@ -65,8 +67,8 @@ pick_issue() {
   # bug → p0 → p1; лише agent, без in-progress/blocked/stuck; усі «після #N» закриті.
   local closed; closed=$(gh issue list --state closed --limit 500 --json number --jq '.[].number' | tr '\n' ' ')
   for pr in bug p0 p1; do
-    gh issue list --state open --label agent --label "$pr" --limit 100 \
-      --json number,title,labels,body --jq 'sort_by(.number)[] | select([.labels[].name] | (index("in-progress") or index("blocked") or index("stuck")) | not) | @base64' |
+    gh issue list --state open --label agent --label "$pr" ${ONLY:+--label "$ONLY"} --limit 100 \
+      --json number,title,labels,body --jq 'sort_by(.number)[] | select([.labels[].name] | (index("in-progress") or index("blocked") or index("stuck") or (env.SKIP != null and env.SKIP != "" and index(env.SKIP))) | not) | @base64' |
     while read -r row; do
       local j; j=$(echo "$row" | base64 --decode)
       local deps ok=1; deps=$(echo "$j" | jq -r .body | grep -oE '(після|after) #[0-9]+' | grep -oE '[0-9]+' || true)
@@ -80,7 +82,13 @@ pick_issue() {
 while [ ! -f "$RUNS/STOP" ]; do
   git fetch -q origin main
   if [ "$MODE" = "fix" ]; then
-    pr=$(gh pr list --state open --label fix --json number,headRefName,labels --jq '[.[] | select([.labels[].name] | index("stuck") | not)][0] // empty')
+    # PR з конфліктом з main не отримує CI, тож і мітку fix — ставимо її самі
+    for c in $(gh pr list --state open --author "$(gh api user --jq .login)" --json number,mergeable,labels --jq '.[] | select(.mergeable=="CONFLICTING") | select([.labels[].name] | (index("fix") or index("stuck")) | not) | .number'); do
+      gh pr edit "$c" --add-label fix >/dev/null && log "PR #$c conflicts with main → fix"
+    done
+    # лише PR конвеєра (автор — акаунт runner, тіло з «Closes #»); PR людей лагодять люди
+    me=$(gh api user --jq .login)
+    pr=$(gh pr list --state open --label fix --author "$me" --json number,headRefName,labels,body --jq '[.[] | select(.body | test("Closes #")) | select([.labels[].name] | index("stuck") | not)][0] // empty')
     [ -z "$pr" ] && { sleep 120; continue; }
     num=$(jq -r .number <<<"$pr"); br=$(jq -r .headRefName <<<"$pr")
     tries=$(gh pr view "$num" --json comments --jq '[.comments[].body | select(startswith("runner: fix attempt"))] | length')
@@ -95,11 +103,19 @@ while [ ! -f "$RUNS/STOP" ]; do
     git worktree remove --force "$wd"; continue
   fi
 
+  sleep $((RANDOM % 10))
   issue=$(pick_issue) || { log "queue empty — sleep 3m"; sleep 180; continue; }
   num=$(jq -r .number <<<"$issue"); title=$(jq -r .title <<<"$issue")
   feat=$(echo "$title $(jq -r '[.labels[].name] | join(" ")' <<<"$issue")" | grep -oE 'F[0-4]' | head -1); feat=${feat:-F0}
+  # захист від гонки двох воркерів: мітка вже стоїть → задачу взяв інший
+  if gh issue view "$num" --json labels --jq '[.labels[].name] | index("in-progress")' | grep -q '[0-9]'; then
+    log "#$num already taken — skip"; sleep $((RANDOM % 15)); continue
+  fi
   gh issue edit "$num" --add-label in-progress >/dev/null
   gh issue comment "$num" --body "runner: взяв $WORKER ($AGENT)" >/dev/null
+  sleep 3
+  first=$(gh issue view "$num" --json comments --jq '[.comments[].body | select(startswith("runner: взяв"))] | last')
+  case "$first" in *"$WORKER "*) ;; *) log "#$num taken by another worker — skip"; continue ;; esac
   br="feat/$feat-$num"; wd="$RUNS/issue-$num"
   rm -rf "$wd"; git worktree prune
   git worktree add -q -B "$br" "$wd" origin/main

@@ -1,6 +1,6 @@
 // PWA (SPEC §7.11): реєстрація service worker і плашка віку прогнозу / офлайн.
 import { useEffect, useState } from 'react';
-import { forecastAge } from '../core';
+import { ageLabel, useT } from './lang';
 
 /** Реєструє web/public/sw.js. Помилка чи відсутність SW не ламають застосунок — він просто працює без офлайну. */
 export async function registerSW(nav: Navigator = navigator): Promise<void> {
@@ -25,12 +25,13 @@ function useNow(stepMs = 60_000): number {
 }
 
 export function AgeBadge({ generatedAt }: { generatedAt: string }) {
-  const age = forecastAge(generatedAt, useNow());
+  const { lang, t } = useT();
+  const age = ageLabel(generatedAt, useNow(), lang);
   const online = useOnline();
   return (
     <>
       <span className={`badge${age.stale ? ' warn' : ''}`}>{age.text}</span>
-      {!online && <span className="badge warn">офлайн · з кешу</span>}
+      {!online && <span className="badge warn">{t('offline')}</span>}
     </>
   );
 }

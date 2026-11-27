@@ -1,0 +1,6 @@
+.zone{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.zone[hidden]{display:none}
+.zonebtn{position:absolute;top:8px;left:8px;z-index:2;min-height:44px;padding:0 12px;background:rgba(28,33,23,.88);border:1px solid var(--rule)}
+.zonebtn[aria-pressed=true]{background:var(--ink);color:#11150e}
+.zonecap{position:absolute;bottom:60px;left:8px;right:8px;z-index:1;max-width:520px;padding:4px 8px;background:rgba(28,33,23,.82);font-size:12px;line-height:1.35;color:var(--ink);pointer-events:none}
+.zonedot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--no);vertical-align:middle}

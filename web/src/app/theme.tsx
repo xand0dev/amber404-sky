@@ -3,6 +3,7 @@
 import { createContext, useContext, useLayoutEffect, useMemo, useState, type ReactNode } from 'react';
 import { DAY_PALETTE, paletteFrom, parseNight, type MapPalette } from '../core';
 import { NIGHT_CSS, NIGHT_VARS } from './night';
+import { useT } from './lang';
 
 export const NIGHT_KEY = 'amber404.night';
 
@@ -40,5 +41,6 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
 export function NightToggle() {
   const { night, toggle } = useTheme();
-  return <button type="button" className="nightbtn" aria-pressed={night} onClick={toggle}>Ніч</button>;
+  const { t } = useT();
+  return <button type="button" className="nightbtn" aria-pressed={night} onClick={toggle}>{t('night')}</button>;
 }

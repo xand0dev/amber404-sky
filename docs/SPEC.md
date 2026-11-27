@@ -1,6 +1,6 @@
 # AMBER//404 Sky — специфікація продукту
 
-Версія: v11 · власник: Олександр (F0) · 12-й CASSINI Hackathon, кейс 2 «Space-enabled crisis response and civil resilience» · фокус — мілтех (екіпажі дронів Сил оборони).
+Версія: v12 · власник: Олександр (F0) · 12-й CASSINI Hackathon, кейс 2 «Space-enabled crisis response and civil resilience» · фокус — мілтех (екіпажі дронів Сил оборони).
 **Джерело правди.** Специфікації фіч (`specs/F<N>/spec.md`) уточнюють цей файл і не суперечать йому. Зміна AC або контракту піднімає версію (v2, v3…) і пишеться в «Журнал змін» унизу.
 **Референс вигляду:** артефакт AMBER Sky (https://claude.ai/artifact/1zHixw5v5axRRSioEczTyJ). Код з нього не копіюємо.
 
@@ -105,7 +105,7 @@ web/public/data/static/{borders,cities,profiles}.json                 # F0
 % годин місяця, коли профіль пройшов би правила §7.4 (лише вітер, пориви, температура, опади, обмерзання).
 
 ### 6.6 Статичні файли (`data/static/`, пише F0)
-- `profiles.json`: `[{ "id": "fpv7", "name": "FPV 7″", "use": "екіпаж FPV", "windMs": 12, "gustMs": 15, "tMinC": -10, "precipMmH": 0.2, "defaultAltM": 120, "source": "assumption" }]` — 7 класів з §7.3 (поля `massKg`, `energy: "battery"|"fuel"`, `enduranceMin`, `bandM`).
+- `profiles.json`: `[{ "id": "fpv7", "name": "FPV 7″", "use": "екіпаж FPV", "windMs": 12, "gustMs": 15, "tMinC": -10, "precipMmH": 0.2, "defaultAltM": 120, "source": "assumption" }]` — 7 класів з §7.3 (поля `massKg`, `energy: "battery"|"fuel"`, `enduranceMin`, `cruiseMs` — крейсерська швидкість для зони й маршруту, `kind: "multirotor"|"wing"`, `bandM`). Схема — `contracts/profiles.schema.json`.
 - `borders.json`: кордони Natural Earth 1:10m, **версія Ukraine POV** (`ne_10m_admin_0_countries_ukr`), спрощені до ≈ 100 КБ.
 - `cities.json`: 16 обласних центрів з координатами.
 
@@ -331,6 +331,7 @@ Copernicus ERA5, рік 2025, погодинно, 5 міст (Київ, Льві
 | Версія | Дата | Що змінено | Хто |
 |---|---|---|---|
 | v1 | 2026-11-26 | Перша версія (замість Shield) | Олександр |
+| v12 | 2026-11-27 | Синхронізація зі збудованим: profile.json замість forecast.json в AC F1; у profiles.json додано cruiseMs і kind; модулі джерел — `fetch(now)` у `pipeline/sky/*/fetch.py`; подача — dual-use першим; Codex у конвеєрі лише на прості задачі (мітка `codex`) | Олександр |
 | v11 | 2026-11-27 | Пітчать Настя й Максим, Іван — єдиний на локації і не пітчить; Олександр на парах сб і нд — працює через чергу задач для агентів (§10 п. 6–8, §11) | Олександр |
 | v10 | 2026-11-27 | Неділя 9–15 без Олександра: подає Настя, чернетка подачі — у суботу вночі, Оля — чергова F0 | Олександр |
 | v9 | 2026-11-27 | Таймлайн під правила: старт 19:00 Київ, субота без Олександра (Оля — чергова F0), подача англійською до 16:00 Київ | Олександр |
