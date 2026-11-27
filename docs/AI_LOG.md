@@ -27,6 +27,7 @@
 | 2026-11-27 21:00–21:45 Київ | Іван | Claude Code / Claude Opus 5.5 | F3 #9: плавне поле шару, легенда зі шкалою §7.6 | `web/src/features/map/`, `web/src/features/layers/`, `specs/F3/` | `make check` зелений (219 vitest); Playwright 400 px і 1280 px: без гор. скролу, перемикання шару/години 17–55 мс, консоль чиста | #9 |
 | 2026-11-27 22:10–22:50 Київ | Іван | Claude Code / Claude Opus 5.5 | F3 #10: частинки вітру обраної висоти, reduced motion → стрілки | `web/src/features/map/`, `specs/F3/` | `make check` зелений (230 vitest); Playwright 400/1280 px × motion/reduce: без гор. скролу, кнопки 44 px, частинки рухаються 60 fps, клік обирає точку, консоль чиста | #10 |
 | 2026-11-27 23:00–23:30 Київ | Іван | Claude Code / Claude Opus 5.5 | F3 #12: підказка при наведенні (вітер, пориви, темп., видимість, вердикт) | `web/src/features/map/`, `specs/F3/` | `make check` зелений (300 vitest), `npm run e2e` 12 passed; Playwright 1280/400 px: підказка в межах карти, значення = панель, без гор. скролу, консоль чиста | #12 |
+| 2026-11-27 23:40–00:30 Київ | Іван | Claude Code / Claude Opus 5.5 | F3 #13: 📷 знімок карти зі штампом, share / завантаження | `web/src/features/map/`, `specs/F3/` | `make check` зелений (312 vitest), `npm run e2e` 12 passed; Playwright: 1280 px завантаження PNG 900×356 за 81 мс; 400 px share з 1 image/png за 129 мс; консоль чиста | #13 |
 
 ## F4
 
