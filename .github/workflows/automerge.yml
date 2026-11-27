@@ -50,4 +50,7 @@ jobs:
             gh pr edit "$num" --add-label fix || true
             echo "Merge failed (conflict?) — label fix"; exit 0
           fi
+          for i in $(gh pr view "$num" --json closingIssuesReferences --jq '.closingIssuesReferences[].number'); do
+            gh issue close "$i" --comment "Злито в #$num" || true
+          done
           gh workflow run deploy.yml --ref main
