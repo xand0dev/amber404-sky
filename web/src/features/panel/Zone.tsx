@@ -60,8 +60,12 @@ export function ZoneView({ zone, lat, lon, mode, onMode, wind, altM, hourLabel, 
       {zone.counts['wind-limit'] > 0 && <p className="perr">{L('zone.cut', { n: zone.counts['wind-limit'], all })}</p>}
       {zone.counts['too-strong'] > 0 && <p className="perr">{L('zone.strong', { n: zone.counts['too-strong'], all })}</p>}
       {zone.counts['no-data'] > 0 && <p className="pnote">{L('zone.nodata', { n: zone.counts['no-data'], all })}</p>}
-      <p className="pnote" data-testid="zone-time">{L('zone.time', { why: zone.why, t: zone.min.toFixed(1), u: (zone.usableS / 60).toFixed(1) })}</p>
-      <p className="pnote">{L('zone.note', { alt: altM, h: hourLabel })}</p>
+      {/* Issue #87 AC2: формула часу й «коефіцієнти — assumption» — у «Деталі». */}
+      <details className="pdetails">
+        <summary>{L('details')}</summary>
+        <p className="pnote" data-testid="zone-time">{L('zone.time', { why: zone.why, t: zone.min.toFixed(1), u: (zone.usableS / 60).toFixed(1) })}</p>
+        <p className="pnote">{L('zone.note', { alt: altM, h: hourLabel })}</p>
+      </details>
     </section>
   );
 }

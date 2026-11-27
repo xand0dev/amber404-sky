@@ -3,6 +3,7 @@
 import { useApp } from '../../app/state';
 import { useVerdicts } from '../../app/useVerdict';
 import { useT, windowLabel } from '../../app/lang';
+import { humanWindow, useNow } from '../../app/when';
 import { t as coreT, type Lang, type Verdict, type Weather } from '../../core';
 import type { DroneProfile } from '../../contracts';
 import { Route } from '../route/Route';
@@ -55,10 +56,14 @@ export function PointView({ city, lat, lon, altM, wx, verdict, windowText, prof,
       </dl>
       <ul className="reasons">{verdict.reasons.map((r) => <li key={r}>{r}</li>)}</ul>
       <p className="win"><span>{L('window')}</span> {windowText}</p>
-      <p className="limits">
-        {L('limits', { w: prof.windMs, g: prof.gustMs, t: prof.tMinC, p: prof.precipMmH, b0: prof.bandM[0], b1: prof.bandM[1] })}
-        {' · '}{L('src')}: <SourceText src={prof.source} lang={lang} />
-      </p>
+      {/* Issue #87 AC2: ліміти й джерело лімітів (assumption) — у «Деталі». */}
+      <details className="pdetails">
+        <summary>{L('details')}</summary>
+        <p className="limits">
+          {L('limits', { w: prof.windMs, g: prof.gustMs, t: prof.tMinC, p: prof.precipMmH, b0: prof.bandM[0], b1: prof.bandM[1] })}
+          {' · '}{L('src')}: <SourceText src={prof.source} lang={lang} />
+        </p>
+      </details>
     </div>
   );
 }
@@ -67,8 +72,10 @@ export function Panel() {
   const { data, s, set } = useApp();
   const { wx, now, window, prof } = useVerdicts();
   const { lang } = useT();
+  const nowMs = useNow();
   const city = nearestCity(data.cities, s.lat, s.lon);
   const last = data.meta.times[data.meta.times.length - 1];
+  // У звіті — абсолютний час (#87 AC4 «зараз» лише на екрані: збережений звіт читають пізніше).
   const win = windowLabel(window, last, lang);
   const time = data.meta.times[s.hour] ?? '';
   // Знімок для «Зберегти погоду» / «Копіювати звіт» (F4-AC4): лише в браузері.
@@ -91,7 +98,7 @@ export function Panel() {
           <input type="range" min={10} max={1000} step={10} value={s.altM} onChange={(e) => set({ altM: Number(e.target.value) })} />
         </label>
       </div>
-      <PointView city={city} lat={s.lat} lon={s.lon} altM={s.altM} wx={wx} verdict={now} windowText={win} prof={prof} lang={lang} />
+      <PointView city={city} lat={s.lat} lon={s.lon} altM={s.altM} wx={wx} verdict={now} windowText={humanWindow(window, last, nowMs, lang)} prof={prof} lang={lang} />
       <Saved current={snapshot} />
       <Zone prof={prof} hourLabel={time ? dayHM(time, lang) : '—'} />
       <HeightTable prof={prof} />

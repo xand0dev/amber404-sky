@@ -72,3 +72,19 @@ describe('Given шар «Зона» (SPEC §7.5b)', () => {
     expect(b.getAttribute('aria-expanded')).toBe('false');
   });
 });
+
+// Issue #87 AC2: у згорнутому підписі — лише відстань і вітер; формула часу й assumption — тапом («Деталі»).
+describe('Given підпис зони (issue #87)', () => {
+  it('Then згорнутий: без формули й assumption; When тап; Then деталі видно', () => {
+    const { container } = view();
+    const det = container.querySelector('.zonecap .zonedet') as HTMLElement;
+    expect(det.hidden).toBe(true);
+    expect(det.textContent).toMatch(/резерв 20%/);
+    expect(det.textContent).toMatch(/assumption/);
+    const rest = container.querySelector('.zonecap .zonetxt')!.textContent!.replace(det.textContent!, '');
+    expect(rest).not.toMatch(/assumption|хв/);
+    expect(rest).toMatch(/Деталі/);
+    fireEvent.click(container.querySelector('.zonecap button')!);
+    expect(det.hidden).toBe(false);
+  });
+});

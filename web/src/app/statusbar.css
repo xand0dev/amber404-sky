@@ -1,0 +1,20 @@
+/* Шапка (issue #87): ≤ 120 px на телефоні. Праворуч — «Ніч» (top 8) і UK/EN (top 56), тому відступи справа. */
+header.status{position:relative;min-width:0;padding:8px 14px}
+.st-top{display:flex;align-items:center;gap:6px;min-height:44px;padding-right:84px}
+.st-top .word{white-space:nowrap}
+@media (max-width:420px){.status .word{font-size:30px}}
+.srcbtn{min-height:44px;min-width:44px;padding:0 8px;background:#11150e;color:var(--ink);border:1px solid var(--rule);font-weight:700;white-space:nowrap;cursor:pointer}
+.srcbtn.warn{color:var(--cau)}
+.srcbtn:focus-visible,.st-more summary:focus-visible{outline:3px solid var(--ink);outline-offset:2px;box-shadow:0 0 0 2px var(--base)}
+.st-more{min-width:0;padding-right:104px}
+.st-more summary{display:flex;align-items:center;gap:8px;min-height:44px;cursor:pointer;list-style:none}
+.st-more summary::-webkit-details-marker{display:none}
+.st-more .why{flex:0 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:20px}
+.st-det{flex:none;font-size:13px;font-weight:700;text-decoration:underline}
+.st-det::after{content:" ▾"}
+.st-more[open] .st-det::after{content:" ▴"}
+.st-more[open] .why{white-space:normal}
+.st-reasons{margin:4px 0 0;padding-left:18px;font-size:14px}
+.srcpop{position:absolute;top:100%;left:0;right:0;z-index:30;padding:10px 14px;background:#11150e;color:var(--ink);border-bottom:1px solid var(--rule);font-size:14px}
+.srcpop p,.srcpop ul{margin:0 0 6px}.srcpop ul{padding-left:18px}
+.srcpop li.warn{color:var(--cau)}

@@ -91,14 +91,15 @@ export function ZoneLayer() {
     <>
       <canvas ref={ref} className="zone" aria-hidden="true" hidden={!on} />
       <InBar slot="more"><button type="button" className="zonebtn" aria-pressed={on} onClick={() => setOn(!on)}>Зона</button></InBar>
-      {/* Issue #85 AC4: підпис згорнутий до одного рядка, деталі — тапом. */}
+      {/* Issue #85 AC4, #87 AC2: згорнутий підпис — відстань і вітер в один рядок; формула часу й assumption — тапом («Деталі»). */}
       {on && z && (
         <p className={full ? 'zonecap open' : 'zonecap'}>
           <button type="button" aria-expanded={full} onClick={() => setFull(!full)}><span className="zonetxt">
-          <b>Зона туди й назад</b> {z.maxDistM > 0 ? `до ${km(z.maxDistM)}` : 'відсутня'} · {z.enduranceMin.toFixed(1)} хв ({z.why}) − резерв 20% · {z.prof.cruiseMs} м/с
+          <b>Зона туди й назад</b> {z.maxDistM > 0 ? `до ${km(z.maxDistM)}` : 'відсутня'}
           {' · '}{ws == null ? 'немає даних про вітер' : `вітер ${ws.toFixed(1)} м/с`}
           {z.cut.length > 0 && <> · <span className="zonedot" aria-hidden="true" /> вітер понад ліміт {z.prof.windMs} м/с</>}
-          {' · '}assumption
+          {!full && <span className="zonemore"> · Деталі ▾</span>}
+          <span className="zonedet" hidden={!full}> · {z.enduranceMin.toFixed(1)} хв ({z.why}) − резерв 20% · {z.prof.cruiseMs} м/с · assumption</span>
           </span></button>
         </p>
       )}

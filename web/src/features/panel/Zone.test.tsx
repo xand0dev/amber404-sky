@@ -148,3 +148,16 @@ describe('uk/en: година в київському часі', () => {
     expect(dayHM('oops', 'en')).toBe('—');
   });
 });
+
+// Issue #87 AC2: формула часу й «коефіцієнти — assumption» — у згорнутих «Деталі»; відстані — на виду.
+describe('Given картка зони (issue #87)', () => {
+  it('Then розкладка часу і примітка в «Деталі», найдалі/найближче — поза ними', () => {
+    const { container } = view();
+    const det = container.querySelector('details') as HTMLDetailsElement;
+    expect(det.open).toBe(false);
+    expect(det.querySelector('summary')?.textContent).toBe('Деталі');
+    expect(det.contains(screen.getByTestId('zone-time'))).toBe(true);
+    expect(det.contains(screen.getByText(/Коефіцієнти — assumption/))).toBe(true);
+    expect(det.contains(screen.getByText(/Найдалі/))).toBe(false);
+  });
+});

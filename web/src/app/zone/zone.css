@@ -6,3 +6,4 @@
 .zonetxt{display:block;width:100%;padding:3px 8px;background:rgba(28,33,23,.88);font-size:12px;line-height:16px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .zonecap.open .zonetxt{white-space:normal}
 .zonedot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--no);vertical-align:middle}
+.zonemore{font-weight:700;text-decoration:underline}
