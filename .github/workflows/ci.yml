@@ -19,6 +19,23 @@ jobs:
       - uses: astral-sh/setup-uv@v6
       - run: make setup
       - run: make check
+  # e2e smoke (issue #34): прод-збірка на mocks у Chromium, 400×800 і 1280×800.
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm, cache-dependency-path: web/package-lock.json }
+      - uses: astral-sh/setup-uv@v6
+      - run: make setup
+      - run: make data-mock
+      - run: npx playwright install --with-deps chromium
+        working-directory: web
+      - run: npm run e2e
+        working-directory: web
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with: { name: e2e-traces, path: web/test-results/, retention-days: 7 }
   guard:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
