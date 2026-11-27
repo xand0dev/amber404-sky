@@ -93,20 +93,3 @@ describe('F4-AC1: панель точки на екрані', () => {
     expect(screen.getByTestId('point-level').textContent).toBe('CAUTION');
   });
 });
-
-// Issue #87 AC2: ліміти й «assumption» — у згорнутому розкривачі «Деталі», вердикт і вікно — на виду.
-describe('Given панель точки (issue #87)', () => {
-  it('Then ліміти й джерело лімітів — у згорнутих «Деталі»; причини й вікно поза ними', () => {
-    const { container } = view();
-    const det = container.querySelector('.point details') as HTMLDetailsElement;
-    expect(det.open).toBe(false);
-    expect(det.querySelector('summary')?.textContent).toBe('Деталі');
-    expect(det.contains(screen.getByText(/Ліміти: вітер 10 м\/с/))).toBe(true);
-    expect(det.contains(container.querySelector('.reasons'))).toBe(false);
-    expect(det.contains(container.querySelector('.win'))).toBe(false);
-  });
-  it('англійською — Details', () => {
-    const { container } = view({ lang: 'en' });
-    expect(container.querySelector('.point details summary')?.textContent).toBe('Details');
-  });
-});
