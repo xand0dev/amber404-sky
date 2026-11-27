@@ -1,5 +1,6 @@
 // F4-AC1: назва найближчого міста (< 35 км) або координати. Чистий TS без DOM.
 import type { City } from '../../contracts';
+import { kyivHM, t as coreT, type Key, type Lang } from '../../core';
 
 export const CITY_RADIUS_KM = 35;
 
@@ -30,3 +31,12 @@ export function placeText(cities: City[], lat: number, lon: number): string {
 
 /** Кут повороту стрілки «куди дме» для напрямку «звідки дме», градуси за годинниковою від півночі. */
 export const arrowDeg = (dirFrom: number) => (dirFrom + 180) % 360;
+
+const WD = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+/** «сб 10:00» / «Sat 10:00» у київському часі — назви днів зі спільного словника (core/i18n). */
+export function dayHM(iso: string, lang: Lang): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '—';
+  const wd = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Kyiv', weekday: 'short' }).format(d);
+  return `${coreT(`day.${WD.indexOf(wd)}` as Key, lang)} ${kyivHM(iso)}`;
+}

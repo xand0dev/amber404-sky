@@ -1,5 +1,6 @@
 // F4 маршрут A → B (SPEC §7.5a): розріз вітру вздовж дуги і перевірка батареї. Чистий TS без DOM.
-import { arcAlt, bearingDeg, bestAltitude, distanceM, offset, routeCalc, type Level, type Pt, type RouteResult, type Wind3Fn } from '../../core';
+import { arcAlt, bearingDeg, bestAltitude, distanceM, offset, routeCalc, type Level, type Pt, type RouteResult, type Wind3Fn, type Lang } from '../../core';
+import { pt, type PKey } from '../panel/strings';
 
 export interface CutPoint { f: number; altM: number; along: number | null; cross: number | null }
 
@@ -35,13 +36,14 @@ export function routeSummary(a: Pt, b: Pt, tasMs: number, altM: number, wind: Wi
 
 const mm = (s: number) => (s / 60).toFixed(1);
 
-/** Батарея: туди ≤ T×0.8, інакше NO-GO; туди + назад > T×0.8 — CAUTION. usableS = T×0.8 у секундах. */
-export function batteryCheck(r: RouteResult, usableS: number, noData = false): { level: Level; reasons: string[] } {
-  if (noData) return { level: 'NO-DATA', reasons: ['Немає даних про вітер на маршруті'] };
+/** Батарея: туди ≤ T×0.8, інакше NO-GO; туди + назад > T×0.8 — CAUTION. usableS = T×0.8 у секундах. Причини — мовою lang. */
+export function batteryCheck(r: RouteResult, usableS: number, noData = false, lang: Lang = 'uk'): { level: Level; reasons: string[] } {
+  const L = (k: PKey, p?: Record<string, string | number>) => pt(k, lang, p);
+  if (noData) return { level: 'NO-DATA', reasons: [L('b.nodata')] };
   const there = r.there.timeS;
-  if (there == null) return { level: 'NO-GO', reasons: ['Туди не долетить: вітер ≥ швидкості дрона'] };
-  if (there > usableS) return { level: 'NO-GO', reasons: [`Туди ${mm(there)} хв > ${mm(usableS)} хв (T×0.8)`] };
-  if (r.totalS == null) return { level: 'CAUTION', reasons: ['Назад не долетить: зустрічний вітер ≥ швидкості дрона'] };
-  if (r.totalS > usableS) return { level: 'CAUTION', reasons: [`Туди й назад ${mm(r.totalS)} хв > ${mm(usableS)} хв (T×0.8) — назад не вистачить`] };
-  return { level: 'GO', reasons: [`Туди й назад ${mm(r.totalS)} хв ≤ ${mm(usableS)} хв (T×0.8)`] };
+  if (there == null) return { level: 'NO-GO', reasons: [L('b.noThere')] };
+  if (there > usableS) return { level: 'NO-GO', reasons: [L('b.there', { t: mm(there), u: mm(usableS) })] };
+  if (r.totalS == null) return { level: 'CAUTION', reasons: [L('b.noBack')] };
+  if (r.totalS > usableS) return { level: 'CAUTION', reasons: [L('b.total', { t: mm(r.totalS), u: mm(usableS) })] };
+  return { level: 'GO', reasons: [L('b.ok', { t: mm(r.totalS), u: mm(usableS) })] };
 }

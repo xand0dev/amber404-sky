@@ -3,10 +3,10 @@
 import { useApp } from '../../app/state';
 import { useVerdicts } from '../../app/useVerdict';
 import { useT, windowLabel } from '../../app/lang';
-import { kyivDayHM, t as coreT, type Lang, type Verdict, type Weather } from '../../core';
+import { t as coreT, type Lang, type Verdict, type Weather } from '../../core';
 import type { DroneProfile } from '../../contracts';
 import { Route } from '../route/Route';
-import { arrowDeg, coordText, nearestCity, placeText } from './place';
+import { arrowDeg, coordText, dayHM, nearestCity, placeText } from './place';
 import { Zone } from './Zone';
 import { HeightTable } from './HeightTable';
 import { Saved } from './Saved';
@@ -41,7 +41,7 @@ export function PointView({ city, lat, lon, altM, wx, verdict, windowText, prof,
         <h2>{city ? city.name : coordText(lat, lon)}</h2>
         <span className={`lvl lv-${verdict.level}`} data-testid="point-level">{coreT(`lv.${verdict.level}`, lang)}</span>
       </div>
-      <p className="coord">{coordText(lat, lon)} · {city ? L('place.near', { km: city.km.toFixed(0) }) : L('place.coord')} · {altM} м</p>
+      <p className="coord">{coordText(lat, lon)} · {city ? L('place.near', { km: city.km.toFixed(0) }) : L('place.coord')} · {altM} {L('unit.m')}</p>
       <dl className="vals">
         <div><dt>{L('wind')}</dt><dd>
           {wx.ws != null && wx.dir != null && (
@@ -50,7 +50,7 @@ export function PointView({ city, lat, lon, altM, wx, verdict, windowText, prof,
           {n(wx.ws)} {ms}{wx.dir != null ? ` · ${L('wind.from', { dir: wx.dir.toFixed(0) })}` : ''}
         </dd></div>
         <div><dt>{L('gust')}</dt><dd>{n(wx.g)} {ms}</dd></div>
-        <div><dt>{L('cloud')}</dt><dd>{n(wx.cb, 0)} м</dd></div>
+        <div><dt>{L('cloud')}</dt><dd>{n(wx.cb, 0)} {L('unit.m')}</dd></div>
         <div><dt>{L('temp')}</dt><dd>{n(wx.t)} °C</dd></div>
         <div><dt>{L('kp')}</dt><dd>{n(wx.kp)}</dd></div>
         <div><dt>{L('galileo')}</dt><dd>{wx.galVisible ?? '—'} · PDOP {n(wx.galPdop)}</dd></div>
@@ -90,14 +90,14 @@ export function Panel() {
             {data.profiles.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
           </select>
         </label>
-        <label>{pt('alt', lang)}: <b>{s.altM} м</b>
+        <label>{pt('alt', lang)}: <b>{s.altM} {pt('unit.m', lang)}</b>
           <input type="range" min={10} max={1000} step={10} value={s.altM} onChange={(e) => set({ altM: Number(e.target.value) })} />
         </label>
       </div>
       <PointView city={city} lat={s.lat} lon={s.lon} altM={s.altM} wx={wx} verdict={now} windowText={win} prof={prof} lang={lang} />
       <TerrainView terrain={terrainAt(relief, s.lat, s.lon)} range={cellRange(relief, data.meta.grid, s.lat, s.lon)} lang={lang} />
       <Saved current={snapshot} />
-      <Zone prof={prof} hourLabel={time ? kyivDayHM(time) : '—'} />
+      <Zone prof={prof} hourLabel={time ? dayHM(time, lang) : '—'} />
       <HeightTable prof={prof} />
       <Route />
       <OwnDrone base={prof} />

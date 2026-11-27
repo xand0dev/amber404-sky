@@ -1,14 +1,16 @@
 // F4 (Оля): маршрут A → B (SPEC §7.5a, F4-AC3). Точки лише в стані браузера — на сервер не йдуть.
 import { useMemo, useState } from 'react';
 import { useApp } from '../../app/state';
-import { effectiveEndurance, evaluate, usableSeconds, weatherAt, windAt, type Level, type Pt, type Wind3Fn } from '../../core';
+import { useT } from '../../app/lang';
+import { effectiveEndurance, evaluate, usableSeconds, weatherAt, windAt, type Lang, type Level, type Pt, type Wind3Fn } from '../../core';
 import { LEVEL_COLOR } from '../layers/colors';
 import { batteryCheck, routeSummary, type RouteSummary } from './routeLogic';
-import { energyInput, type AnyProfile } from '../panel/zoneLogic';
+import { energyInput, energyWhy, type AnyProfile } from '../panel/zoneLogic';
+import { pt as tr, type PKey } from '../panel/strings';
 import './route.css';
 
 const n1 = (x: number) => x.toFixed(1);
-const min = (s: number | null) => (s == null ? 'не долетить' : `${(s / 60).toFixed(1)} хв`);
+const min = (s: number | null, lang: Lang) => (s == null ? tr('rt.cant', lang) : `${(s / 60).toFixed(1)} ${tr('unit.min', lang)}`);
 const pt = (p: Pt | null) => (p ? `${p.lat.toFixed(3)}, ${p.lon.toFixed(3)}` : '—');
 
 export interface RouteViewProps {
@@ -16,14 +18,16 @@ export interface RouteViewProps {
   summary: RouteSummary | null; battery: { level: Level; reasons: string[] } | null;
   usableS: number; why: string;
   onSetA: () => void; onSetB: () => void; onClear: () => void;
+  lang?: Lang; // без провайдера мови — українська
 }
 
 /** Розріз: стовпці вгору — попутний, вниз — зустрічний; сірий — немає даних. */
-function Cut({ cut }: { cut: RouteSummary['cut'] }) {
+function Cut({ cut, lang }: { cut: RouteSummary['cut']; lang: Lang }) {
+  const L = (k: PKey, p?: Record<string, string | number>) => tr(k, lang, p);
   const W = 320, H = 80, mid = H / 2, bw = W / cut.length;
   const top = Math.max(1, ...cut.map((c) => Math.abs(c.along ?? 0)));
   return (
-    <svg className="cut" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`Розріз попутного й зустрічного вітру, макс ${n1(top)} м/с`}>
+    <svg className="cut" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={L('rt.cut', { v: n1(top) })}>
       <line x1={0} x2={W} y1={mid} y2={mid} stroke="var(--rule)" />
       {cut.map((c, i) => {
         const v = c.along, h = v == null ? mid : (Math.abs(v) / top) * (mid - 2);
@@ -31,43 +35,45 @@ function Cut({ cut }: { cut: RouteSummary['cut'] }) {
         const fill = v == null ? 'var(--rule)' : v >= 0 ? 'var(--go)' : 'var(--no)';
         return (
           <rect key={i} data-testid="cut-bar" x={i * bw + 0.5} y={y} width={bw - 1} height={Math.max(h, 0.5)} fill={fill}>
-            <title>{v == null ? 'немає даних' : `${v >= 0 ? 'попутний' : 'зустрічний'} ${n1(Math.abs(v))} м/с · ${Math.round(c.altM)} м`}</title>
+            <title>{v == null ? L('rt.nodata') : `${L(v >= 0 ? 'rt.tail' : 'rt.head')} ${n1(Math.abs(v))} ${L('unit.ms')} · ${Math.round(c.altM)} ${L('unit.m')}`}</title>
           </rect>
         );
       })}
-      <text x={2} y={10} className="cutlbl">попутний ↑</text>
-      <text x={2} y={H - 2} className="cutlbl">зустрічний ↓</text>
+      <text x={2} y={10} className="cutlbl">{L('rt.tail')} ↑</text>
+      <text x={2} y={H - 2} className="cutlbl">{L('rt.head')} ↓</text>
     </svg>
   );
 }
 
-export function RouteView({ a, b, altM, summary, battery, usableS, why, onSetA, onSetB, onClear }: RouteViewProps) {
+export function RouteView({ a, b, altM, summary, battery, usableS, why, onSetA, onSetB, onClear, lang = 'uk' }: RouteViewProps) {
+  const L = (k: PKey, p?: Record<string, string | number>) => tr(k, lang, p);
+  const m = L('unit.m'), ms = L('unit.ms');
   return (
-    <section className="route" aria-label="Маршрут A → B">
-      <h3>Маршрут A → B · {altM} м</h3>
+    <section className="route" aria-label={L('rt')}>
+      <h3>{L('rt')} · {altM} {m}</h3>
       <div className="routebtns">
-        <button type="button" onClick={onSetA}>A = точка</button>
-        <button type="button" onClick={onSetB}>B = точка</button>
-        <button type="button" onClick={onClear}>Скинути</button>
+        <button type="button" onClick={onSetA}>{L('rt.setA')}</button>
+        <button type="button" onClick={onSetB}>{L('rt.setB')}</button>
+        <button type="button" onClick={onClear}>{L('rt.clear')}</button>
       </div>
       <p className="coord">A: {pt(a)} · B: {pt(b)}</p>
       {!summary || !battery ? (
-        <p className="hint">Поставте A і B: оберіть точку на карті й натисніть «A = точка», потім другу — «B = точка».</p>
+        <p className="hint">{L('rt.hint')}</p>
       ) : (
         <>
-          <Cut cut={summary.cut} />
+          <Cut cut={summary.cut} lang={lang} />
           <dl className="vals">
-            <div><dt>Відстань</dt><dd>{(summary.route.distM / 1000).toFixed(1)} км · {Math.round(summary.route.bearing)}°</dd></div>
-            <div><dt>Туди</dt><dd>{min(summary.route.there.timeS)}</dd></div>
-            <div><dt>Назад</dt><dd>{min(summary.route.back.timeS)}</dd></div>
-            <div><dt>Зустрічний макс</dt><dd>{n1(summary.maxHead)} м/с</dd></div>
-            <div><dt>Боковий макс</dt><dd>{n1(summary.maxCross)} м/с</dd></div>
-            <div><dt>Найкраща висота</dt><dd>{summary.best ? `${summary.best.altM} м · ${min(summary.best.totalS)}` : 'немає без NO-GO'}</dd></div>
+            <div><dt>{L('rt.dist')}</dt><dd>{(summary.route.distM / 1000).toFixed(1)} {L('unit.km')} · {Math.round(summary.route.bearing)}°</dd></div>
+            <div><dt>{L('rt.there')}</dt><dd>{min(summary.route.there.timeS, lang)}</dd></div>
+            <div><dt>{L('rt.back')}</dt><dd>{min(summary.route.back.timeS, lang)}</dd></div>
+            <div><dt>{L('rt.maxHead')}</dt><dd>{n1(summary.maxHead)} {ms}</dd></div>
+            <div><dt>{L('rt.maxCross')}</dt><dd>{n1(summary.maxCross)} {ms}</dd></div>
+            <div><dt>{L('rt.best')}</dt><dd>{summary.best ? `${summary.best.altM} ${m} · ${min(summary.best.totalS, lang)}` : L('rt.noBest')}</dd></div>
           </dl>
           <p className="battery" data-testid="route-battery" style={{ borderColor: LEVEL_COLOR[battery.level] }}>
             <b>{battery.level}</b> · {battery.reasons.join('; ')}
           </p>
-          <p className="coord">T×0.8 = {(usableS / 60).toFixed(1)} хв ({why}) · коефіцієнти — assumption</p>
+          <p className="coord">{L('rt.usable', { u: (usableS / 60).toFixed(1), why })}</p>
         </>
       )}
     </section>
@@ -76,6 +82,7 @@ export function RouteView({ a, b, altM, summary, battery, usableS, why, onSetA, 
 
 export function Route() {
   const { data, s } = useApp();
+  const { lang } = useT();
   const [a, setA] = useState<Pt | null>(null);
   const [b, setB] = useState<Pt | null>(null);
   const prof: AnyProfile = data.profiles.find((p) => p.id === s.droneId) ?? data.profiles[0];
@@ -84,19 +91,21 @@ export function Route() {
     const src = { meta: data.meta, profile: data.profile, kp: data.kp, galileo: data.galileo };
     const tA = a ? weatherAt(src, a.lat, a.lon, 10, s.hour).t : null;
     // Свій дрон (F4-AC6): вантаж і паливо з профілю, якщо є.
-    const e = effectiveEndurance(energyInput(prof, tA));
+    const ei = energyInput(prof, tA);
+    const e = effectiveEndurance(ei);
+    const why = energyWhy(ei, lang);
     const usableS = usableSeconds(e.min);
-    if (!a || !b) return { usableS, why: e.why, summary: null, battery: null };
+    if (!a || !b) return { usableS, why, summary: null, battery: null };
     const wind: Wind3Fn = (lat, lon, alt) => windAt(data.meta.grid, data.profile, alt, s.hour, lat, lon);
     const mid = { lat: (a.lat + b.lat) / 2, lon: (a.lon + b.lon) / 2 };
     // assumption: NO-GO висоти перевіряємо в A, середині й B маршруту.
     const isNoGo = (alt: number) => [a, mid, b].some((p) => evaluate(weatherAt(src, p.lat, p.lon, alt, s.hour), prof, alt).level === 'NO-GO');
     const summary = routeSummary(a, b, prof.cruiseMs, s.altM, wind, isNoGo);
-    return { usableS, why: e.why, summary, battery: batteryCheck(summary.route, usableS, summary.noData) };
-  }, [data, prof, a, b, s.altM, s.hour]);
+    return { usableS, why, summary, battery: batteryCheck(summary.route, usableS, summary.noData, lang) };
+  }, [data, prof, a, b, s.altM, s.hour, lang]);
 
   return (
-    <RouteView a={a} b={b} altM={s.altM} {...calc}
+    <RouteView a={a} b={b} altM={s.altM} lang={lang} {...calc}
       onSetA={() => setA({ lat: s.lat, lon: s.lon })} onSetB={() => setB({ lat: s.lat, lon: s.lon })}
       onClear={() => { setA(null); setB(null); }} />
   );
