@@ -12,7 +12,7 @@
 | Challenge | Challenge 2 — Space-enabled crisis response and civil resilience |
 | Tagline | Wind at every altitude and a GO / CAUTION / NO-GO verdict for your drone, hour by hour, over all of Ukraine. |
 | Live demo | https://xand0dev.github.io/amber404-sky/ |
-| Repository | https://github.com/xand0dev/amber404-sky (Apache-2.0) |
+| Repository | https://github.com/xand0dev/amber404-sky (MIT) |
 | Video | TODO (Настя, нд 14:00) |
 | Pitch | Nastia and Maksym |
 
