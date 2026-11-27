@@ -10,6 +10,7 @@ import { arrowDeg, coordText, nearestCity, placeText } from './place';
 import { Zone } from './Zone';
 import { HeightTable } from './HeightTable';
 import { Saved } from './Saved';
+import { OwnDrone } from './OwnDrone';
 import type { SavedWx } from './saved';
 import { pt } from './strings';
 import './panel.css';
@@ -95,6 +96,7 @@ export function Panel() {
       <Zone prof={prof} hourLabel={time ? kyivDayHM(time) : '—'} />
       <HeightTable prof={prof} />
       <Route />
+      <OwnDrone base={prof} />
     </section>
   );
 }

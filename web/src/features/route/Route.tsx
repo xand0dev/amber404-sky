@@ -4,6 +4,7 @@ import { useApp } from '../../app/state';
 import { effectiveEndurance, evaluate, usableSeconds, weatherAt, windAt, type Level, type Pt, type Wind3Fn } from '../../core';
 import { LEVEL_COLOR } from '../layers/colors';
 import { batteryCheck, routeSummary, type RouteSummary } from './routeLogic';
+import { energyInput, type AnyProfile } from '../panel/zoneLogic';
 import './route.css';
 
 const n1 = (x: number) => x.toFixed(1);
@@ -77,12 +78,13 @@ export function Route() {
   const { data, s } = useApp();
   const [a, setA] = useState<Pt | null>(null);
   const [b, setB] = useState<Pt | null>(null);
-  const prof = data.profiles.find((p) => p.id === s.droneId) ?? data.profiles[0];
+  const prof: AnyProfile = data.profiles.find((p) => p.id === s.droneId) ?? data.profiles[0];
 
   const calc = useMemo(() => {
     const src = { meta: data.meta, profile: data.profile, kp: data.kp, galileo: data.galileo };
     const tA = a ? weatherAt(src, a.lat, a.lon, 10, s.hour).t : null;
-    const e = effectiveEndurance({ energy: prof.energy, enduranceMin: prof.enduranceMin, massKg: prof.massKg, kind: prof.kind, t: tA });
+    // Свій дрон (F4-AC6): вантаж і паливо з профілю, якщо є.
+    const e = effectiveEndurance(energyInput(prof, tA));
     const usableS = usableSeconds(e.min);
     if (!a || !b) return { usableS, why: e.why, summary: null, battery: null };
     const wind: Wind3Fn = (lat, lon, alt) => windAt(data.meta.grid, data.profile, alt, s.hour, lat, lon);
