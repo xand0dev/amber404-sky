@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { useApp } from '../../app/state';
 import { useT } from '../../app/lang';
 import type { Lang } from '../../core';
-import { dropOwn, fromProfile, loadOwn, OWN_ID, removeOwn, saveOwn, toProfile, upsertOwn, validate, type OwnDrone as Own } from './ownDrone';
+import { dropOwn, fromProfile, loadOwn, OWN_ID, removeOwn, saveOwn, toProfile, upsertOwn, validate, type OwnDrone as Own } from './ownDroneStore';
 import { pt, type PKey } from './strings';
 import type { AnyProfile } from './zoneLogic';
 

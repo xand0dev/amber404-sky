@@ -11,7 +11,7 @@ import { Zone } from './Zone';
 import { HeightTable } from './HeightTable';
 import { Saved } from './Saved';
 import { OwnDrone } from './OwnDrone';
-import type { SavedWx } from './saved';
+import type { SavedWx } from './savedStore';
 import { pt } from './strings';
 import './panel.css';
 
