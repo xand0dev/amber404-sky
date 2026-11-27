@@ -29,3 +29,4 @@
 
 | Дата | Хто | Агент / модель | Задача | Файли | Перевірка | PR |
 |---|---|---|---|---|---|---|
+| 2026-11-27 21:20–22:10 Київ | Оля | Claude Code / Claude Opus 5.5 | #14 панель точки, #15 зона, #16 висоти × години, #18 збережене й звіт, #19 свій дрон, #20 джерела дронів | `web/src/features/panel/`, `web/src/features/route/Route.tsx`, `web/src/app/{App.tsx,state.ts}` (shared), `web/public/data/static/profiles.json` (shared), `docs/SOURCES.md`, `specs/F4/spec.md` | `make check`: ruff, 35 pytest, eslint, tsc, 251 vitest, схеми, build; e2e 12/12 (400 px і 1280 px); скриншоти 400 і 1280 px без горизонтального скролу й помилок консолі | гілки feat/F4-14, -15, -16, -18, -19, -20 |
