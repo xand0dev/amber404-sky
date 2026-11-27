@@ -14,6 +14,7 @@ geopotential_height − elevation, лише вище 200 м), сортуванн
 from __future__ import annotations
 
 import math
+import sys
 import time
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
@@ -234,9 +235,65 @@ def pack(col: Collected, now: datetime) -> dict:
     return out
 
 
+KYIV_RC = (4, 17)  # вузол (50.5, 30.5), найближчий до Києва (50.45, 30.52)
+KYIV_I = KYIV_RC[0] * GRID["nc"] + KYIV_RC[1]
+FIELDS3, FIELDS2 = ("spd", "dir"), tuple(SURFACE)
+
+
+def non_null_share(p: dict) -> float:
+    """Частка не-null значень у всіх полях profile.json (F1-AC4: ≥ 95 % на живому прогоні)."""
+    total = good = 0
+    for k in FIELDS3:
+        for lvl in p[k]:
+            for row in lvl:
+                total += len(row)
+                good += sum(x is not None for x in row)
+    for k in FIELDS2:
+        for row in p[k]:
+            total += len(row)
+            good += sum(x is not None for x in row)
+    return good / total if total else 0.0
+
+
+def _x10(x: int | None, unit: str) -> str:
+    return "—" if x is None else f"{x / 10:.1f} {unit}"
+
+
+def control_lines(p: dict) -> list[str]:
+    """3 рядки контролю для Києва (F1-AC4): перша, середня й остання година."""
+    lat, lon = point(*KYIV_RC)
+    times, i, out = p.get("times") or [], KYIV_I, []
+    for h in (0, HOURS // 2, HOURS - 1):
+        head = f"Київ ({lat}, {lon}) {times[h] if h < len(times) else f'година {h}'}:"
+        if all(p[k][h][i] is None for k in FIELDS2) and all(p["spd"][li][h][i] is None for li in range(len(LEVELS))):
+            out.append(f"{head} немає даних")
+            continue
+        wind = ", ".join(
+            f"{alt} м {_x10(p['spd'][li][h][i], 'м/с')} з {p['dir'][li][h][i]}°"
+            for li, alt in enumerate(LEVELS)
+            if alt in (10, 100, 500)
+        )
+        vis = p["vis"][h][i]
+        out.append(
+            f"{head} вітер {wind}; пориви {_x10(p['gust'][h][i], 'м/с')}; t {_x10(p['temp'][h][i], '°C')}; "
+            f"опади {_x10(p['precip'][h][i], 'мм/год')}; rh {p['rh'][h][i]} %; "
+            f"видимість {'—' if vis is None else f'{vis / 10:.1f} км'}"
+        )
+    return out
+
+
+def _log(p: dict) -> None:
+    print(f"openmeteo: не null {non_null_share(p) * 100:.1f}%, статус {p['_status']} {p['_note']}", file=sys.stderr)
+    for line in control_lines(p):
+        print(line, file=sys.stderr)
+
+
 def fetch(now: datetime, client: httpx.Client | None = None, sleep: Sleep = time.sleep) -> dict:
-    """Контракт build.py: profile.json (§6.2) + times, _status, _note."""
+    """Контракт build.py: profile.json (§6.2) + times, _status, _note; у stderr — частка не-null і контроль Києва."""
     if client is None:
         with httpx.Client() as c:
-            return pack(collect(grid_points(), c, sleep), now)
-    return pack(collect(grid_points(), client, sleep), now)
+            p = pack(collect(grid_points(), c, sleep), now)
+    else:
+        p = pack(collect(grid_points(), client, sleep), now)
+    _log(p)
+    return p
