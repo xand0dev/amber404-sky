@@ -6,9 +6,11 @@ import { useT, windowLabel } from '../../app/lang';
 import { kyivDayHM, t as coreT, type Lang, type Verdict, type Weather } from '../../core';
 import type { DroneProfile } from '../../contracts';
 import { Route } from '../route/Route';
-import { arrowDeg, coordText, nearestCity } from './place';
+import { arrowDeg, coordText, nearestCity, placeText } from './place';
 import { Zone } from './Zone';
 import { HeightTable } from './HeightTable';
+import { Saved } from './Saved';
+import type { SavedWx } from './saved';
 import { pt } from './strings';
 import './panel.css';
 
@@ -68,6 +70,14 @@ export function Panel() {
   const last = data.meta.times[data.meta.times.length - 1];
   const win = windowLabel(window, last, lang);
   const time = data.meta.times[s.hour] ?? '';
+  // Знімок для «Зберегти погоду» / «Копіювати звіт» (F4-AC4): лише в браузері.
+  const snapshot = (): SavedWx => ({
+    id: `${s.lat.toFixed(3)},${s.lon.toFixed(3)},${s.altM},${time},${prof.id}`, savedAt: new Date().toISOString(),
+    place: placeText(data.cities, s.lat, s.lon), lat: s.lat, lon: s.lon, altM: s.altM, time, drone: prof.name,
+    ws: wx.ws, dir: wx.dir, g: wx.g, cb: wx.cb, t: wx.t, level: now.level, reasons: now.reasons, window: win,
+    source: data.meta.sources.map((x) => x.name).join(', ') || data.profile.sources.join(', '),
+    generatedAt: data.meta.generatedAt, mock: data.meta.mock,
+  });
   return (
     <section className="panel" aria-label="Точка">
       <div className="row">
@@ -81,6 +91,7 @@ export function Panel() {
         </label>
       </div>
       <PointView city={city} lat={s.lat} lon={s.lon} altM={s.altM} wx={wx} verdict={now} windowText={win} prof={prof} lang={lang} />
+      <Saved current={snapshot} />
       <Zone prof={prof} hourLabel={time ? kyivDayHM(time) : '—'} />
       <HeightTable prof={prof} />
       <Route />
