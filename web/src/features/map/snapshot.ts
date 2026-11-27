@@ -2,7 +2,7 @@
 import type { Bundle } from '../../app/data';
 import type { AppState, LayerId } from '../../app/state';
 import type { DroneProfile } from '../../contracts';
-import { kyivDayHM, t, type Lang, type Verdict } from '../../core';
+import { kyivDayHM, profileName, t, type Lang, type Verdict } from '../../core';
 import { LAYERS } from '../layers/LayerPicker';
 
 const EN_LAYER: Record<LayerId, string> = { wind: 'Wind', go: 'Can fly', gust: 'Gusts', cloud: 'Cloud base', icing: 'Icing', temp: 'Temp.', vis: 'Visibility' };
@@ -24,7 +24,7 @@ export function stampLines(data: Bundle, s: AppState, v: Verdict, prof: DronePro
   return [
     `AMBER Sky · ${l.demo}`,
     `${l.fc} ${fc ? when(fc) : '—'} ${l.kyiv} · ${l.from} ${when(data.meta.generatedAt)}`,
-    `${l.alt} ${s.altM} ${l.m} · ${prof.name} · ${l.layer} ${layer}`,
+    `${l.alt} ${s.altM} ${l.m} · ${profileName(prof, lang)} · ${l.layer} ${layer}`,
     `${l.at} ${s.lat.toFixed(3)}, ${s.lon.toFixed(3)}: ${t(`lv.${v.level}`, lang)}${v.reasons[0] ? ` — ${v.reasons[0]}` : ''}`,
     `${l.src}: ${src || '—'}${data.meta.mock ? ' · MOCK' : ''}`,
   ];

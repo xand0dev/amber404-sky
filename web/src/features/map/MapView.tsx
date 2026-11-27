@@ -2,6 +2,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { useApp } from '../../app/state';
 import { useView } from '../../app/view/view';
+import { useT } from '../../app/lang';
+import { cityName } from './translit';
 import { makeProjection } from '../../core';
 import { Legend } from '../layers/Legend';
 import { drawWindArrows } from './arrows';
@@ -17,6 +19,7 @@ type MapCanvas = HTMLCanvasElement & { unproject?: (x: number, y: number) => [nu
 
 export function MapView() {
   const { data, s, set } = useApp();
+  const { lang } = useT();
   const ref = useRef<MapCanvas>(null);
   const reduce = useReducedMotion();
   const { view } = useView();
@@ -59,17 +62,17 @@ export function MapView() {
     for (const c of data.cities) {
       const [x, y] = px(c.lat, c.lon);
       ctx.fillStyle = '#e6e2cc'; ctx.fillRect(x - 2, y - 2, 4, 4);
-      ctx.strokeStyle = 'rgba(17,21,14,.85)'; ctx.lineWidth = 3; ctx.strokeText(c.name, x + 5, y - 4);
-      ctx.fillText(c.name, x + 5, y - 4);
+      ctx.strokeStyle = 'rgba(17,21,14,.85)'; ctx.lineWidth = 3; ctx.strokeText(cityName(c, lang), x + 5, y - 4);
+      ctx.fillText(cityName(c, lang), x + 5, y - 4);
     }
     const [cx, cy] = px(s.lat, s.lon);
     ctx.strokeStyle = '#e2a72e'; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.arc(cx, cy, 9, 0, Math.PI * 2); ctx.moveTo(cx - 16, cy); ctx.lineTo(cx + 16, cy); ctx.moveTo(cx, cy - 16); ctx.lineTo(cx, cy + 16); ctx.stroke();
-  }, [data, s, reduce, view]);
+  }, [data, s, reduce, view, lang]);
 
   return (
     <>
-      <canvas ref={ref} className="map" aria-label="Карта: торкніться, щоб обрати точку"
+      <canvas ref={ref} className="map" aria-label={lang === 'en' ? 'Map: tap to pick a point' : 'Карта: торкніться, щоб обрати точку'}
         onClick={(e) => {
           const cv = e.currentTarget as MapCanvas;
           const r = cv.getBoundingClientRect();

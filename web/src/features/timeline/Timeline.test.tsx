@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { TimelineView } from './Timeline';
 import { LEVEL_COLOR } from '../layers/colors';
 import type { Level } from '../../core';
+import { LANG_KEY, LangProvider } from '../../app/lang';
 
 const times = Array.from({ length: 48 }, (_, h) => new Date(Date.UTC(2026, 10, 27, 10 + h)).toISOString());
 const order: Level[] = ['GO', 'CAUTION', 'NO-GO', 'NO-DATA'];
@@ -63,5 +64,21 @@ describe('F3-AC4: смуга 48 год', () => {
     const marks = screen.getAllByTestId('day-mark');
     expect(marks.map((m) => m.textContent)).toEqual(['пт 27', 'сб 28', 'нд 29']);
     expect(marks.map((m) => m.style.flexGrow)).toEqual(['12', '24', '12']);
+  });
+});
+
+// Issue #116: EN — доступні імена й позначки днів англійською, без кирилиці.
+describe('Given EN (issue #116)', () => {
+  afterEach(() => localStorage.clear());
+  it('Then «Play 48 h», «Forecast hour», «Fri 27»; ні title, ні aria-label без кирилиці', () => {
+    localStorage.setItem(LANG_KEY, 'en');
+    const { container } = render(<LangProvider><Harness /></LangProvider>);
+    expect(screen.getByRole('button', { name: 'Play 48 h' })).toBeTruthy();
+    expect(screen.getByRole('navigation', { name: 'Forecast hour' })).toBeTruthy();
+    expect(screen.getAllByTestId('day-mark')[0].textContent).toBe('Fri 27');
+    fireEvent.click(screen.getByRole('button', { name: 'Play 48 h' }));
+    expect(screen.getByRole('button', { name: 'Pause' })).toBeTruthy();
+    const attrs = [...container.querySelectorAll('[aria-label],[title]')].map((e) => `${e.getAttribute('aria-label') ?? ''} ${e.getAttribute('title') ?? ''}`);
+    expect(attrs.join('\n') + container.textContent).not.toMatch(/[Ѐ-ӿ]/);
   });
 });
