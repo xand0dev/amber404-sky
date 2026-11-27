@@ -4,6 +4,7 @@
 #   CLAUDE_CONFIG_DIR=~/.claude-acc2 scripts/runner.sh w2
 #   AGENT=codex scripts/runner.sh w3
 #   MODE=fix scripts/runner.sh w3   # лагодить PR з міткою fix
+#   ONCE=1 scripts/runner.sh w1     # одна задача й вихід (перевірка конвеєра)
 # Зупинити: touch ~/amber-runs/STOP   (або pkill -f runner.sh)
 set -uo pipefail
 
@@ -120,5 +121,6 @@ while [ ! -f "$RUNS/STOP" ]; do
     log "#$num stuck"
   fi
   git worktree remove --force "$wd"
+  [ -n "${ONCE:-}" ] && { log "ONCE — exit"; exit 0; }
 done
 log "STOP file — exit"
