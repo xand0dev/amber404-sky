@@ -13,7 +13,7 @@ set -uo pipefail
 WORKER="${1:?worker name, e.g. w1}"
 AGENT="${AGENT:-claude}"
 MODE="${MODE:-issues}"
-REPO_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+REPO_DIR="${REPO_DIR:-$(cd "$(dirname "$0")/.." && pwd)}"
 RUNS="${RUNS:-$HOME/amber-runs}"
 TIMEOUT_MIN="${TIMEOUT_MIN:-45}"
 mkdir -p "$RUNS/logs"
