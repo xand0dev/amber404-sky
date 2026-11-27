@@ -3,6 +3,7 @@ import { loadBundle, type Bundle } from './data';
 import { AppCtx, type AppState } from './state';
 import { StatusBar } from './StatusBar';
 import { registerSW } from './pwa';
+import { ThemeProvider } from './theme';
 import { MapView } from '../features/map/MapView';
 import { LayerPicker } from '../features/layers/LayerPicker';
 import { Timeline } from '../features/timeline/Timeline';
@@ -21,6 +22,7 @@ export function App() {
   if (err) return <div className="boot err">Не вдалося завантажити дані: {err}</div>;
   if (!ctx) return <div className="boot">Завантаження…</div>;
   return (
+    <ThemeProvider>
     <AppCtx.Provider value={ctx}>
       <div className="shell">
         <StatusBar />
@@ -29,5 +31,6 @@ export function App() {
         <Panel />
       </div>
     </AppCtx.Provider>
+    </ThemeProvider>
   );
 }
