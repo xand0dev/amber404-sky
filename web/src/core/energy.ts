@@ -25,6 +25,15 @@ export interface EnergyInput {
   t: number | null;
 }
 
+/** Додаткові поля «свого дрона» (§7.3a), яких немає в каталозі profiles.json. */
+export interface EnergyExtras { payloadKg?: number; fuelL?: number; burnLh?: number }
+type EnergyProfile = Pick<EnergyInput, 'energy' | 'massKg' | 'kind'> & { enduranceMin: number } & EnergyExtras;
+
+/** Вхід для effectiveEndurance з профілю (каталог або свій дрон) і температури в точці старту — однаково для карти й панелі. */
+export function energyInput(p: EnergyProfile, t: number | null): EnergyInput {
+  return { energy: p.energy, enduranceMin: p.enduranceMin, fuelL: p.fuelL, burnLh: p.burnLh, massKg: p.massKg, payloadKg: p.payloadKg ?? 0, kind: p.kind, t };
+}
+
 /** Ефективний час польоту, хв (без резерву) і пояснення, з чого порахований. */
 export function effectiveEndurance(e: EnergyInput): { min: number; why: string } {
   if (e.energy === 'fuel') {
