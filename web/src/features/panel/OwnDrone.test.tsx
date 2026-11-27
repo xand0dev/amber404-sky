@@ -5,7 +5,7 @@ import type { DroneProfile } from '../../contracts';
 import { AppCtx, useApp, type AppState } from '../../app/state';
 import type { Bundle } from '../../app/data';
 import { Panel } from './Panel';
-import { dropOwn, fromProfile, loadOwn, OWN_ID, OWN_KEY, saveOwn, toProfile, upsertOwn, validate } from './ownDrone';
+import { dropOwn, fromProfile, loadOwn, OWN_ID, OWN_KEY, saveOwn, toProfile, upsertOwn, validate } from './ownDroneStore';
 import { fixture } from './fixture.test-util';
 
 const FPV: DroneProfile = {

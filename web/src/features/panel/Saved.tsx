@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { useT } from '../../app/lang';
 import type { Lang } from '../../core';
-import { addSaved, copyText, kyivStamp, loadSaved, persist, removeSaved, reportText, type SavedWx } from './saved';
+import { addSaved, copyText, kyivStamp, loadSaved, persist, removeSaved, reportText, type SavedWx } from './savedStore';
 import { pt } from './strings';
 
 export interface SavedViewProps {

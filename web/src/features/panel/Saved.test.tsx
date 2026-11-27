@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { Saved } from './Saved';
-import { addSaved, kyivStamp, loadSaved, MAX_SAVED, persist, removeSaved, reportText, SAVED_KEY, type SavedWx } from './saved';
+import { addSaved, kyivStamp, loadSaved, MAX_SAVED, persist, removeSaved, reportText, SAVED_KEY, type SavedWx } from './savedStore';
 
 const E = (i: number, extra: Partial<SavedWx> = {}): SavedWx => ({
   id: `e${i}`, savedAt: '2026-11-28T09:00:00Z', place: 'Київ (50.450, 30.520)', lat: 50.45, lon: 30.52, altM: 120,
