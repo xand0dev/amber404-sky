@@ -4,7 +4,7 @@ body{background:var(--base);color:var(--ink);font:500 16px/1.4 "DIN Alternate","
 button,select,input{font:inherit;color:inherit}
 button:focus-visible,select:focus-visible,input:focus-visible,canvas:focus-visible{outline:2px solid var(--cau);outline-offset:2px}
 .boot{padding:24px}.boot.err{color:var(--no)}
-.shell{display:grid;grid-template-rows:auto auto minmax(260px,1fr) auto auto auto;min-height:100%;max-width:900px;margin:0 auto}
+.shell{display:grid;grid-template-rows:auto auto minmax(260px,1fr) auto auto auto;min-height:100%}
 .status{padding:10px 14px;color:#11150e}.status .word{font:700 34px/1 "DIN Condensed","Barlow Condensed",sans-serif;letter-spacing:.02em}
 .status .why{font-weight:600}.status .sub{font-size:14px}
 .lv-GO{background:var(--go)}.lv-CAUTION{background:var(--cau)}.lv-NO-GO{background:var(--no)}.lv-NO-DATA{background:var(--rule);color:var(--ink)}
@@ -37,3 +37,22 @@ button:focus-visible,select:focus-visible,input:focus-visible,canvas:focus-visib
 .ovprev{position:relative}.ovprev img{display:block;width:100%;cursor:crosshair}
 .ovmark{position:absolute;transform:translate(-50%,-50%);min-width:20px;height:20px;border-radius:50%;background:var(--cau);color:#11150e;font-size:12px;font-weight:700;text-align:center;line-height:20px;pointer-events:none}
 @media (max-width:420px){.ovrow{grid-template-columns:repeat(2,1fr)}}
+/* Issue #86: десктоп ≥ 1024 px — дві колонки. Ліворуч ряд інструментів, карта на всю висоту, шари й смуга 48 год;
+   праворуч панель точки 360–420 px із власною прокруткою. Сторінка сама не прокручується.
+   Нижче 1024 px — розкладка телефона на всю ширину (без max-width, тож без порожнеч з боків). */
+@media (min-width:1024px){
+  .shell{height:100vh;height:100dvh;min-height:0;overflow:hidden;grid-template-columns:minmax(0,1fr) clamp(360px,30vw,420px);
+    grid-template-rows:auto auto minmax(0,1fr) auto auto;grid-template-areas:"hd hd" "bar side" "map side" "lay side" "tl side"}
+  .shell>.status{grid-area:hd}.shell>.mapbarwrap{grid-area:bar}.shell>.layers{grid-area:lay}.shell>.tl{grid-area:tl}
+  .shell>.mapwrap{grid-area:map;min-height:0}
+  .shell>.panel{grid-area:side;min-height:0;overflow-y:auto;overscroll-behavior:contain;border-left:1px solid var(--rule)}
+  /* Шапка — один рядок ≤ 72 px: вердикт · причина й профіль · бейджі · «Ніч» · UK/EN. */
+  .shell>header.status{display:flex;align-items:center;gap:14px;min-height:0;height:68px;padding:8px 12px;overflow:hidden}
+  .shell>.status .word{flex:0 0 auto;font-size:30px;white-space:nowrap}
+  .shell>.status .why,.shell>.status .sub{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .shell>.status .why{flex:0 1 auto;max-width:40%}.shell>.status .sub{flex:1 1 0}
+  .shell>.status .badges{flex:0 1 auto;flex-wrap:nowrap;min-width:0;overflow:hidden;margin-top:0}
+  .shell>.status .badge{white-space:nowrap}
+  .shell>.status .nightbtn,.shell>.status .langsw{position:static;flex:0 0 auto}
+  .shell>.status .nightbtn{order:2}.shell>.status .langsw{order:3}
+}
