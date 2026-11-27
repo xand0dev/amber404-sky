@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { loadBundle, type Bundle } from './data';
 import { AppCtx, type AppState } from './state';
 import { StatusBar } from './StatusBar';
@@ -27,7 +27,9 @@ function Shell() {
   useEffect(() => { loadBundle().then(setData).catch((e: Error) => setErr(e.message)); }, []);
   // Офлайн (SPEC §7.11): у dev SW не реєструємо, щоб кеш не ховав зміни коду.
   useEffect(() => { if (import.meta.env.PROD) void registerSW(); }, []);
-  const ctx = useMemo(() => (data ? { data, s, set: (p: Partial<AppState>) => setS((o) => ({ ...o, ...p })) } : null), [data, s]);
+  // Стабільна функція: «свій дрон» (F4-AC6) додає профіль у список без перезавантаження даних.
+  const setProfiles = useCallback((f: (l: Bundle['profiles']) => Bundle['profiles']) => setData((d) => (d ? { ...d, profiles: f(d.profiles) } : d)), []);
+  const ctx = useMemo(() => (data ? { data, s, set: (p: Partial<AppState>) => setS((o) => ({ ...o, ...p })), setProfiles } : null), [data, s, setProfiles]);
   if (err) return <div className="boot err">{t('boot.error', { err })}</div>;
   if (!ctx) return <div className="boot">{t('boot.loading')}</div>;
   return (
