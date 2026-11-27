@@ -40,6 +40,19 @@
 - T3 (AC1, AC5) `map/WindParticles.tsx` — окремий canvas зі слідами, колір з теми; `MapView.tsx`: reduce → стрілки замість частинок.
 - T4 тести: `particles.test.ts`, `MapView.test.tsx`.
 
+**#12 — підказка при наведенні:**
+- T1 (AC6) `map/hover.ts`: `hoverInfo` (core.weatherAt + evaluate на `s.altM`, `s.hour`, дроні), `hoverRows` (uk/en, «немає даних» замість null).
+- T2 (AC6) `map/HoverTip.tsx` + `hover.css`: `role=tooltip` біля курсора; у правій / нижній половині — з іншого боку, ширина обмежена місцем до краю.
+- T3 (AC6) `MapView.tsx`: `pointermove` (миша/перо) → підказка, `pointerleave` → немає; дотик — без підказки.
+- T4 тести: `hover.test.ts`, `MapView.test.tsx`.
+
+**#13 — 📷 знімок карти зі штампом:**
+- T1 `map/arrows.ts`: `drawWindArrows` — спільні стрілки для reduced motion і знімка.
+- T2 (AC7) `map/snapshot.ts`: `stampLines` (AMBER Sky, час прогнозу, висота, дрон, шар, вердикт у точці, джерела, MOCK; uk/en), `fileName`, `deliver` (share → AbortError → завантаження).
+- T3 (AC7) `map/compose.ts`: PNG з підкладки, поля, стрілок, зони й SVG-малюнків + штамп; лише локальні Canvas/SVG.
+- T4 (AC7) `map/SnapButton.tsx` + `snap.css`: кнопка 📷 44×44, статус у `aria-live`.
+- T5 тести: `snapshot.test.ts`, `SnapButton.test.tsx`.
+
 ## Відкриті питання
 | Питання | Хто | Коли | План Б |
 |---|---|---|---|
