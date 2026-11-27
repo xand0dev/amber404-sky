@@ -40,6 +40,12 @@
 - T3 (AC1, AC5) `map/WindParticles.tsx` — окремий canvas зі слідами, колір з теми; `MapView.tsx`: reduce → стрілки замість частинок.
 - T4 тести: `particles.test.ts`, `MapView.test.tsx`.
 
+**#12 — підказка при наведенні:**
+- T1 (AC6) `map/hover.ts`: `hoverInfo` (core.weatherAt + evaluate на `s.altM`, `s.hour`, дроні), `hoverRows` (uk/en, «немає даних» замість null).
+- T2 (AC6) `map/HoverTip.tsx` + `hover.css`: `role=tooltip` біля курсора; у правій / нижній половині — з іншого боку, ширина обмежена місцем до краю.
+- T3 (AC6) `MapView.tsx`: `pointermove` (миша/перо) → підказка, `pointerleave` → немає; дотик — без підказки.
+- T4 тести: `hover.test.ts`, `MapView.test.tsx`.
+
 ## Відкриті питання
 | Питання | Хто | Коли | План Б |
 |---|---|---|---|
