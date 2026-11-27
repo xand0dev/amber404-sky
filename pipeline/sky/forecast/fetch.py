@@ -288,12 +288,48 @@ def _log(p: dict) -> None:
         print(line, file=sys.stderr)
 
 
+PAGES = "https://xand0dev.github.io/amber404-sky/data/"
+FALLBACK_MAX_H = 12  # assumption: старіший прогноз уже не допомагає вирішити «летіти чи ні»
+
+
+def previous(client: httpx.Client, now: datetime) -> tuple[dict | None, str]:
+    """План Б §12 (#93): цілий попередній profile.json з Pages, якщо він справжній і не старший за 12 год.
+    Повертає (профіль з times, причина відмови)."""
+    try:
+        meta = client.get(PAGES + "meta.json", timeout=TIMEOUT_S).raise_for_status().json()
+        prof = client.get(PAGES + "profile.json", timeout=TIMEOUT_S).raise_for_status().json()
+        src = next(s for s in meta["sources"] if s["id"] == "openmeteo")
+        gen = datetime.strptime(prof["generatedAt"], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=now.tzinfo)
+        times = meta["times"]
+    except Exception as e:  # noqa: BLE001 — недоступний чи битий попередній прогноз → без плану Б
+        return None, f"попередній прогноз недоступний ({type(e).__name__})"
+    if src.get("status") not in ("ok", "partial"):
+        return None, "у попередньому прогнозі теж немає даних Open-Meteo"
+    if (now - gen).total_seconds() > FALLBACK_MAX_H * 3600:
+        return None, f"попередній прогноз старший за {FALLBACK_MAX_H} год"
+    if len(times) != HOURS or len(prof.get("spd") or []) != len(LEVELS):
+        return None, "попередній прогноз не за контрактом"
+    return {**prof, "times": times}, ""
+
+
+def _fetch(now: datetime, client: httpx.Client, sleep: Sleep) -> dict:
+    p = pack(collect(grid_points(), client, sleep), now)
+    if p["_status"] != "nodata":
+        return p  # ok або partial — свіжі дані, ніколи не змішуємо зі старими
+    old, why = previous(client, now)
+    if old is None:
+        return p | {"_note": f"{why}; {p['_note']}"[:200]}
+    note = f"Open-Meteo недоступний; показано прогноз від {old['generatedAt']} ({p['_note'][12:]})"
+    return old | {"_status": "partial", "_note": note[:200]}
+
+
 def fetch(now: datetime, client: httpx.Client | None = None, sleep: Sleep = time.sleep) -> dict:
-    """Контракт build.py: profile.json (§6.2) + times, _status, _note; у stderr — частка не-null і контроль Києва."""
+    """Контракт build.py: profile.json (§6.2) + times, _status, _note; у stderr — частка не-null і контроль Києва.
+    Open-Meteo зовсім недоступний → цілий попередній прогноз з Pages з його справжнім часом (план Б, #93)."""
     if client is None:
         with httpx.Client() as c:
-            p = pack(collect(grid_points(), c, sleep), now)
+            p = _fetch(now, c, sleep)
     else:
-        p = pack(collect(grid_points(), client, sleep), now)
+        p = _fetch(now, client, sleep)
     _log(p)
     return p
