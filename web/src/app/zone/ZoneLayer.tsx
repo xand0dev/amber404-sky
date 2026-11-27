@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { fromUV, makeProjection } from '../../core';
 import { useApp } from '../state';
 import { useTheme } from '../theme';
+import { useView } from '../view/view';
 import { zoneFor, zoneShapes, type ZoneState } from './model';
 import './zone.css';
 
@@ -23,6 +24,7 @@ export function ZoneLayer() {
   const [size, setSize] = useState<[number, number]>([0, 0]);
   const z = useZone();
   const { colors } = useTheme();
+  const { view } = useView();
 
   // Розмір шару = розмір mapwrap.
   useEffect(() => {
@@ -45,7 +47,7 @@ export function ZoneLayer() {
     const ctx = cv.getContext('2d');
     if (!ctx) return;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    const sh = zoneShapes(z, makeProjection(W, H));
+    const sh = zoneShapes(z, makeProjection(W, H, view));
     const path = (pts: [number, number][]) => { ctx.beginPath(); pts.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y))); ctx.closePath(); };
 
     // Кільця відстаней — пунктир із підписом на півночі; на дрібному масштабі не малюємо, щоб не злипались.
@@ -80,7 +82,7 @@ export function ZoneLayer() {
       ctx.strokeStyle = colors.base; ctx.lineWidth = 5; draw();
       ctx.strokeStyle = colors.ink; ctx.lineWidth = 2.5; draw();
     }
-  }, [on, z, size, colors]);
+  }, [on, z, size, colors, view]);
 
   const ws = z?.wind ? fromUV(z.wind[0], z.wind[1])[0] : null;
   return (

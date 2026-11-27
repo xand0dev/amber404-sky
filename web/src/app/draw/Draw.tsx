@@ -2,6 +2,7 @@
 // Загальні позначки, без тактичних знаків і без шару цілей (Конституція 8). Лише localStorage, експорт/імпорт — файлами в браузері.
 import { useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { fromGeoJSON, makeProjection, newId, toGeoJSON, toKML, type Shape, type ShapeKind } from '../../core';
+import { useView } from '../view/view';
 import { draw, initDraw, loadShapes, saveShapes } from './store';
 import './draw.css';
 
@@ -32,6 +33,7 @@ export function Draw() {
   const [draft, setDraft] = useState<[number, number][]>([]);
   const [err, setErr] = useState<string | null>(null);
   const [size, setSize] = useState<[number, number]>([0, 0]);
+  const { view } = useView();
 
   // Запис у localStorage на кожну зміну фігур (ідемпотентний); false — сховище недоступне.
   const stored = useMemo(() => saveShapes(st.shapes), [st.shapes]);
@@ -64,7 +66,7 @@ export function Draw() {
     if (!tool) return;
     const r = e.currentTarget.getBoundingClientRect();
     if (!r.width || !r.height) return;
-    const ll = makeProjection(r.width, r.height).unproject(e.clientX - r.left, e.clientY - r.top);
+    const ll = makeProjection(r.width, r.height, view).unproject(e.clientX - r.left, e.clientY - r.top);
     if (multi(tool)) { setDraft((d) => [...d, ll]); return; }
     const text = label.trim();
     if (tool === 'text' && !text) { setErr('Підпис: введіть текст напису'); return; }
@@ -86,7 +88,7 @@ export function Draw() {
   };
 
   const [W, H] = size;
-  const pr = W && H ? makeProjection(W, H) : null;
+  const pr = W && H ? makeProjection(W, H, view) : null;
   const pts = (cs: [number, number][]) => cs.map(([la, lo]) => pr!.project(la, lo).map((v) => v.toFixed(1)).join(',')).join(' ');
   const xy = (c: [number, number]) => pr!.project(c[0], c[1]);
 

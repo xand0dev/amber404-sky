@@ -1,9 +1,12 @@
 // F3 (Іван): карта — плавне поле шару, кордони, міста, частинки вітру (reduced motion → стрілки), вибір точки, легенда.
 import { useEffect, useRef, useState } from 'react';
 import { useApp } from '../../app/state';
-import { makeProjection, windAt } from '../../core';
+import { useView } from '../../app/view/view';
+import { makeProjection } from '../../core';
 import { Legend } from '../layers/Legend';
+import { drawWindArrows } from './arrows';
 import { fieldPixels, nodeStep } from './field';
+import { SnapButton } from './SnapButton';
 import { WindParticles } from './WindParticles';
 import { HoverTip, type HoverPos } from './HoverTip';
 import { useReducedMotion } from './useReducedMotion';
@@ -16,6 +19,7 @@ export function MapView() {
   const { data, s, set } = useApp();
   const ref = useRef<MapCanvas>(null);
   const reduce = useReducedMotion();
+  const { view } = useView();
   const [hover, setHover] = useState<HoverPos | null>(null);
 
   useEffect(() => {
@@ -27,7 +31,7 @@ export function MapView() {
     const ctx = cv.getContext('2d');
     if (!ctx) return;
     ctx.scale(dpr, dpr);
-    const { project: px, unproject } = makeProjection(W, H);
+    const { project: px, unproject } = makeProjection(W, H, view);
     cv.unproject = unproject;
 
     ctx.fillStyle = '#1c2117'; ctx.fillRect(0, 0, W, H);
@@ -49,16 +53,7 @@ export function MapView() {
       for (const ring of f.rings) { ctx.beginPath(); ring.forEach(([lo, la], i) => { const [x, y] = px(la, lo); if (i) ctx.lineTo(x, y); else ctx.moveTo(x, y); }); ctx.stroke(); }
     }
     // prefers-reduced-motion (§7.10): замість частинок — статичні стрілки вітру обраної висоти.
-    const g = data.meta.grid, P = data.profile, h = s.hour;
-    ctx.strokeStyle = 'rgba(230,226,204,.75)'; ctx.lineWidth = 1.2;
-    if (reduce) for (let lat = 44.5; lat < 52.5; lat += 1) for (let lon = 22.5; lon < 40.5; lon += 1) {
-      const w = windAt(g, P, s.altM, h, lat, lon); if (!w) continue;
-      const [x, y] = px(lat, lon), len = Math.min(18, 4 + Math.hypot(w[0], w[1]) * 1.2), a = Math.atan2(-w[1], w[0]);
-      const ex = x + Math.cos(a) * len, ey = y + Math.sin(a) * len;
-      ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(ex, ey);
-      ctx.lineTo(ex - Math.cos(a - 0.5) * 5, ey - Math.sin(a - 0.5) * 5); ctx.moveTo(ex, ey);
-      ctx.lineTo(ex - Math.cos(a + 0.5) * 5, ey - Math.sin(a + 0.5) * 5); ctx.stroke();
-    }
+    if (reduce) drawWindArrows(ctx, data, s, px);
     // Підписи міст з темною обводкою, щоб читались на будь-якому кольорі поля.
     ctx.font = '600 12px system-ui'; ctx.lineJoin = 'round';
     for (const c of data.cities) {
@@ -70,7 +65,7 @@ export function MapView() {
     const [cx, cy] = px(s.lat, s.lon);
     ctx.strokeStyle = '#e2a72e'; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.arc(cx, cy, 9, 0, Math.PI * 2); ctx.moveTo(cx - 16, cy); ctx.lineTo(cx + 16, cy); ctx.moveTo(cx, cy - 16); ctx.lineTo(cx, cy + 16); ctx.stroke();
-  }, [data, s, reduce]);
+  }, [data, s, reduce, view]);
 
   return (
     <>
@@ -85,12 +80,13 @@ export function MapView() {
           // F3-AC6: підказка лише для миші/пера; на дотик тап обирає точку.
           if (e.pointerType === 'touch') { setHover(null); return; }
           const r = e.currentTarget.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
-          const [lat, lon] = makeProjection(r.width, r.height).unproject(x, y);
+          const [lat, lon] = makeProjection(r.width, r.height, view).unproject(x, y);
           setHover({ x, y, lat, lon, W: r.width, H: r.height });
         }}
         onPointerLeave={() => setHover(null)} />
       {!reduce && <WindParticles />}
       <Legend />
+      <SnapButton reduce={reduce} />
       {hover && <HoverTip at={hover} />}
     </>
   );
