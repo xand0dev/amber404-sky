@@ -1,0 +1,52 @@
+.panel{min-width:0}.panel>section,.panel>details{min-width:0;max-width:100%}
+.point{margin-top:10px}
+.pointhead{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.pointhead h2{font-size:20px;line-height:1.2;margin:0;overflow-wrap:anywhere}
+.lvl{font-weight:700;font-size:13px;padding:3px 8px;color:#11150e;white-space:nowrap}
+.arrow{display:inline-block;margin-right:4px;font-weight:700;line-height:1}
+.win{margin-top:6px;font-size:14px}.win span{color:var(--dim);margin-right:4px}
+.limits{margin-top:6px;font-size:12px;color:var(--dim);overflow-wrap:anywhere}
+.limits a{color:var(--ink)}
+.psec{margin-top:14px;border-top:1px solid var(--rule);padding-top:10px}
+.psec h3{margin:0 0 8px;font-size:15px}
+.pbtns{display:flex;gap:8px;flex-wrap:wrap}
+.pbtns button,.psec button{min-height:44px;padding:0 12px;background:var(--base);color:var(--ink);border:1px solid var(--rule)}
+.psec button[aria-pressed=true]{background:var(--ink);color:#11150e}
+.pnote{font-size:12px;color:var(--dim);margin-top:6px}
+/* Зона польоту (§7.5b) */
+.zonesvg{display:block;width:100%;max-width:320px;height:auto;margin:8px auto;background:var(--base)}
+.zonesvg .ring{fill:none;stroke:var(--rule);stroke-dasharray:3 3}
+.zonesvg .ringlbl{font-size:9px;fill:var(--dim)}
+.zonesvg .contour{fill:rgba(140,191,79,.22);stroke:var(--go);stroke-width:1.5}
+.zonesvg .cut{fill:var(--no)}.zonesvg .nod{fill:var(--dim)}
+.zonesvg .wind{stroke:var(--cau);stroke-width:2.5;fill:none}.zonesvg .windhead{fill:var(--cau)}
+.zonesvg .home{fill:var(--ink)}.zonesvg .north{font-size:10px;fill:var(--dim)}
+/* Таблиця висоти × години (F4-AC2) */
+.hgrid{overflow-x:auto;max-width:100%;-webkit-overflow-scrolling:touch}
+.hgrid table{border-collapse:separate;border-spacing:2px;font-size:12px}
+.hgrid th{font-weight:600;color:var(--dim);padding:0 2px;white-space:nowrap;position:sticky;left:0;background:var(--panel)}
+.hgrid thead th{position:static}
+.hgrid td{padding:0}
+.hgrid .cell{display:flex;flex-direction:column;align-items:center;justify-content:center;width:40px;min-height:44px;padding:0;border:2px solid transparent;color:#11150e;font-weight:700;font-size:12px;line-height:1.1}
+.hgrid .cell.over{border:3px solid var(--no);color:var(--ink)}
+.hgrid .cell.cloud{background-image:repeating-linear-gradient(45deg,rgba(230,226,204,.55) 0 2px,transparent 2px 6px)}
+.hgrid .cell.on{outline:3px solid var(--ink);outline-offset:-3px}
+.hgrid .cell:focus-visible{outline:3px solid var(--cau);outline-offset:-1px}
+.hgrid .cell .a{display:inline-block;font-size:11px}
+/* Збережене (F4-AC4) */
+.saved{list-style:none;padding:0;margin-top:8px;display:grid;gap:6px}
+.saved li{background:var(--base);padding:6px 8px;border-left:4px solid var(--rule);display:flex;justify-content:space-between;gap:8px;align-items:center}
+.saved li.lv-GO{border-left-color:var(--go)}.saved li.lv-CAUTION{border-left-color:var(--cau)}.saved li.lv-NO-GO{border-left-color:var(--no)}
+.saved li{background:var(--base)}
+.saved .txt{font-size:13px;overflow-wrap:anywhere}
+.report{width:100%;min-height:120px;margin-top:6px;background:var(--base);border:1px solid var(--rule);font-size:12px;padding:6px}
+/* Свій дрон (F4-AC6) */
+.ownform{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.ownform label{display:grid;gap:2px;font-size:13px;color:var(--dim)}
+.ownform input,.ownform select{min-height:44px;background:var(--base);border:1px solid var(--rule);padding:0 8px;color:var(--ink);width:100%}
+.ownform fieldset{grid-column:1/-1;border:1px solid var(--rule);padding:6px;display:flex;gap:6px;flex-wrap:wrap}
+.ownform legend{font-size:13px;color:var(--dim)}
+.ownform .wide{grid-column:1/-1}
+.perr{color:var(--no);font-size:13px;margin-top:6px}.pok{color:var(--go);font-size:13px;margin-top:6px}
+details.psec>summary{min-height:44px;display:flex;align-items:center;cursor:pointer;font-weight:600}
+@media (max-width:420px){.ownform{grid-template-columns:1fr}}
