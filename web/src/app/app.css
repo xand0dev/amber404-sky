@@ -24,3 +24,15 @@ button:focus-visible,select:focus-visible,input:focus-visible,canvas:focus-visib
 .vals dt{font-size:12px;color:var(--dim)}.vals dd{font-weight:600}
 .reasons{margin-top:8px;padding-left:18px}.coord{margin-top:6px;font-size:12px;color:var(--dim)}
 @media (max-width:420px){.panel .row{grid-template-columns:1fr}.vals{grid-template-columns:repeat(2,1fr)}}
+.underlay{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.mapwrap.has-underlay .map{opacity:var(--wx-op,1)}
+.ovbtn{position:absolute;top:8px;right:8px;z-index:2;min-height:44px;padding:0 12px;background:rgba(28,33,23,.88);border:1px solid var(--rule)}
+.ovpanel{position:absolute;top:60px;left:8px;right:8px;z-index:2;max-height:min(70vh,560px);overflow:auto;display:grid;gap:8px;padding:10px;background:var(--panel);border:1px solid var(--rule);font-size:14px}
+.ovpanel label{display:grid;gap:4px;color:var(--dim)}.ovpanel input[type=range]{min-height:44px;accent-color:var(--cau)}
+.ovpanel input[type=number]{min-height:44px;min-width:0;width:100%;background:var(--base);border:1px solid var(--rule);padding:0 6px}
+.ovrow{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;border:1px solid var(--rule);padding:6px}.ovrow.on{border-color:var(--cau)}
+.ovrow legend button,.ovact button{min-height:44px;padding:0 12px;background:var(--base);border:1px solid var(--rule)}
+.ovact{display:flex;gap:8px}.ovnote{font-size:12px;color:var(--dim)}.overr{color:var(--no)}
+.ovprev{position:relative}.ovprev img{display:block;width:100%;cursor:crosshair}
+.ovmark{position:absolute;transform:translate(-50%,-50%);min-width:20px;height:20px;border-radius:50%;background:var(--cau);color:#11150e;font-size:12px;font-weight:700;text-align:center;line-height:20px;pointer-events:none}
+@media (max-width:420px){.ovrow{grid-template-columns:repeat(2,1fr)}}
