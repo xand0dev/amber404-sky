@@ -1,6 +1,7 @@
 // F4 (Оля): панель точки — дрон, висота, значення, причини. Маршрут і зона — задачі F4.
 import { useApp } from '../../app/state';
 import { useVerdicts } from '../../app/useVerdict';
+import { Route } from '../route/Route';
 
 const n = (x: number | null, d = 1) => (x == null ? '—' : x.toFixed(d));
 
@@ -29,6 +30,7 @@ export function Panel() {
       </dl>
       <ul className="reasons">{now.reasons.map((r) => <li key={r}>{r}</li>)}</ul>
       <p className="coord">{s.lat.toFixed(3)}, {s.lon.toFixed(3)} · ліміти дронів — assumption</p>
+      <Route />
     </section>
   );
 }
