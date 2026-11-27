@@ -1,0 +1,4 @@
+{ "$schema": "https://json-schema.org/draft/2020-12/schema", "title": "climate.json (SPEC §6.5)", "type": "object",
+  "required": ["generatedAt", "sources", "year", "cities"],
+  "properties": { "cities": { "type": "object", "additionalProperties": { "type": "object",
+    "additionalProperties": { "type": "array", "minItems": 12, "maxItems": 12, "items": { "type": "number", "minimum": 0, "maximum": 100 } } } } } }

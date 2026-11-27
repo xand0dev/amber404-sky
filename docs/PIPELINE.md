@@ -25,22 +25,24 @@ CI (check + guard)  ──зелений──►  automerge squash ──►  d
 
 | Воркер | Акаунт | Команда (без підтверджень) | Бере |
 |---|---|---|---|
-| `w1` | Claude, акаунт 1 | `claude -p "<промпт>" --permission-mode bypassPermissions --max-turns 80` | p0, p1 (F0, F3, F4 — складне) |
-| `w2` | Claude, акаунт 2 (`CLAUDE_CONFIG_DIR=~/.claude-acc2`) | те саме | p1, bug |
-| `w3` | ChatGPT Plus (Codex) | `codex exec --full-auto "<промпт>"` | тести, pipeline на Python, доки, `fix` |
+| `w1` | Claude, акаунт 1 | `scripts/runner.sh w1` → `claude -p … --permission-mode bypassPermissions` | p0, p1 (F0, F3, F4 — складне) |
+| `w2` | Claude, акаунт 2 | `CLAUDE_CONFIG_DIR=~/.claude-acc2 scripts/runner.sh w2` | p1, bug |
+| `w3` | ChatGPT Plus (Codex) | `AGENT=codex scripts/runner.sh w3` → `codex exec -s workspace-write --approve-for-me` (без мережі: текст issue йде в промпт) | тести, pipeline на Python, доки, `fix` |
 
 - `-p` / `exec` — **неінтерактивний режим: агент нічого не питає**, працює до кінця й виходить. Саме це прибирає «зупинився й питає».
 - Обхід підтверджень — лише всередині окремого worktree в `~/amber-runs/`, без доступу до `.env` і ключів. Секрет CDS — тільки в GitHub Secrets, агенту не потрібен.
 - Ліміт підписки вичерпано (вихід з помилкою rate/usage limit) → воркер повертає задачу в чергу, спить 20 хв, пробує знову. Інші два працюють далі.
 
-## 3. Runner (`scripts/runner.sh`, пише F0 о 19:30)
+## 3. Runner (`scripts/runner.sh`)
+
+Лаштування раз: `CLAUDE_CONFIG_DIR=~/.claude-acc2 claude` → увійти другим акаунтом; `codex login`. Стоп: `touch ~/amber-runs/STOP`.
 
 Цикл кожного воркера:
 1. `git fetch` → взяти найстаршу відкриту issue з міткою `agent`, без `in-progress`, без `blocked`, у якої всі «після #N» уже закриті. Порядок: `bug` → `p0` → `p1`.
 2. Поставити мітку `in-progress` і коментар «взяв w1».
 3. `git worktree add ~/amber-runs/<issue> -b feat/F<N>-<issue> origin/main`.
 4. Запустити агента з промптом §4, таймаут 45 хв.
-5. Якщо є коміти: push, `gh pr create` (не draft), у тілі — «Closes #<issue>».
+5. Агент лише комітить; runner робить push і `gh pr create` (не draft), у тілі — «Closes #<issue>».
    Якщо комітів нема: мітка `stuck` + останні 30 рядків логу в коментар issue.
 6. Прибрати worktree, лог — у `~/amber-runs/logs/`. Наступна задача.
 

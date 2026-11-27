@@ -1,0 +1,10 @@
+{
+  "name": "AMBER Sky",
+  "short_name": "AMBER Sky",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#1c2117",
+  "theme_color": "#1c2117",
+  "lang": "uk",
+  "icons": []
+}

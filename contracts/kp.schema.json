@@ -1,0 +1,4 @@
+{ "$schema": "https://json-schema.org/draft/2020-12/schema", "title": "kp.json (SPEC §6.4)", "type": "object",
+  "required": ["generatedAt", "sources", "series"],
+  "properties": { "series": { "type": "array", "items": { "type": "object", "required": ["t", "kp", "observed"],
+    "properties": { "t": { "type": "string", "format": "date-time" }, "kp": { "type": "number", "minimum": 0, "maximum": 9 }, "observed": { "type": "boolean" } } } } } }

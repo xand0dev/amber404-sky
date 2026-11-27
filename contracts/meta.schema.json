@@ -1,0 +1,10 @@
+{ "$schema": "https://json-schema.org/draft/2020-12/schema", "title": "meta.json (SPEC §6.1)", "type": "object",
+  "required": ["generatedAt", "mock", "grid", "times", "sources"],
+  "properties": {
+    "generatedAt": { "type": "string", "format": "date-time" },
+    "mock": { "type": "boolean" },
+    "grid": { "type": "object", "required": ["lat0", "lon0", "step", "nr", "nc"],
+      "properties": { "lat0": { "const": 52.5 }, "lon0": { "const": 22.0 }, "step": { "const": 0.5 }, "nr": { "const": 18 }, "nc": { "const": 38 } } },
+    "times": { "type": "array", "minItems": 48, "maxItems": 48, "items": { "type": "string", "format": "date-time" } },
+    "sources": { "type": "array", "items": { "type": "object", "required": ["id", "name", "license", "fetchedAt", "status", "note"],
+      "properties": { "status": { "enum": ["ok", "partial", "nodata"] } } } } } }

@@ -8,6 +8,7 @@
 
 | Дата | Хто | Агент / модель | Задача | Файли | Перевірка | PR |
 |---|---|---|---|---|---|---|
+| 2026-11-27 19:30–20:00 Київ | Олександр | Claude Code / Claude Opus 5.5 | F0: каркас web і pipeline, core (вердикт, вікно, енергія, зона, маршрут, зсув), mocks, кордони NE Ukraine POV, схеми, CI, автомерж, deploy, runner | `web/`, `pipeline/`, `contracts/`, `.github/`, `scripts/`, `Makefile` | `make check`: ruff, 9 pytest, eslint, tsc, 50 vitest, схеми, build; екран на mocks у браузері 375 px | прямий коміт у main (початок) |
 
 ## F1
 

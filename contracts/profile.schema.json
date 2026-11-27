@@ -1,0 +1,13 @@
+{ "$schema": "https://json-schema.org/draft/2020-12/schema", "title": "profile.json (SPEC §6.2)", "type": "object",
+  "required": ["generatedAt", "sources", "levels", "spd", "dir", "gust", "temp", "precip", "rh", "vis"],
+  "$defs": {
+    "row": { "type": "array", "minItems": 684, "maxItems": 684, "items": {"type":["number","null"]} },
+    "f2": { "type": "array", "minItems": 48, "maxItems": 48, "items": { "$ref": "#/$defs/row" } },
+    "f3": { "type": "array", "minItems": 16, "maxItems": 16, "items": { "$ref": "#/$defs/f2" } } },
+  "properties": {
+    "generatedAt": { "type": "string", "format": "date-time" },
+    "sources": { "type": "array", "items": { "type": "string" } },
+    "levels": { "const": [10, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 600, 700, 800, 900, 1000] },
+    "spd": { "$ref": "#/$defs/f3" }, "dir": { "$ref": "#/$defs/f3" },
+    "gust": { "$ref": "#/$defs/f2" }, "temp": { "$ref": "#/$defs/f2" }, "precip": { "$ref": "#/$defs/f2" },
+    "rh": { "$ref": "#/$defs/f2" }, "vis": { "$ref": "#/$defs/f2" } } }

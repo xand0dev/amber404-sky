@@ -1,0 +1,6 @@
+{ "$schema": "https://json-schema.org/draft/2020-12/schema", "title": "galileo.json (SPEC §6.3)", "type": "object",
+  "required": ["generatedAt", "sources", "elevationMaskDeg", "points", "visible", "pdop"],
+  "properties": {
+    "points": { "type": "array", "items": { "type": "object", "required": ["name", "lat", "lon"] } },
+    "visible": { "type": "array", "items": { "type": "array", "maxItems": 48, "items": {"type":["number","null"]} } },
+    "pdop": { "type": "array", "items": { "type": "array", "maxItems": 48, "items": {"type":["number","null"]} } } } }

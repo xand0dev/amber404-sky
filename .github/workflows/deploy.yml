@@ -1,0 +1,39 @@
+# Pages (F0-AC5): збирає дані (справжні, де готові; решта — MOCK) і сайт. Мерж токеном workflow
+# не породжує push, тому automerge запускає цей workflow явно.
+name: Deploy
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+  schedule:
+    - cron: '7 */3 * * *'   # дані кожні 3 год (SPEC §5)
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: true
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm, cache-dependency-path: web/package-lock.json }
+      - uses: astral-sh/setup-uv@v6
+      - run: make setup
+      - run: make data
+        env:
+          CDSAPI_KEY: ${{ secrets.CDSAPI_KEY }}
+      - run: cd web && npm run schemas && npm run build
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with: { path: web/dist }
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: { name: github-pages, url: '${{ steps.d.outputs.page_url }}' }
+    steps:
+      - id: d
+        uses: actions/deploy-pages@v4
