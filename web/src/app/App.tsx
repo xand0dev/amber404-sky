@@ -6,6 +6,7 @@ import { registerSW } from './pwa';
 import { ThemeProvider } from './theme';
 import { LangProvider, useT } from './lang';
 import { Overlay } from './overlay/Overlay';
+import { ZoneLayer } from './zone/ZoneLayer';
 import { MapView } from '../features/map/MapView';
 import { LayerPicker } from '../features/layers/LayerPicker';
 import { Timeline } from '../features/timeline/Timeline';
@@ -13,7 +14,7 @@ import { Panel } from '../features/panel/Panel';
 import './app.css';
 
 // Слоти фіч (SPEC §9): map/layers/timeline — F3, panel/route — F4. Каркас лише розкладає їх.
-// Overlay (F0, §7.14) — власна карта-підкладка під полем погоди.
+// Overlay (F0, §7.14) — власна карта-підкладка під полем погоди; ZoneLayer (F0, §7.5b) — зона польоту над ним.
 export function App() {
   return <LangProvider><Shell /></LangProvider>;
 }
@@ -34,7 +35,7 @@ function Shell() {
     <AppCtx.Provider value={ctx}>
       <div className="shell">
         <StatusBar />
-        <main className="mapwrap"><Overlay /><MapView /><LayerPicker /></main>
+        <main className="mapwrap"><Overlay /><MapView /><ZoneLayer /><LayerPicker /></main>
         <Timeline />
         <Panel />
       </div>
