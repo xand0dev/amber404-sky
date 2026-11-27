@@ -4,6 +4,7 @@ import { useApp } from '../../app/state';
 import { useTheme } from '../../app/theme';
 import { makeProjection } from '../../core';
 import { particleCount, seed, step, windSampler, type WindFn } from './particles';
+import './wind.css';
 
 export function WindParticles() {
   const { data, s } = useApp();
@@ -46,5 +47,5 @@ export function WindParticles() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  return <canvas ref={ref} className="map particles" aria-hidden="true" style={{ pointerEvents: 'none' }} />;
+  return <canvas ref={ref} className="wind-particles" aria-hidden="true" style={{ pointerEvents: 'none' }} />;
 }

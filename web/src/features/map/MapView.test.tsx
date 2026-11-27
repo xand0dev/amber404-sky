@@ -22,12 +22,12 @@ describe('Given prefers-reduced-motion', () => {
   it('reduce → canvas частинок немає (стрілки на полі)', () => {
     reduce = true;
     const { container } = show();
-    expect(container.querySelector('canvas.particles')).toBeNull();
+    expect(container.querySelector('canvas.wind-particles')).toBeNull();
   });
   it('без reduce → canvas частинок є, прихований від читачів екрана й не перехоплює кліки', () => {
     reduce = false;
     const { container } = show();
-    const cv = container.querySelector<HTMLCanvasElement>('canvas.particles');
+    const cv = container.querySelector<HTMLCanvasElement>('canvas.wind-particles');
     expect(cv).not.toBeNull();
     expect(cv?.getAttribute('aria-hidden')).toBe('true');
     expect(cv?.style.pointerEvents).toBe('none');
@@ -35,9 +35,9 @@ describe('Given prefers-reduced-motion', () => {
   it('зміна налаштування на льоту перемикає режим', () => {
     reduce = false;
     const { container } = show();
-    expect(container.querySelector('canvas.particles')).not.toBeNull();
+    expect(container.querySelector('canvas.wind-particles')).not.toBeNull();
     reduce = true;
     act(() => listeners.forEach((f) => f()));
-    expect(container.querySelector('canvas.particles')).toBeNull();
+    expect(container.querySelector('canvas.wind-particles')).toBeNull();
   });
 });
