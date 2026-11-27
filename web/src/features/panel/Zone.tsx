@@ -29,7 +29,7 @@ export function ZoneView({ zone, lat, lon, mode, onMode, wind, altM, hourLabel, 
   const a = wind ? (arrowDeg(wind.dir) * Math.PI) / 180 : 0;
   const ax = Math.sin(a) * 28, ay = -Math.cos(a) * 28;
   return (
-    <section className="psec zone" aria-label={L('zone')}>
+    <section className="psec pzone" aria-label={L('zone')}>
       <h3>{L('zone')} · {altM} м</h3>
       <div className="pbtns" role="group" aria-label={L('zone')}>
         <button type="button" aria-pressed={mode === 'roundtrip'} onClick={() => onMode('roundtrip')}>{L('zone.rt')}</button>
