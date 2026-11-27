@@ -3,6 +3,9 @@
 Порядок: справжнє джерело (модулі F1/F2) → якщо модуля ще нема або він упав, файл береться з mocks,
 а `meta.mock = true` і статус джерела — `nodata` з причиною. Дані іншого джерела не підставляються.
 
+План Б §12 (issue #93): модуль може віддати цілий попередній прогноз зі старим часом у `_fetchedAt`.
+Тоді `meta.generatedAt` — найстаріший `fetchedAt` серед справжніх джерел, і плашка віку на сайті чесна.
+
   uv run python -m sky.build --mock        # лише синтетика
   uv run python -m sky.build               # справжні джерела, де готові
 """
@@ -34,6 +37,14 @@ def write(name: str, data: dict, out: Path) -> None:
     (out / f"{name}.json").write_text(json.dumps(data, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
 
 
+def generated_at(statuses: list[dict], gen: str, mock_only: bool) -> str:
+    """Вік прогнозу = найстаріше справжнє джерело (ok / partial); без справжніх — час збірки."""
+    if mock_only:
+        return gen
+    real = [s["fetchedAt"] for s in statuses if s["status"] in ("ok", "partial")]
+    return min(real, default=gen)  # ISO-8601 UTC «...Z» порівнюється як рядок
+
+
 def build(mock_only: bool, out: Path = OUT) -> dict:
     now = datetime.now(UTC)
     gen = now.strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -47,8 +58,9 @@ def build(mock_only: bool, out: Path = OUT) -> dict:
             continue
         try:
             files[name] = importlib.import_module(mod).fetch(now)
+            at = files[name].pop("_fetchedAt", None) or gen
             statuses.append(
-                SourceMeta(sid, files[name].pop("_status", "ok"), gen, files[name].pop("_note", "")).to_json()
+                SourceMeta(sid, files[name].pop("_status", "ok"), at, files[name].pop("_note", "")).to_json()
             )
         except ModuleNotFoundError:
             any_mock = True
@@ -56,7 +68,7 @@ def build(mock_only: bool, out: Path = OUT) -> dict:
         except Exception as e:  # noqa: BLE001 — будь-яка помилка джерела → nodata з причиною
             any_mock = True
             statuses.append(SourceMeta(sid, "nodata", gen, f"{type(e).__name__}: {e}"[:200]).to_json())
-    meta = dict(mock["meta"], generatedAt=gen, mock=any_mock, sources=statuses)
+    meta = dict(mock["meta"], generatedAt=generated_at(statuses, gen, mock_only), mock=any_mock, sources=statuses)
     if "profile" in files and not mock_only and files["profile"] is not mock["profile"]:
         meta["times"] = files["profile"].get("times", meta["times"])
         files["profile"].pop("times", None)
