@@ -8,5 +8,7 @@ export const FEATURES = {
 
 export function ownsFile(feature, file) {
   if (file.startsWith(`specs/${feature}/`)) return true;
+  // свій розділ ## F<N> у спільних журналах (AGENTS.md) — дозволено кожній фічі
+  if (file === 'docs/AI_LOG.md' || file === 'docs/SOURCES.md') return true;
   return (FEATURES[feature] ?? []).some((p) => (p.endsWith('/') ? file.startsWith(p) : file === p));
 }

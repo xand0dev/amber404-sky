@@ -83,10 +83,12 @@ while [ ! -f "$RUNS/STOP" ]; do
   git fetch -q origin main
   if [ "$MODE" = "fix" ]; then
     # PR з конфліктом з main не отримує CI, тож і мітку fix — ставимо її самі
-    for c in $(gh pr list --state open --json number,mergeable,labels --jq '.[] | select(.mergeable=="CONFLICTING") | select([.labels[].name] | (index("fix") or index("stuck")) | not) | .number'); do
+    for c in $(gh pr list --state open --author "$(gh api user --jq .login)" --json number,mergeable,labels --jq '.[] | select(.mergeable=="CONFLICTING") | select([.labels[].name] | (index("fix") or index("stuck")) | not) | .number'); do
       gh pr edit "$c" --add-label fix >/dev/null && log "PR #$c conflicts with main → fix"
     done
-    pr=$(gh pr list --state open --label fix --json number,headRefName,labels --jq '[.[] | select([.labels[].name] | index("stuck") | not)][0] // empty')
+    # лише PR конвеєра (автор — акаунт runner, тіло з «Closes #»); PR людей лагодять люди
+    me=$(gh api user --jq .login)
+    pr=$(gh pr list --state open --label fix --author "$me" --json number,headRefName,labels,body --jq '[.[] | select(.body | test("Closes #")) | select([.labels[].name] | index("stuck") | not)][0] // empty')
     [ -z "$pr" ] && { sleep 120; continue; }
     num=$(jq -r .number <<<"$pr"); br=$(jq -r .headRefName <<<"$pr")
     tries=$(gh pr view "$num" --json comments --jq '[.comments[].body | select(startswith("runner: fix attempt"))] | length')
