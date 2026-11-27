@@ -32,3 +32,40 @@ def test_missing_module_is_nodata(tmp_path, monkeypatch, net_calls):
     assert "MOCK" in statuses["openmeteo"]["note"]
     assert json.loads((tmp_path / "meta.json").read_text())["mock"] is True
     assert net_calls == []
+
+
+def _fake(monkeypatch, name: str, payload: dict) -> None:
+    import sys
+    import types
+
+    m = types.ModuleType(name)
+    m.fetch = lambda _now: dict(payload)
+    monkeypatch.setitem(sys.modules, name, m)
+
+
+def test_old_whole_forecast_keeps_its_time(tmp_path, monkeypatch, net_calls):
+    """План Б §12 (#93): цілий попередній прогноз → generatedAt старий, плашка віку чесна."""
+    _fake(
+        monkeypatch,
+        "sky._t_old",
+        {"_status": "partial", "_note": "показано прогноз від 10:00", "_fetchedAt": "2026-01-01T10:00:00Z"},
+    )
+    _fake(monkeypatch, "sky._t_new", {})
+    monkeypatch.setattr("sky.build.REAL", {"profile": ("sky._t_old", "openmeteo"), "kp": ("sky._t_new", "noaa-kp")})
+    meta = build(mock_only=False, out=tmp_path)
+    st = {s["id"]: s for s in meta["sources"]}
+    assert st["openmeteo"]["fetchedAt"] == "2026-01-01T10:00:00Z"
+    assert st["openmeteo"]["status"] == "partial"
+    assert meta["generatedAt"] == "2026-01-01T10:00:00Z"
+    assert "_fetchedAt" not in json.loads((tmp_path / "profile.json").read_text())
+
+
+def test_nodata_source_does_not_age_forecast(tmp_path, monkeypatch, net_calls):
+    """Джерело nodata (MOCK) не впливає на вік: беремо час справжніх джерел."""
+    _fake(monkeypatch, "sky._t_new", {})
+    monkeypatch.setattr(
+        "sky.build.REAL", {"profile": ("sky._t_new", "openmeteo"), "kp": ("sky._nema_takoho", "noaa-kp")}
+    )
+    meta = build(mock_only=False, out=tmp_path)
+    st = {s["id"]: s for s in meta["sources"]}
+    assert meta["generatedAt"] == st["openmeteo"]["fetchedAt"]
