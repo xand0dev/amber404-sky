@@ -1,0 +1,4 @@
+/* Масштаб карти (issue #64): 2×2 ліворуч під «Зона», щоб на 400 px не перекривати легенду F3 праворуч. */
+.viewctl{position:absolute;top:60px;left:8px;z-index:1;display:grid;grid-template-columns:auto auto;gap:4px}
+.viewctl button{min-width:44px;min-height:44px;padding:0 10px;background:rgba(28,33,23,.88);border:1px solid var(--rule);font-weight:700}
+.viewctl button:disabled{opacity:.5}

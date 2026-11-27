@@ -1,6 +1,7 @@
 // F3 (Іван): карта — плавне поле шару, кордони, міста, частинки вітру (reduced motion → стрілки), вибір точки, легенда.
 import { useEffect, useRef } from 'react';
 import { useApp } from '../../app/state';
+import { useView } from '../../app/view/view';
 import { makeProjection, windAt } from '../../core';
 import { Legend } from '../layers/Legend';
 import { fieldPixels, nodeStep } from './field';
@@ -15,6 +16,7 @@ export function MapView() {
   const { data, s, set } = useApp();
   const ref = useRef<MapCanvas>(null);
   const reduce = useReducedMotion();
+  const { view } = useView();
 
   useEffect(() => {
     const cv = ref.current;
@@ -25,7 +27,7 @@ export function MapView() {
     const ctx = cv.getContext('2d');
     if (!ctx) return;
     ctx.scale(dpr, dpr);
-    const { project: px, unproject } = makeProjection(W, H);
+    const { project: px, unproject } = makeProjection(W, H, view);
     cv.unproject = unproject;
 
     ctx.fillStyle = '#1c2117'; ctx.fillRect(0, 0, W, H);
@@ -68,7 +70,7 @@ export function MapView() {
     const [cx, cy] = px(s.lat, s.lon);
     ctx.strokeStyle = '#e2a72e'; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.arc(cx, cy, 9, 0, Math.PI * 2); ctx.moveTo(cx - 16, cy); ctx.lineTo(cx + 16, cy); ctx.moveTo(cx, cy - 16); ctx.lineTo(cx, cy + 16); ctx.stroke();
-  }, [data, s, reduce]);
+  }, [data, s, reduce, view]);
 
   return (
     <>

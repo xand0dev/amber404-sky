@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { composeAffine, fitAffine, makeProjection, type Affine, type Anchor } from '../../core';
 import { clearOverlay, loadOverlay, saveOverlay } from './store';
+import { useView } from '../view/view';
 
 type Row = Record<keyof Anchor, string>;
 interface Img { blob: Blob; el: HTMLImageElement; url: string }
@@ -37,6 +38,7 @@ export function Overlay() {
   const [err, setErr] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);
   const [size, setSize] = useState<[number, number]>([0, 0]);
+  const { view } = useView();
 
   // Відновлення з IndexedDB.
   useEffect(() => {
@@ -84,11 +86,11 @@ export function Overlay() {
     if (!img || !fit || !W || !H) return;
     const ctx = cv.getContext('2d');
     if (!ctx) return;
-    const m = composeAffine(makeProjection(W, H).affine, fit.m);
+    const m = composeAffine(makeProjection(W, H, view).affine, fit.m);
     ctx.setTransform(dpr * m[0], dpr * m[3], dpr * m[1], dpr * m[4], dpr * m[2], dpr * m[5]);
     ctx.imageSmoothingQuality = 'high';
     ctx.drawImage(img.el, 0, 0);
-  }, [img, fit, size]);
+  }, [img, fit, size, view]);
 
   useEffect(() => {
     if (!img || !fit) return;
