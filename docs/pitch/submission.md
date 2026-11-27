@@ -18,11 +18,11 @@
 
 ## Description
 
-**AMBER Sky** is a weather map for drone crews over Ukraine. In 30 seconds a crew sees wind direction and speed at any altitude from 10 to 1000 m, the cloud base, gusts and icing, and gets a GO / CAUTION / NO-GO verdict with reasons for a specific drone class, for every hour of the next 48 hours.
+**AMBER Sky** is a dual-use weather map for drone operators over Ukraine: emergency services, demining teams, farmers and defence crews. In 30 seconds a crew sees wind direction and speed at any altitude from 10 to 1000 m, the cloud base, gusts and icing, and gets a GO / CAUTION / NO-GO verdict with reasons for a specific drone class, for every hour of the next 48 hours.
 
-**Problem.** Before every shift, drone crews of the Defence Forces of Ukraine decide whether to fly, at what altitude, and whether the battery will last the way back. The requirements come from a call with an experienced drone operator on 26 November: crews look at wind by altitude (the "small sky" up to about 90 m, layers up to 500 m) and the dew point (clouds), for any point on the map, and want to save and share the weather. Today they combine tools: Windy gives a map without a verdict; UAV Forecast gives a verdict without a map, for one point, often one subscription shared by five people. Wind that is fine at 10 m can ground a heavy multicopter at 120 m.
+**Problem.** In Ukraine drones fly every day for many tasks: rescuers of the State Emergency Service (DSNS) inspecting damage and searching for people, demining teams surveying fields, agricultural operators spraying crops, and defence crews. Before every flight each of them decides whether to fly, at what altitude, and whether the battery will last the way back. The requirements come from a call with an experienced drone operator on 26 November: operators look at wind by altitude (the "small sky" up to about 90 m, layers up to 500 m) and the dew point (clouds), for any point on the map, and want to save and share the weather. Today they combine tools: Windy gives a map without a verdict; UAV Forecast gives a verdict without a map, for one point, often one subscription shared by five people. Wind that is fine at 10 m can ground a heavy multicopter at 120 m.
 
-**Users.** Commanders and operators of FPV (7-10 inch), heavy multicopter and fixed-wing VTOL crews. The same engine serves a second, civilian market: agricultural drone operators in the field, and also emergency services (DSNS) and demining teams. Weather is dual-use; the product is weather only.
+**Users.** One engine, several markets: emergency services (DSNS) and demining teams that fly in disrupted areas with poor connectivity; agricultural drone operators in the field; and defence crews flying FPV, heavy multicopters and fixed-wing VTOL drones. Weather is dual-use; the product is weather and flight readiness only.
 
 **What it does.**
 - A live wind map of Ukraine: particles flow with the wind at the chosen altitude, colour shows speed. Layers: wind, cloud base, gusts, "Can fly" verdict, icing, temperature, visibility.
@@ -39,7 +39,7 @@
 
 **How it is built.** A Python pipeline runs every 3 hours in GitHub Actions: it collects a 48-hour forecast on a 0.5 degree grid over Ukraine (684 points), interpolates wind (u, v) from model levels to 16 altitudes, computes Galileo visibility and PDOP from Celestrak orbits, reads Kp from NOAA, validates every file against JSON schemas and deploys static JSON. The web app is React and TypeScript with Canvas 2D and SVG; the verdict, flight range, route and energy logic is pure TypeScript, ready for a native app via Capacitor. Borders are the Natural Earth Ukraine point-of-view version (Crimea is Ukraine). The code was written during the hackathon by Claude Code and Codex agents from a specification; humans wrote the specification and check acceptance criteria. Every AI session is logged in the repository.
 
-**Business.** Free for Defence Forces crews. Paid subscription for agricultural drone operators and service companies; the commercial version moves the forecast from Open-Meteo (non-commercial licence) to ECMWF Open Data. Details: `docs/pitch/business.md`.
+**Business.** Free for emergency services, demining teams and defence crews. Paid subscription for agricultural drone operators and service companies; the commercial version moves the forecast from Open-Meteo (non-commercial licence) to ECMWF Open Data. Details: `docs/pitch/business.md`.
 
 **What is next.** Verify drone limits with manufacturers and crews; exclude Galileo satellites flagged unusable by the GSC; native app from the same code; offline map overlays from the crew's own map files.
 
