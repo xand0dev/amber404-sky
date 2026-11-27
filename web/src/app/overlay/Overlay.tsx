@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { composeAffine, fitAffine, makeProjection, type Affine, type Anchor } from '../../core';
 import { clearOverlay, loadOverlay, saveOverlay } from './store';
 import { useView } from '../view/view';
+import { InBar } from '../../ui/MapFrame';
 
 type Row = Record<keyof Anchor, string>;
 interface Img { blob: Blob; el: HTMLImageElement; url: string }
@@ -131,7 +132,11 @@ export function Overlay() {
   return (
     <>
       <canvas ref={ref} className="underlay" aria-hidden="true" />
-      <button type="button" className="ovbtn" aria-expanded={open} onClick={() => setOpen(!open)}>Підкладка</button>
+      <InBar>
+        <button type="button" className="ovbtn" title="Підкладка" aria-expanded={open} onClick={() => setOpen(!open)}>
+          <span className="tb-ico" aria-hidden="true">▦</span><span className="tb-txt">Підкладка</span>
+        </button>
+      </InBar>
       {open && (
         <section className="ovpanel" aria-label="Власна карта-підкладка">
           <label>Файл карти

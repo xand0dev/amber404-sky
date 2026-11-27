@@ -1,0 +1,16 @@
+/* Issue #85: тонкий ряд інструментів над картою (44 px кнопки + 2 px поля = 48 px), «⋯» — праворуч.
+   Порядок фіксований через order, бо кнопки приходять порталами з різних компонентів. */
+.mapbarwrap{position:relative;z-index:4}
+.mapbar{display:flex;align-items:center;gap:2px;height:48px;padding:2px 4px;overflow-x:auto;overflow-y:hidden;background:var(--panel);border-bottom:1px solid var(--rule)}
+.mapbar>*{flex:0 0 auto}
+.mapbar button{min-width:44px;min-height:44px;padding:0 10px;background:var(--base);border:1px solid var(--rule);line-height:1}
+.mapbar .drawbtn{order:1}.mapbar .ovbtn{order:2}.mapbar .snapbtn{order:3}.mapbar .viewctl{order:4}
+.mapbar .morebtn{order:9;margin-left:auto;padding:0;font-size:20px}
+.mapbar button[aria-pressed=true],.mapbar button[aria-expanded=true]{background:var(--ink);color:#11150e}
+/* Іконка завжди, підпис — лише коли є місце; на вузькому екрані підпис лишається доступним ім'ям кнопки. */
+.tb-ico{font-size:18px}.tb-txt{margin-left:6px}
+@media (max-width:600px){.mapbar button{padding:0}.tb-txt{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}}
+.mapmore{position:absolute;top:100%;right:4px;display:grid;gap:4px;min-width:160px;padding:4px;background:var(--panel);border:1px solid var(--rule)}
+.mapmore[hidden]{display:none}
+.mapmore button{min-height:44px;padding:0 12px;text-align:left;background:var(--base);border:1px solid var(--rule)}
+.mapmore button[aria-pressed=true]{background:var(--ink);color:#11150e}

@@ -15,12 +15,14 @@ import { MapView } from '../features/map/MapView';
 import { LayerPicker } from '../features/layers/LayerPicker';
 import { Timeline } from '../features/timeline/Timeline';
 import { Panel } from '../features/panel/Panel';
+import { MapFrame } from '../ui/MapFrame';
 import './app.css';
 
 // Слоти фіч (SPEC §9): map/layers/timeline — F3, panel/route — F4. Каркас лише розкладає їх.
 // Overlay (F0, §7.14) — власна карта-підкладка під полем погоди; ZoneLayer (F0, §7.5b) — зона польоту над ним;
 // Draw (F0, §7.13) — малюнки над ними.
 // ViewCtx (issue #64) — спільний вигляд карти (центр, масштаб) для всіх шарів; ViewControls — жести й кнопки масштабу.
+// MapFrame (issue #85) — ряд інструментів над картою й меню «⋯»; смуга шарів — під картою.
 export function App() {
   return <LangProvider><Shell /></LangProvider>;
 }
@@ -46,7 +48,8 @@ function Shell() {
     <ViewCtx.Provider value={vctx}>
       <div className="shell">
         <StatusBar />
-        <main className="mapwrap"><Overlay /><MapView /><ZoneLayer /><Draw /><ViewControls /><LayerPicker /></main>
+        <MapFrame><Overlay /><MapView /><ZoneLayer /><Draw /><ViewControls /></MapFrame>
+        <LayerPicker />
         <Timeline />
         <Panel />
       </div>

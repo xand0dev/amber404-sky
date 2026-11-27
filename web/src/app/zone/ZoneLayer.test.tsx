@@ -59,4 +59,16 @@ describe('Given шар «Зона» (SPEC §7.5b)', () => {
     expect(cap.textContent).toMatch(/вітер понад ліміт 10 м\/с/);
     expect(cap.querySelector('.zonedot')).not.toBeNull();
   });
+  // Issue #85 AC4: на телефоні підпис згорнутий до одного рядка, деталі — тапом.
+  it('Then підпис згорнутий в один рядок; When тап; Then деталі розгорнуто; When ще тап; Then знову згорнуто', () => {
+    const { container } = view();
+    const b = container.querySelector('.zonecap button')!;
+    expect(b.getAttribute('aria-expanded')).toBe('false');
+    expect(container.querySelector('.zonecap')!.classList.contains('open')).toBe(false);
+    fireEvent.click(b);
+    expect(b.getAttribute('aria-expanded')).toBe('true');
+    expect(container.querySelector('.zonecap')!.classList.contains('open')).toBe(true);
+    fireEvent.click(b);
+    expect(b.getAttribute('aria-expanded')).toBe('false');
+  });
 });

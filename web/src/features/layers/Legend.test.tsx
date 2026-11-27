@@ -36,3 +36,19 @@ describe('Given обраний шар; When відкрито карту; Then л
     expect(screen.getByText('ні')).toBeTruthy();
   });
 });
+
+// Issue #85 AC3: смужка легенди внизу карти (≤ 32 px + відступ 8 px) не накриває підписів міст на телефоні.
+import { makeProjection, FULL_VIEW } from '../../core';
+import cities from '../../../public/data/static/cities.json';
+
+describe('Given телефон 375×812 і 400×800, вся Україна; When легенда внизу карти; Then підписи міст вище неї', () => {
+  // Висота карти = 55% першого екрана (AC1); ширина = ширина екрана.
+  it.each([[375, 812], [400, 800]])('%i×%i', (W, VH) => {
+    const H = Math.round(VH * 0.55);
+    const { project } = makeProjection(W, H, FULL_VIEW);
+    const stripTop = H - 8 - 32;
+    // Підпис міста: базова лінія y − 4, шрифт 12 px; квадратик міста — до y + 2.
+    const low = cities.map((c) => ({ name: c.name, bottom: project(c.lat, c.lon)[1] + 2 })).filter((c) => c.bottom >= stripTop);
+    expect(low).toEqual([]);
+  });
+});
