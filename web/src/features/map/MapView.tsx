@@ -1,9 +1,9 @@
 // F3 (Іван): карта — плавне поле шару, кордони, міста, стрілки вітру, вибір точки, легенда.
 import { useEffect, useRef } from 'react';
 import { useApp } from '../../app/state';
-import { windAt } from '../../core';
+import { makeProjection, windAt } from '../../core';
 import { Legend } from '../layers/Legend';
-import { fieldPixels, projection } from './field';
+import { fieldPixels, nodeStep } from './field';
 
 /** Поле рахуємо в сітці кожні FIELD_PX css-пікселів і згладжуємо при масштабуванні (≤ 300 мс, F3-AC2). */
 const FIELD_PX = 3;
@@ -22,7 +22,7 @@ export function MapView() {
     const ctx = cv.getContext('2d');
     if (!ctx) return;
     ctx.scale(dpr, dpr);
-    const { project: px, unproject } = projection(W, H);
+    const { project: px, unproject } = makeProjection(W, H);
     cv.unproject = unproject;
 
     ctx.fillStyle = '#1c2117'; ctx.fillRect(0, 0, W, H);
@@ -32,7 +32,8 @@ export function MapView() {
     off.width = fw; off.height = fh;
     const octx = off.getContext('2d');
     if (octx) {
-      octx.putImageData(new ImageData(fieldPixels(data, s, fw, fh, (x, y) => unproject(x * FIELD_PX, y * FIELD_PX)), fw, fh), 0, 0);
+      const fu = (x: number, y: number) => unproject(x * FIELD_PX, y * FIELD_PX);
+      octx.putImageData(new ImageData(fieldPixels(data, s, fw, fh, fu, nodeStep(fu)), fw, fh), 0, 0);
       ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
       ctx.drawImage(off, 0, 0, fw * FIELD_PX, fh * FIELD_PX);
     }

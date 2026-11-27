@@ -1,8 +1,8 @@
 // F3-AC1 (плавне поле) і F3-AC2 (≤ 300 мс) для розрахунку поля шару.
 import { describe, expect, it } from 'vitest';
-import { fromUV, windAt } from '../../core';
+import { fromUV, makeProjection as projection, windAt } from '../../core';
 import type { LayerId } from '../../app/state';
-import { fieldPixels, projection, sampleLayer } from './field';
+import { fieldPixels, nodeStep, sampleLayer } from './field';
 import { bundle, state } from './fixture.test-util';
 
 const data = bundle();
@@ -24,7 +24,7 @@ describe('Given дані; When рахуємо значення шару в то�
 
 describe('Given поле вітру, що плавно росте на схід; When малюємо поле', () => {
   it('Then без квадратів: колір змінюється щопікселя, без довгих однакових відрізків', () => {
-    const W = 400, H = 300, px = fieldPixels(data, state(), W, H, projection(W, H).unproject);
+    const W = 400, H = 300, { unproject } = projection(W, H), px = fieldPixels(data, state(), W, H, unproject, nodeStep(unproject));
     const y = Math.floor(H / 2);
     let run = 1, maxRun = 1, maxJump = 0;
     for (let x = 1; x < W; x++) {
@@ -45,13 +45,29 @@ describe('Given поле вітру, що плавно росте на схід;
   });
 });
 
+describe('Given вузли кожні step px; When малюємо поле', () => {
+  it('Then у вузлі колір той самий, що й при розрахунку кожного пікселя', () => {
+    const W = 300, H = 200, { unproject } = projection(W, H), step = nodeStep(unproject);
+    expect(step).toBeGreaterThan(1);
+    const full = fieldPixels(data, state(), W, H, unproject, 1), fast = fieldPixels(data, state(), W, H, unproject, step);
+    let maxDiff = 0;
+    for (let y = 0; y < H; y += step) for (let x = 0; x < W; x += step) {
+      const o = (y * W + x) * 4;
+      if (full[o + 3] === 0) continue;
+      for (let k = 0; k < 4; k++) maxDiff = Math.max(maxDiff, Math.abs(full[o + k] - fast[o + k]));
+    }
+    expect(maxDiff).toBeLessThanOrEqual(1);
+  });
+});
+
 describe('Given перемикання шару; When перемальовуємо поле', () => {
   const layers: LayerId[] = ['wind', 'go', 'gust', 'cloud', 'icing', 'temp', 'vis'];
   for (const layer of layers) {
     it(`Then «${layer}» рахується ≤ 300 мс (F3-AC2)`, () => {
-      const W = 300, H = 200, { unproject } = projection(W, H);
+      // 900×600 css-px карта → поле 300×200 (крок 3 px), вузли як у MapView.
+      const W = 300, H = 200, { unproject } = projection(W, H), step = nodeStep(unproject);
       const t0 = performance.now();
-      fieldPixels(data, state({ layer }), W, H, unproject);
+      fieldPixels(data, state({ layer }), W, H, unproject, step);
       expect(performance.now() - t0).toBeLessThan(300);
     });
   }
