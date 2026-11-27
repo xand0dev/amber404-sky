@@ -27,6 +27,24 @@
 
 ## План від агента (plan mode)
 <!-- Агент вставляє сюди план T1…Tn з посиланнями на AC. Людина пише «затверджено, дата». -->
+**#9 — плавне поле й легенда:**
+- T1 (AC1) `layers/colors.ts`: шкали §7.6 (`SCALES`), неперервна рампа `layerRGBA`.
+- T2 (AC1, AC2) `map/field.ts`: `sampleLayer` (лише core: windAt, bilinear, weatherAt, evaluate, isIcing), `fieldPixels`, `projection`.
+- T3 (AC1) `MapView.tsx`: поле рахується кожні 3 px → ImageData → згладжений drawImage замість квадратів 0.25°.
+- T4 (AC1) `layers/Legend.tsx`: градієнт + мін/середина/макс з одиницею; для «Можна летіти» й «Обмерзання» — колір + текст.
+- T5 тести: `colors.test.ts`, `field.test.ts` (без квадратів, ≤ 300 мс на шар), `Legend.test.tsx`.
+
+**#10 — частинки вітру; reduced motion → стрілки:**
+- T1 (AC1) `map/particles.ts`: `windSampler` (core.windAt на `s.altM`, `s.hour`), `seed`, `step`, `particleCount`; екранна швидкість `K = 3 px/с на 1 м/с` (assumption), не залежить від масштабу.
+- T2 (AC5) `map/useReducedMotion.ts`: matchMedia + подія `change`.
+- T3 (AC1, AC5) `map/WindParticles.tsx` — окремий canvas зі слідами, колір з теми; `MapView.tsx`: reduce → стрілки замість частинок.
+- T4 тести: `particles.test.ts`, `MapView.test.tsx`.
+
+**#12 — підказка при наведенні:**
+- T1 (AC6) `map/hover.ts`: `hoverInfo` (core.weatherAt + evaluate на `s.altM`, `s.hour`, дроні), `hoverRows` (uk/en, «немає даних» замість null).
+- T2 (AC6) `map/HoverTip.tsx` + `hover.css`: `role=tooltip` біля курсора; у правій / нижній половині — з іншого боку, ширина обмежена місцем до краю.
+- T3 (AC6) `MapView.tsx`: `pointermove` (миша/перо) → підказка, `pointerleave` → немає; дотик — без підказки.
+- T4 тести: `hover.test.ts`, `MapView.test.tsx`.
 
 ## Відкриті питання
 | Питання | Хто | Коли | План Б |

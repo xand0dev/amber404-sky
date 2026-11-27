@@ -5,11 +5,15 @@ F1-AC1: пауза між пакетами; 429 / 5xx / таймаут / пор�
 F1-AC2: пакет, що так і не завантажився, дає `None` для своїх точок і статус `partial` з причиною.
 Дані іншого пакета чи попереднього запуску ніколи не підставляються.
 
-Пакування у profile.json (u, v → 16 висот) — issue #2; до того `fetch(now)` не готова, і build пише MOCK.
+F1-AC3 / §6.2: пакування у profile.json — вітер 10/80/120/180 м і рівні 1000…850 гПа (висота над землею =
+geopotential_height − elevation, лише вище 200 м), сортування за висотою, лінійна інтерполяція u, v на LEVELS;
+вище верхнього рівня — його значення; нижче нижнього наявного — null. Масштаби: м/с, °C, мм/год × 10; rh %;
+видимість м / 100. Індекс точки i = r * nc + c.
 """
 
 from __future__ import annotations
 
+import math
 import time
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
@@ -17,7 +21,7 @@ from datetime import datetime
 
 import httpx
 
-from ..contracts import GRID, HOURS, point
+from ..contracts import GRID, HOURS, LEVELS, NPTS, point
 
 URL = "https://api.open-meteo.com/v1/forecast"
 BATCH = 114  # 684 = 6 × 114, ліміт Open-Meteo — ≤ 120 точок за запит (§8)
@@ -143,6 +147,96 @@ def collect(
     return Collected(times, out, status, note[:200])
 
 
-def fetch(now: datetime) -> dict:
-    """Контракт build.py. Пакування у profile.json (§6.2) — issue #2; до того build ставить nodata і MOCK."""
-    raise NotImplementedError("пакування у profile.json — issue #2, поки MOCK")
+HEIGHT_M = (10, 80, 120, 180)
+PRESSURE_HPA = (1000, 975, 950, 925, 900, 850)
+MIN_PRESSURE_AGL_M = 200  # рівні тиску беремо лише вище 200 м (§6.2)
+SURFACE = {  # ключ profile.json → (змінна Open-Meteo, множник)
+    "gust": ("wind_gusts_10m", 10),
+    "temp": ("temperature_2m", 10),
+    "precip": ("precipitation", 10),
+    "rh": ("relative_humidity_2m", 1),
+    "vis": ("visibility", 0.01),
+}
+
+
+def iso_utc(t: str) -> str:
+    """'2026-11-27T19:00' (Open-Meteo, timezone=GMT) → '2026-11-27T19:00:00Z'."""
+    return t.rstrip("Z")[:16] + ":00Z"
+
+
+def _uv(spd: float, deg: float) -> tuple[float, float]:
+    """Напрямок «звідки дме» → вектор «куди дме»."""
+    a = math.radians(deg)
+    return -spd * math.sin(a), -spd * math.cos(a)
+
+
+def _column(pt: dict, h: int) -> list[tuple[float, float, float]]:
+    """(висота над землею, u, v) для години h, відсортовано за висотою; рівні без даних пропущено."""
+    hr, elev = pt["hourly"], pt.get("elevation")
+    col = []
+    for m in HEIGHT_M:
+        s, d = hr.get(f"wind_speed_{m}m", [None] * HOURS)[h], hr.get(f"wind_direction_{m}m", [None] * HOURS)[h]
+        if s is not None and d is not None:
+            col.append((float(m), *_uv(s, d)))
+    if elev is not None:
+        for p in PRESSURE_HPA:
+            s = hr.get(f"wind_speed_{p}hPa", [None] * HOURS)[h]
+            d = hr.get(f"wind_direction_{p}hPa", [None] * HOURS)[h]
+            gh = hr.get(f"geopotential_height_{p}hPa", [None] * HOURS)[h]
+            if s is not None and d is not None and gh is not None and gh - elev > MIN_PRESSURE_AGL_M:
+                col.append((gh - elev, *_uv(s, d)))
+    return sorted(col)
+
+
+def _at(col: list[tuple[float, float, float]], alt: float) -> tuple[float, float] | None:
+    if not col or alt < col[0][0]:
+        return None  # нижче найнижчого наявного рівня — немає даних
+    for (z0, u0, v0), (z1, u1, v1) in zip(col, col[1:], strict=False):
+        if z0 <= alt <= z1:
+            f = 0.0 if z1 == z0 else (alt - z0) / (z1 - z0)
+            return u0 + f * (u1 - u0), v0 + f * (v1 - v0)
+    return col[-1][1], col[-1][2]  # вище останнього — значення останнього
+
+
+def _scale(x: float | None, k: float) -> int | None:
+    return None if x is None else round(x * k)
+
+
+def pack(col: Collected, now: datetime) -> dict:
+    nl = len(LEVELS)
+    spd = [[[None] * NPTS for _ in range(HOURS)] for _ in range(nl)]
+    dirs = [[[None] * NPTS for _ in range(HOURS)] for _ in range(nl)]
+    surf = {k: [[None] * NPTS for _ in range(HOURS)] for k in SURFACE}
+    for i, pt in enumerate(col.points):
+        if pt is None:
+            continue  # пакет не завантажився — null, нічого не підставляємо
+        for h in range(HOURS):
+            c = _column(pt, h)
+            for li, alt in enumerate(LEVELS):
+                uv = _at(c, alt)
+                if uv is not None:
+                    spd[li][h][i] = round(math.hypot(*uv) * 10)
+                    dirs[li][h][i] = round(math.degrees(math.atan2(-uv[0], -uv[1]))) % 360
+            for key, (var, k) in SURFACE.items():
+                surf[key][h][i] = _scale(pt["hourly"].get(var, [None] * HOURS)[h], k)
+    out = {
+        "generatedAt": now.strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "sources": ["openmeteo"],
+        "levels": list(LEVELS),
+        "spd": spd,
+        "dir": dirs,
+        **surf,
+        "_status": col.status,
+        "_note": col.note,
+    }
+    if col.times:  # build переносить у meta.times; без даних — лишає times від now
+        out["times"] = [iso_utc(t) for t in col.times]
+    return out
+
+
+def fetch(now: datetime, client: httpx.Client | None = None, sleep: Sleep = time.sleep) -> dict:
+    """Контракт build.py: profile.json (§6.2) + times, _status, _note."""
+    if client is None:
+        with httpx.Client() as c:
+            return pack(collect(grid_points(), c, sleep), now)
+    return pack(collect(grid_points(), client, sleep), now)
