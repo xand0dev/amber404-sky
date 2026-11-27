@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react';
 import { FULL_VIEW, fitView, gestureStep, zoomAt } from '../../core';
 import { useZone } from '../zone/ZoneLayer';
 import { useView } from './view';
+import { useT } from '../lang';
 import { InBar, useMapWrap } from '../../ui/MapFrame';
 import './view.css';
 
@@ -19,6 +20,7 @@ export function ViewControls() {
   const ref = useRef<HTMLDivElement>(null);
   const { setView } = useView();
   const z = useZone();
+  const { t } = useT();
   // Кнопки — у ряду над картою (issue #85), тож жести слухаємо на mapwrap з рамки; без рамки — на батьківському елементі.
   const frame = useMapWrap();
 
@@ -88,11 +90,11 @@ export function ViewControls() {
 
   return (
     <InBar>
-      <div ref={ref} className="viewctl" role="group" aria-label="Масштаб карти">
-        <button type="button" aria-label="Наблизити" onClick={() => zoomBy(BTN_FACTOR)}>+</button>
-        <button type="button" aria-label="Віддалити" onClick={() => zoomBy(1 / BTN_FACTOR)}>−</button>
-        <button type="button" aria-label="До зони" title="До зони" onClick={toZone} disabled={!z}>◎</button>
-        <button type="button" aria-label="Україна" title="Вся Україна" onClick={() => setView(FULL_VIEW)}>⤢</button>
+      <div ref={ref} className="viewctl" role="group" aria-label={t('view.group')}>
+        <button type="button" aria-label={t('view.in')} onClick={() => zoomBy(BTN_FACTOR)}>+</button>
+        <button type="button" aria-label={t('view.out')} onClick={() => zoomBy(1 / BTN_FACTOR)}>−</button>
+        <button type="button" aria-label={t('view.zone')} title={t('view.zone')} onClick={toZone} disabled={!z}>◎</button>
+        <button type="button" aria-label={t('view.full')} title={t('view.fullTitle')} onClick={() => setView(FULL_VIEW)}>⤢</button>
       </div>
     </InBar>
   );
