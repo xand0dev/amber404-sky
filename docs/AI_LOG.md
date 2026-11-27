@@ -14,6 +14,9 @@
 
 | Дата | Хто | Агент / модель | Задача | Файли | Перевірка | PR |
 |---|---|---|---|---|---|---|
+| 2026-11-27 21:00–21:50 Київ | Максим | Claude Code / Claude Opus 5.5 | #1 збір Open-Meteo пакетами ≤ 120, повтори на 429, пакет не завантажився → null | `pipeline/sky/forecast/fetch.py`, `pipeline/tests/forecast/` | 12 тестів F1 на справжній фікстурі; pytest 34 passed; ruff, eslint, tsc, vitest, схеми, build | #59 |
+| 2026-11-27 22:00–22:40 Київ | Максим | Claude Code / Claude Opus 5.5 | #2 пакування у profile.json: u, v → 16 висот | `pipeline/sky/forecast/fetch.py`, `pipeline/tests/forecast/` | 26 тестів F1; `make check` зелений (62 pytest, 291 vitest); знайдено й передано F0 #62 | #66 |
+| 2026-11-27 22:40–23:10 Київ | Максим | Claude Code / Claude Opus 5.5 | #3 живий `make data`, контроль Києва; план Б ECMWF | `pipeline/sky/forecast/fetch.py`, `pipeline/tests/forecast/test_control.py`, `specs/F1/spec.md` | 31 тест F1; живий `make data`: 100 % не null, `openmeteo ok`; на Pages — справжній прогноз | #82 |
 
 ## F2
 
