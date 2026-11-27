@@ -18,6 +18,8 @@
 
 | Що | Джерело | Ліцензія | Перевірено |
 |---|---|---|---|
+| Супутникова мозаїка `static/satellite.jpg` (SPEC §7.6a, §8 `s2cloudless`): один WMS GetMap `layers=s2cloudless-2020`, EPSG:4326, bbox 22,44,40.5,52.5, 1480×680 | https://tiles.maps.eox.at/wms — Sentinel-2 cloudless by EOX — Copernicus Sentinel data 2020 | CC BY-NC-SA 4.0 (некомерційно), атрибуція «Sentinel-2 cloudless by EOX — Copernicus Sentinel data 2020» | 2026-11-27: `python -m sky.basemap.build` → 1480×680, 244 КБ |
+| Ріки й озера `static/water.json` (SPEC §7.6a, §8 `ne-water`): `ne_10m_rivers_lake_centerlines` + `ne_10m_lakes`, обрізано по рамці, Дуглас-Пекер 0,01° | Natural Earth 1:10m physical, https://naciscdn.org/naturalearth/10m/physical/ | public domain | 2026-11-27: 27 рік + 8 озер, 32 КБ. NE ще показує Каховське водосховище (спущене з 06.2023) — дані як є |
 
 ## F3
 
