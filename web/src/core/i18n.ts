@@ -96,3 +96,8 @@ export function detectLang(nav: string | null | undefined): Lang {
 export function parseLang(v: string | null): Lang | null {
   return v === 'uk' || v === 'en' ? v : null;
 }
+
+/** Назва дрона мовою інтерфейсу (issue #108): в EN — nameEn, якщо є, інакше name. */
+export function profileName(p: { name: string; nameEn?: string }, lang: Lang): string {
+  return lang === 'en' && p.nameEn ? p.nameEn : p.name;
+}

@@ -1,5 +1,5 @@
 { "$schema": "https://json-schema.org/draft/2020-12/schema", "title": "static/profiles.json (SPEC §6.6, §7.3)", "type": "array", "minItems": 7,
   "items": { "type": "object",
     "required": ["id", "name", "use", "massKg", "energy", "enduranceMin", "cruiseMs", "windMs", "gustMs", "tMinC", "precipMmH", "bandM", "defaultAltM", "kind", "source"],
-    "properties": { "energy": { "enum": ["battery", "fuel"] }, "kind": { "enum": ["multirotor", "wing"] },
+    "properties": { "nameEn": { "type": "string", "minLength": 1 }, "useEn": { "type": "string", "minLength": 1 }, "energy": { "enum": ["battery", "fuel"] }, "kind": { "enum": ["multirotor", "wing"] },
       "bandM": { "type": "array", "minItems": 2, "maxItems": 2, "items": { "type": "number" } } } } }
