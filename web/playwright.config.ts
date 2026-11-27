@@ -10,7 +10,8 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? [['github'], ['list']] : 'list',
-  use: { baseURL: `http://localhost:${PORT}`, trace: 'retain-on-failure' },
+  // Інтерфейс обирає мову браузера (#44); смоук перевіряє українську версію.
+  use: { baseURL: `http://localhost:${PORT}`, trace: 'retain-on-failure', locale: 'uk-UA' },
   projects: [
     { name: 'phone-400', use: { browserName: 'chromium', viewport: { width: 400, height: 800 }, hasTouch: true } },
     { name: 'desktop-1280', use: { browserName: 'chromium', viewport: { width: 1280, height: 800 } } },
