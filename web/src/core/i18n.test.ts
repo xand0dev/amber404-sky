@@ -1,5 +1,6 @@
 // Issue #44: словник uk/en, однаковий набір ключів, вибір мови за замовчуванням.
 import { describe, expect, it } from 'vitest';
+import { effectiveEndurance } from './energy';
 import { DICT, detectLang, parseLang, profileName, t, type Key } from './i18n';
 import type { DroneProfile } from '../contracts';
 import profilesJson from '../../public/data/static/profiles.json';
@@ -49,5 +50,18 @@ describe('profileName', () => {
       wingE: 'Electric fixed wing', wingF: 'Fuel fixed wing (ICE)', agro: 'Agricultural drone',
     };
     expect(Object.fromEntries(profiles.map((x) => [x.id, x.nameEn]))).toEqual(want);
+  });
+});
+
+describe('Issue #119: пояснення часу польоту на карті мовою інтерфейсу', () => {
+  const batt = { energy: 'battery' as const, enduranceMin: 10, massKg: 1, payloadKg: 0, kind: 'multirotor' as const, t: -20 };
+  it('uk — як і раніше', () => {
+    expect(effectiveEndurance(batt).why).toBe('паспорт 10 хв × холод 0.70 × вантаж 1.00');
+    expect(effectiveEndurance(batt, 'uk').why).toBe('паспорт 10 хв × холод 0.70 × вантаж 1.00');
+  });
+  it('en — без кирилиці', () => {
+    expect(effectiveEndurance(batt, 'en').why).toBe('datasheet 10 min × cold 0.70 × payload 1.00');
+    expect(effectiveEndurance({ energy: 'fuel', fuelL: 5, burnLh: 1, massKg: 20, kind: 'wing', t: 0 }, 'en').why).toBe('5 L / 1 L/h');
+    expect(effectiveEndurance({ energy: 'fuel', enduranceMin: 90, massKg: 20, kind: 'wing', t: 0 }, 'en').why).toBe('datasheet 90 min (fuel)');
   });
 });

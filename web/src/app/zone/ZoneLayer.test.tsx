@@ -3,6 +3,7 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { AppCtx, type Ctx } from '../state';
 import { ZoneLayer } from './ZoneLayer';
 import { clearZoneCache } from './model';
+import { LANG_KEY, LangProvider } from '../lang';
 
 afterEach(() => { cleanup(); clearZoneCache(); });
 
@@ -70,5 +71,18 @@ describe('Given шар «Зона» (SPEC §7.5b)', () => {
     expect(container.querySelector('.zonecap')!.classList.contains('open')).toBe(true);
     fireEvent.click(b);
     expect(b.getAttribute('aria-expanded')).toBe('false');
+  });
+});
+
+describe('Issue #119: EN', () => {
+  it('Then кнопка й підпис зони англійською, без кирилиці; uk не змінився', () => {
+    localStorage.setItem(LANG_KEY, 'en');
+    try {
+      const { container } = render(<LangProvider><AppCtx.Provider value={ctx}><main className="mapwrap"><ZoneLayer /></main></AppCtx.Provider></LangProvider>);
+      expect(screen.getByRole('button', { name: 'Zone' })).toBeTruthy();
+      const cap = container.querySelector('.zonecap')!.textContent!;
+      expect(cap).toMatch(/^Round-trip zone up to .* km · .* min \(datasheet 10 min × cold .* × payload .*\) − 20% reserve · 22 m\/s/);
+      expect(cap).not.toMatch(/[Ѐ-ӿ]/);
+    } finally { localStorage.removeItem(LANG_KEY); }
   });
 });
