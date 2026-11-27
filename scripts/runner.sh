@@ -83,10 +83,12 @@ while [ ! -f "$RUNS/STOP" ]; do
   git fetch -q origin main
   if [ "$MODE" = "fix" ]; then
     # PR з конфліктом з main не отримує CI, тож і мітку fix — ставимо її самі
-    for c in $(gh pr list --state open --json number,mergeable,labels --jq '.[] | select(.mergeable=="CONFLICTING") | select([.labels[].name] | (index("fix") or index("stuck")) | not) | .number'); do
+    for c in $(gh pr list --state open --author "$(gh api user --jq .login)" --json number,mergeable,labels --jq '.[] | select(.mergeable=="CONFLICTING") | select([.labels[].name] | (index("fix") or index("stuck")) | not) | .number'); do
       gh pr edit "$c" --add-label fix >/dev/null && log "PR #$c conflicts with main → fix"
     done
-    pr=$(gh pr list --state open --label fix --json number,headRefName,labels --jq '[.[] | select([.labels[].name] | index("stuck") | not)][0] // empty')
+    # лише PR конвеєра (автор — акаунт runner, тіло з «Closes #»); PR людей лагодять люди
+    me=$(gh api user --jq .login)
+    pr=$(gh pr list --state open --label fix --author "$me" --json number,headRefName,labels,body --jq '[.[] | select(.body | test("Closes #")) | select([.labels[].name] | index("stuck") | not)][0] // empty')
     [ -z "$pr" ] && { sleep 120; continue; }
     num=$(jq -r .number <<<"$pr"); br=$(jq -r .headRefName <<<"$pr")
     tries=$(gh pr view "$num" --json comments --jq '[.comments[].body | select(startswith("runner: fix attempt"))] | length')
@@ -101,11 +103,19 @@ while [ ! -f "$RUNS/STOP" ]; do
     git worktree remove --force "$wd"; continue
   fi
 
+  sleep $((RANDOM % 10))
   issue=$(pick_issue) || { log "queue empty — sleep 3m"; sleep 180; continue; }
   num=$(jq -r .number <<<"$issue"); title=$(jq -r .title <<<"$issue")
   feat=$(echo "$title $(jq -r '[.labels[].name] | join(" ")' <<<"$issue")" | grep -oE 'F[0-4]' | head -1); feat=${feat:-F0}
+  # захист від гонки двох воркерів: мітка вже стоїть → задачу взяв інший
+  if gh issue view "$num" --json labels --jq '[.labels[].name] | index("in-progress")' | grep -q '[0-9]'; then
+    log "#$num already taken — skip"; sleep $((RANDOM % 15)); continue
+  fi
   gh issue edit "$num" --add-label in-progress >/dev/null
   gh issue comment "$num" --body "runner: взяв $WORKER ($AGENT)" >/dev/null
+  sleep 3
+  first=$(gh issue view "$num" --json comments --jq '[.comments[].body | select(startswith("runner: взяв"))] | last')
+  case "$first" in *"$WORKER "*) ;; *) log "#$num taken by another worker — skip"; continue ;; esac
   br="feat/$feat-$num"; wd="$RUNS/issue-$num"
   rm -rf "$wd"; git worktree prune
   git worktree add -q -B "$br" "$wd" origin/main
