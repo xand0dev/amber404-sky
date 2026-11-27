@@ -5,6 +5,8 @@
 #   AGENT=codex scripts/runner.sh w3
 #   MODE=fix scripts/runner.sh w3   # лагодить PR з міткою fix
 #   ONCE=1 scripts/runner.sh w1     # одна задача й вихід (перевірка конвеєра)
+#   ONLY=codex AGENT=codex scripts/runner.sh w3   # бере лише задачі з міткою codex
+#   SKIP=codex scripts/runner.sh w1               # не бере задачі з міткою codex
 # Зупинити: touch ~/amber-runs/STOP   (або pkill -f runner.sh)
 set -uo pipefail
 
@@ -65,8 +67,8 @@ pick_issue() {
   # bug → p0 → p1; лише agent, без in-progress/blocked/stuck; усі «після #N» закриті.
   local closed; closed=$(gh issue list --state closed --limit 500 --json number --jq '.[].number' | tr '\n' ' ')
   for pr in bug p0 p1; do
-    gh issue list --state open --label agent --label "$pr" --limit 100 \
-      --json number,title,labels,body --jq 'sort_by(.number)[] | select([.labels[].name] | (index("in-progress") or index("blocked") or index("stuck")) | not) | @base64' |
+    gh issue list --state open --label agent --label "$pr" ${ONLY:+--label "$ONLY"} --limit 100 \
+      --json number,title,labels,body --jq 'sort_by(.number)[] | select([.labels[].name] | (index("in-progress") or index("blocked") or index("stuck") or (env.SKIP != null and env.SKIP != "" and index(env.SKIP))) | not) | @base64' |
     while read -r row; do
       local j; j=$(echo "$row" | base64 --decode)
       local deps ok=1; deps=$(echo "$j" | jq -r .body | grep -oE '(після|after) #[0-9]+' | grep -oE '[0-9]+' || true)
