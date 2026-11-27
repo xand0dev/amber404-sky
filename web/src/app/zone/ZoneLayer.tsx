@@ -1,7 +1,8 @@
 // Шар «Зона польоту» (SPEC §7.5b, issue #22): контур туди й назад, кільця відстаней, стрілка вітру, червоні точки обриву.
 // Окремий canvas над полем погоди (MapView, F3), проєкція — спільна з core/projection.ts. Кліки проходять до карти.
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { fromUV, makeProjection } from '../../core';
+import { effectiveEndurance, fromUV, makeProjection } from '../../core';
+import { useT } from '../lang';
 import { useApp } from '../state';
 import { useTheme } from '../theme';
 import { useView } from '../view/view';
@@ -17,7 +18,10 @@ export function useZone(): ZoneState | null {
 }
 
 const MIN_RING_PX = 14;
-const km = (m: number) => (m >= 10_000 ? `${Math.round(m / 1000)} км` : `${+(m / 1000).toFixed(1)} км`);
+const km = (m: number, unit: string) => (m >= 10_000 ? `${Math.round(m / 1000)} ${unit}` : `${+(m / 1000).toFixed(1)} ${unit}`);
+
+// Issue #87: підпис кнопки «Деталі» в згорнутому підписі зони.
+const DETAILS = { uk: 'Деталі', en: 'Details' } as const;
 
 export function ZoneLayer() {
   const ref = useRef<HTMLCanvasElement>(null);
@@ -27,6 +31,7 @@ export function ZoneLayer() {
   const z = useZone();
   const { colors } = useTheme();
   const { view } = useView();
+  const { lang, t } = useT();
 
   // Розмір шару = розмір mapwrap.
   useEffect(() => {
@@ -58,7 +63,7 @@ export function ZoneLayer() {
     for (const r of rings) { path(r.pts); ctx.stroke(); }
     ctx.setLineDash([]); ctx.globalAlpha = 1;
     ctx.font = '600 11px system-ui'; ctx.textAlign = 'center'; ctx.fillStyle = colors.ink;
-    for (const r of rings) { const [x, y] = r.pts[0]; ctx.fillText(km(r.distM), x, y - 3); }
+    for (const r of rings) { const [x, y] = r.pts[0]; ctx.fillText(km(r.distM, t('unit.km')), x, y - 3); }
 
     // Контур зони туди й назад.
     if (z.maxDistM > 0) {
@@ -84,22 +89,22 @@ export function ZoneLayer() {
       ctx.strokeStyle = colors.base; ctx.lineWidth = 5; draw();
       ctx.strokeStyle = colors.ink; ctx.lineWidth = 2.5; draw();
     }
-  }, [on, z, size, colors, view]);
+  }, [on, z, size, colors, view, t]);
 
   const ws = z?.wind ? fromUV(z.wind[0], z.wind[1])[0] : null;
   return (
     <>
       <canvas ref={ref} className="zone" aria-hidden="true" hidden={!on} />
-      <InBar slot="more"><button type="button" className="zonebtn" aria-pressed={on} onClick={() => setOn(!on)}>Зона</button></InBar>
-      {/* Issue #85 AC4, #87 AC2: згорнутий підпис — відстань і вітер в один рядок; формула часу й assumption — тапом («Деталі»). */}
+      <InBar slot="more"><button type="button" className="zonebtn" aria-pressed={on} onClick={() => setOn(!on)}>{t('zone.btn')}</button></InBar>
+      {/* Issue #85 AC4, #87 AC2: згорнутий підпис — відстань і вітер в один рядок; формула часу, крейсер і assumption — тапом («Деталі»). */}
       {on && z && (
         <p className={full ? 'zonecap open' : 'zonecap'}>
           <button type="button" aria-expanded={full} onClick={() => setFull(!full)}><span className="zonetxt">
-          <b>Зона туди й назад</b> {z.maxDistM > 0 ? `до ${km(z.maxDistM)}` : 'відсутня'}
-          {' · '}{ws == null ? 'немає даних про вітер' : `вітер ${ws.toFixed(1)} м/с`}
-          {z.cut.length > 0 && <> · <span className="zonedot" aria-hidden="true" /> вітер понад ліміт {z.prof.windMs} м/с</>}
-          {!full && <span className="zonemore"> · Деталі ▾</span>}
-          <span className="zonedet" hidden={!full}> · {z.enduranceMin.toFixed(1)} хв ({z.why}) − резерв 20% · {z.prof.cruiseMs} м/с · assumption</span>
+          <b>{t('zone.title')}</b> {z.maxDistM > 0 ? t('zone.upTo', { d: km(z.maxDistM, t('unit.km')) }) : t('zone.none')}
+          {' · '}{ws == null ? t('zone.noWind') : t('zone.wind', { v: ws.toFixed(1) })}
+          {z.cut.length > 0 && <> · <span className="zonedot" aria-hidden="true" /> {t('zone.cut', { v: z.prof.windMs })}</>}
+          {!full && <span className="zonemore"> · {DETAILS[lang]} ▾</span>}
+          <span className="zonedet" hidden={!full}> · {t('zone.time', { min: z.enduranceMin.toFixed(1), why: effectiveEndurance(z.energy, lang).why })} · {t('zone.cruise', { v: z.prof.cruiseMs })} · assumption</span>
           </span></button>
         </p>
       )}
