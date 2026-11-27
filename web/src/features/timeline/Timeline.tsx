@@ -1,20 +1,67 @@
-// F3: смуга 48 год, колір години = вердикт у точці (F3-AC4).
+// F3: смуга 48 год, колір години = вердикт у точці, ▶ і позначки днів (F3-AC4).
+import { useEffect, useMemo, useState } from 'react';
 import { useApp } from '../../app/state';
 import { useVerdicts } from '../../app/useVerdict';
-import { kyivHM } from '../../core';
+import { kyivHM, type Level } from '../../core';
 import { LEVEL_COLOR } from '../layers/colors';
+import { daySegments, nextPlayHour } from './days';
+import './timeline.css';
+
+const HOUR_PX = 32;
+const PLAY_MS = 700;
+
+export interface TimelineProps { times: string[]; levels: Level[]; hour: number; onPick: (h: number) => void }
+
+export function TimelineView({ times, levels, hour, onPick }: TimelineProps) {
+  const [playing, setPlaying] = useState(false);
+  const days = useMemo(() => daySegments(times), [times]);
+
+  useEffect(() => {
+    if (!playing) return;
+    const id = setTimeout(() => {
+      const n = nextPlayHour(hour, times.length);
+      if (n != null) onPick(n);
+      if (n == null || nextPlayHour(n, times.length) == null) setPlaying(false);
+    }, PLAY_MS);
+    return () => clearTimeout(id);
+  }, [playing, hour, times.length, onPick]);
+
+  const toggle = () => {
+    if (playing) { setPlaying(false); return; }
+    if (nextPlayHour(hour, times.length) == null) onPick(0);
+    setPlaying(true);
+  };
+
+  return (
+    <div className="tl">
+      <button className="tl-play" aria-label={playing ? 'Пауза' : 'Програти 48 год'} onClick={toggle}>
+        {playing ? '⏸' : '▶'}
+      </button>
+      <div className="tl-scroll">
+        <div className="tl-days" aria-hidden="true">
+          {days.map((d) => (
+            <span key={d.start} data-testid="day-mark" className="tl-day" title={d.title}
+              style={{ flexGrow: d.len, width: d.len * HOUR_PX }}>{d.label}</span>
+          ))}
+        </div>
+        <nav className="hours" aria-label="Година прогнозу">
+          {times.map((t, h) => (
+            <button key={t} data-hour={h} className={h === hour ? 'on' : ''} aria-pressed={h === hour}
+              style={{ background: LEVEL_COLOR[levels[h]] }}
+              aria-label={`${kyivHM(t)} ${levels[h]}`} onClick={() => { setPlaying(false); onPick(h); }}>
+              {kyivHM(t).slice(0, 2)}
+            </button>
+          ))}
+        </nav>
+      </div>
+    </div>
+  );
+}
 
 export function Timeline() {
   const { data, s, set } = useApp();
   const { series } = useVerdicts();
-  return (
-    <nav className="hours" aria-label="Година прогнозу">
-      {data.meta.times.map((t, h) => (
-        <button key={t} className={h === s.hour ? 'on' : ''} style={{ background: LEVEL_COLOR[series[h].level] }}
-          aria-label={`${kyivHM(t)} ${series[h].level}`} onClick={() => set({ hour: h })}>
-          {kyivHM(t).slice(0, 2)}
-        </button>
-      ))}
-    </nav>
-  );
+  const levels = useMemo(() => series.map((v) => v.level), [series]);
+  const onPick = useMemo(() => (h: number) => set({ hour: h }), [set]);
+  return <TimelineView times={data.meta.times} levels={levels} hour={s.hour} onPick={onPick} />;
 }
