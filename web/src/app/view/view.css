@@ -1,4 +1,5 @@
-/* Масштаб карти (issue #64): 2×2 праворуч унизу над шарами — не перекриває центр карти (тап по точці), «Зона» і «Знімок» ліворуч, легенду F3 праворуч угорі. */
-.viewctl{position:absolute;right:8px;bottom:60px;z-index:2;display:grid;grid-template-columns:auto auto;gap:4px}
-.viewctl button{min-width:44px;min-height:44px;padding:0 10px;background:rgba(28,33,23,.88);border:1px solid var(--rule);font-weight:700}
+/* Масштаб карти (issue #64): компактна сітка 2×2 з іконок ліворуч під «Зона» і «Знімок».
+   На 400 px карта ≈ 260 px заввишки: сітка (y 112–204) вміщається над смугою шарів і не перекриває центр карти (тап по точці). */
+.viewctl{position:absolute;top:112px;left:8px;z-index:2;display:grid;grid-template-columns:44px 44px;gap:4px}
+.viewctl button{width:44px;min-height:44px;padding:0;background:rgba(28,33,23,.88);border:1px solid var(--rule);font-weight:700;font-size:20px;line-height:1}
 .viewctl button:disabled{opacity:.5}

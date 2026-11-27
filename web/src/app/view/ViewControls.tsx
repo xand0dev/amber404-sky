@@ -87,8 +87,8 @@ export function ViewControls() {
     <div ref={ref} className="viewctl" role="group" aria-label="Масштаб карти">
       <button type="button" aria-label="Наблизити" onClick={() => zoomBy(BTN_FACTOR)}>+</button>
       <button type="button" aria-label="Віддалити" onClick={() => zoomBy(1 / BTN_FACTOR)}>−</button>
-      <button type="button" onClick={toZone} disabled={!z}>До зони</button>
-      <button type="button" onClick={() => setView(FULL_VIEW)}>Україна</button>
+      <button type="button" aria-label="До зони" title="До зони" onClick={toZone} disabled={!z}>◎</button>
+      <button type="button" aria-label="Україна" title="Вся Україна" onClick={() => setView(FULL_VIEW)}>⤢</button>
     </div>
   );
 }
