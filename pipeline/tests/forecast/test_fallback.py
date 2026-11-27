@@ -63,6 +63,7 @@ def test_open_meteo_down_uses_whole_previous_forecast_with_its_real_time():
     assert p["_status"] == "partial"
     assert "Open-Meteo недоступний" in p["_note"] and prof["generatedAt"] in p["_note"]
     assert p["generatedAt"] == prof["generatedAt"]  # старий час, не «зараз»
+    assert p["_fetchedAt"] == prof["generatedAt"]  # build → meta.sources.fetchedAt і meta.generatedAt
     assert p["times"] == meta["times"]
     assert p["spd"] == prof["spd"] and p["temp"] == prof["temp"]
 
@@ -71,6 +72,7 @@ def test_fresh_data_never_touches_pages():
     c, hosts = _client(_ok, _old(3))
     p = f.fetch(NOW, client=c, sleep=lambda s: None)
     assert p["_status"] == "ok"
+    assert "_fetchedAt" not in p  # свіжі дані — час збірки ставить build
     assert "xand0dev.github.io" not in hosts
 
 
@@ -108,3 +110,22 @@ def test_pages_unreachable_or_broken_is_nodata():
         p = f.fetch(NOW, client=c, sleep=lambda s: None)
         assert p["_status"] == "nodata"
         assert "times" not in p
+
+
+def test_build_end_to_end_meta_age_is_old_forecast_time(tmp_path, monkeypatch):
+    """Справжній build + fetch: Open-Meteo лежить → meta.generatedAt і fetchedAt = час старого прогнозу."""
+    from sky import build as b
+
+    prof, meta = _old(3)
+    mock_client, _ = _client(_down, (prof, meta))  # до підміни httpx.Client, інакше рекурсія
+    monkeypatch.setattr(httpx, "Client", lambda *a, **k: mock_client)
+    monkeypatch.setattr(f.fetch, "__defaults__", (None, lambda s: None))  # build кличе fetch(now) без sleep
+    monkeypatch.setattr(b, "REAL", {"profile": ("sky.forecast.fetch", "openmeteo")})
+    out = b.build(mock_only=False, out=tmp_path)
+    om = next(s for s in out["sources"] if s["id"] == "openmeteo")
+    assert om["status"] == "partial" and "Open-Meteo недоступний" in om["note"]
+    assert om["fetchedAt"] == prof["generatedAt"]
+    assert out["generatedAt"] == prof["generatedAt"]  # плашка віку: 3 год, а не «щойно»
+    assert out["times"] == meta["times"]
+    written = json.loads((tmp_path / "profile.json").read_text("utf-8"))
+    assert not any(k.startswith("_") for k in written) and written["spd"] == prof["spd"]

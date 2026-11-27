@@ -320,7 +320,8 @@ def _fetch(now: datetime, client: httpx.Client, sleep: Sleep) -> dict:
     if old is None:
         return p | {"_note": f"{why}; {p['_note']}"[:200]}
     note = f"Open-Meteo недоступний; показано прогноз від {old['generatedAt']} ({p['_note'][12:]})"
-    return old | {"_status": "partial", "_note": note[:200]}
+    # _fetchedAt — справжній час старого прогнозу: build ставить його в meta, і плашка віку чесна (AGENTS.md)
+    return old | {"_status": "partial", "_note": note[:200], "_fetchedAt": old["generatedAt"]}
 
 
 def fetch(now: datetime, client: httpx.Client | None = None, sleep: Sleep = time.sleep) -> dict:
