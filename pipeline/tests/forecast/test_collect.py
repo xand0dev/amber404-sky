@@ -203,8 +203,3 @@ def test_timeout_and_empty_response_are_retried():
     sleeps = Sleeps()
     assert f.get_batch(_client(handler), FIX[0]["points"], sleep=sleeps) == FIX[0]["response"]
     assert sleeps == [2.0, 4.0]
-
-
-def test_fetch_waits_for_packing_issue_2():
-    with pytest.raises(NotImplementedError):
-        f.fetch(None)
