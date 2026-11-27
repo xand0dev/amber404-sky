@@ -6,3 +6,4 @@ export * from './zone';
 export * from './route';
 export * from './shear';
 export * from './time';
+export * from './age';
