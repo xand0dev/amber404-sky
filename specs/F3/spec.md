@@ -46,6 +46,13 @@
 - T3 (AC6) `MapView.tsx`: `pointermove` (миша/перо) → підказка, `pointerleave` → немає; дотик — без підказки.
 - T4 тести: `hover.test.ts`, `MapView.test.tsx`.
 
+**#13 — 📷 знімок карти зі штампом:**
+- T1 `map/arrows.ts`: `drawWindArrows` — спільні стрілки для reduced motion і знімка.
+- T2 (AC7) `map/snapshot.ts`: `stampLines` (AMBER Sky, час прогнозу, висота, дрон, шар, вердикт у точці, джерела, MOCK; uk/en), `fileName`, `deliver` (share → AbortError → завантаження).
+- T3 (AC7) `map/compose.ts`: PNG з підкладки, поля, стрілок, зони й SVG-малюнків + штамп; лише локальні Canvas/SVG.
+- T4 (AC7) `map/SnapButton.tsx` + `snap.css`: кнопка 📷 44×44, статус у `aria-live`.
+- T5 тести: `snapshot.test.ts`, `SnapButton.test.tsx`.
+
 ## Відкриті питання
 | Питання | Хто | Коли | План Б |
 |---|---|---|---|
