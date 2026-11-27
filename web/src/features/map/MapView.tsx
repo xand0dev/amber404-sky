@@ -1,10 +1,11 @@
 // F3 (Іван): карта — плавне поле шару, кордони, міста, частинки вітру (reduced motion → стрілки), вибір точки, легенда.
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useApp } from '../../app/state';
 import { makeProjection, windAt } from '../../core';
 import { Legend } from '../layers/Legend';
 import { fieldPixels, nodeStep } from './field';
 import { WindParticles } from './WindParticles';
+import { HoverTip, type HoverPos } from './HoverTip';
 import { useReducedMotion } from './useReducedMotion';
 
 /** Поле рахуємо в сітці кожні FIELD_PX css-пікселів і згладжуємо при масштабуванні (≤ 300 мс, F3-AC2). */
@@ -15,6 +16,7 @@ export function MapView() {
   const { data, s, set } = useApp();
   const ref = useRef<MapCanvas>(null);
   const reduce = useReducedMotion();
+  const [hover, setHover] = useState<HoverPos | null>(null);
 
   useEffect(() => {
     const cv = ref.current;
@@ -78,9 +80,18 @@ export function MapView() {
           const r = cv.getBoundingClientRect();
           const [lat, lon] = cv.unproject?.(e.clientX - r.left, e.clientY - r.top) ?? [s.lat, s.lon];
           if (lat >= 44 && lat <= 52.5 && lon >= 22 && lon <= 40.5) set({ lat, lon });
-        }} />
+        }}
+        onPointerMove={(e) => {
+          // F3-AC6: підказка лише для миші/пера; на дотик тап обирає точку.
+          if (e.pointerType === 'touch') { setHover(null); return; }
+          const r = e.currentTarget.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
+          const [lat, lon] = makeProjection(r.width, r.height).unproject(x, y);
+          setHover({ x, y, lat, lon, W: r.width, H: r.height });
+        }}
+        onPointerLeave={() => setHover(null)} />
       {!reduce && <WindParticles />}
       <Legend />
+      {hover && <HoverTip at={hover} />}
     </>
   );
 }

@@ -1,0 +1,8 @@
+/* F3-AC6: підказка при наведенні. Не перехоплює мишу, не ширша за карту. */
+.hovertip{position:absolute;z-index:3;padding:6px 8px;background:rgba(17,21,14,.92);border:1px solid var(--rule);font-size:13px;line-height:1.3;pointer-events:none}
+.hovertip dl{margin:0;display:grid;gap:1px}
+.hovertip dl div{display:flex;gap:8px;justify-content:space-between}
+.hovertip dt{color:var(--dim)}
+.hovertip dd{margin:0;font-weight:600;text-align:right;font-variant-numeric:tabular-nums}
+.hovertip.lv-GO-tip{border-left:4px solid var(--go)}.hovertip.lv-CAUTION-tip{border-left:4px solid var(--cau)}
+.hovertip.lv-NO-GO-tip{border-left:4px solid var(--no)}.hovertip.lv-NO-DATA-tip{border-left:4px solid var(--rule)}
