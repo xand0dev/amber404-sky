@@ -107,6 +107,12 @@
 - T3 (AC1) `map/SnapButton.tsx`: на екрані < 420 px 📷 — у «⋯» (9 кнопок по 44 px не вміщуються); `ui/MapFrame.tsx`: торкання поза «⋯» закриває меню.
 - T4 (AC6, AC8) `Locate.test.tsx`: мок `navigator.geolocation` — успіх, відмова, таймаут, без API, поза рамкою, стеження вмик/вимик; жодного fetch / XHR / sendBeacon / localStorage / console. e2e `locate.spec.ts` (Playwright `geolocation`), `mobile.spec.ts` AC2.
 
+**#168 — частинки вітру: колір за швидкістю, шлейфи, 60 fps:**
+- T1 (AC1) `map/particles.ts`: `speedBucket` (12 кошиків на `SCALES.wind`), `bucketColors` — рампа легенди (`layerRGBA('wind')`), непрозора, +30 % до `--ink` (assumption: щоб читалась над полем того ж кольору); уночі `nightRamp`; `LINE_PX = 1.75` CSS px, `FADE = 0.06` (assumption).
+- T2 (AC2) `particleCount(W, H, zoom)`: телефон (вужча сторона < 600 px) — 1 частинка на 1400 px² замість 900, при наближенні × 1/√zoom (не менше 0,4), стеля 1500 (assumption). Бенчмарк `performance.now()` у `particles.test.ts`: крок + малювання на 1280×800 ≤ 8 мс (медіана).
+- T3 (AC1, AC3, AC5) `map/WindParticles.tsx`: `drawTrails` — один stroke на кошик; зміна вигляду → `clearRect` і нові частинки; `visibilitychange` → пауза; семплер бере актуальні дані й годину через ref.
+- T4 (AC6) `particles.test.ts`, `WindParticles.test.tsx`; знімки `img/168-{before,after}-{400x800,1280x800}.png`.
+
 ## Відкриті питання
 | Питання | Хто | Коли | План Б |
 |---|---|---|---|
