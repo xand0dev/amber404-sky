@@ -17,11 +17,28 @@ for (const [w, h] of [[375, 812], [400, 800]]) {
   test.describe(`${w}×${h}`, () => {
     test.use({ viewport: { width: w, height: h }, hasTouch: true });
 
-    test('AC1: карта займає ≥ 55% висоти першого екрана', async ({ page }) => {
+    // #143 (рішення Івана, замість «≥ 55% екрана» з #85): карта під висоту України — уся країна, без порожніх смуг,
+    // а вибір дрона — на першому екрані.
+    test('AC1: уся Україна по ширині, смуги над і під нею ≤ 60 px; дрон видно на першому екрані', async ({ page }) => {
       await open(page);
       const m = await box(page, 'canvas.map');
-      const visible = Math.min(m.y + m.height, h) - Math.max(m.y, 0);
-      expect(visible / h).toBeGreaterThanOrEqual(0.55);
+      const r = await page.locator('canvas.map').evaluate((cv: HTMLCanvasElement & { unproject?: (x: number, y: number) => [number, number] }) => {
+        const [latTop, lonL] = cv.unproject!(0, 0), [latBot, lonR] = cv.unproject!(cv.clientWidth, cv.clientHeight);
+        return { latTop, latBot, lonL, lonR };
+      });
+      // Рамка України: 52.6…43.9° пн. ш., 21.9…40.6° сх. д. (core MAP_BOX).
+      expect(r.lonL).toBeLessThanOrEqual(21.9 + 0.01);
+      expect(r.lonR).toBeGreaterThanOrEqual(40.6 - 0.01);
+      expect(r.latTop).toBeGreaterThanOrEqual(52.6);
+      expect(r.latBot).toBeLessThanOrEqual(43.9);
+      const pxPerDeg = m.height / (r.latTop - r.latBot);
+      expect((r.latTop - 52.6) * pxPerDeg).toBeLessThanOrEqual(60);
+      expect((43.9 - r.latBot) * pxPerDeg).toBeLessThanOrEqual(60);
+      // Легенда й підпис зони — нижче південного узбережжя Криму (~44.4°).
+      const crimeaY = m.y + (r.latTop - 44.4) * pxPerDeg;
+      for (const sel of ['.legend', '.zonecap .zonetxt']) expect((await box(page, sel)).y, sel).toBeGreaterThanOrEqual(crimeaY);
+      const drone = await page.getByRole('combobox').first().boundingBox();
+      expect(drone!.y + drone!.height).toBeLessThanOrEqual(h);
     });
 
     test('AC2: один ряд інструментів ≤ 48 px над картою, кнопки ≥ 44 px, решта в «⋯»', async ({ page }) => {

@@ -16,3 +16,9 @@
 .mapmore{position:absolute;top:100%;right:var(--sp-1);display:grid;gap:var(--sp-1);min-width:160px;padding:var(--sp-1);background:var(--panel);border:1px solid var(--rule)}
 .mapmore[hidden]{display:none}
 .mapmore button{padding:0 var(--sp-3);text-align:left}
+/* Issue #143: книжковий телефон — карта під висоту України (рамка 18.7° × 8.7° у проєкції cos 48.5°: висота = 70.2% ширини)
+   + 104 px: зверху атрибуція, знизу легенда й підпис зони, щоб не накривати Крим. Вся країна без порожніх смуг, а дрон і
+   висота — на першому екрані. Альбомний телефон і десктоп (#86) — як були. */
+@media (max-width:1023px) and (orientation:portrait){
+  .shell>.mapwrap{min-height:0;height:calc(70.2vw + 104px)}
+}
