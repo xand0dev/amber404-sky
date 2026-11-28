@@ -94,5 +94,17 @@ export interface City {
   lon: number;
 }
 
+/** static/relief.json (SPEC §7.6a, `cop-dem`). Рядок 0 = lat0 — ПІВДЕНЬ, не як у Grid:
+ *  точка (r, c) — lat0 + r·step, lon0 + c·step; індекс r * nc + c. */
+export interface Relief {
+  source: 'cop-dem' | string;
+  lat0: number; // південь, рядок 0
+  lon0: number; // захід, стовпець 0
+  step: number; // градуси
+  nr: number;
+  nc: number;
+  elev: (number | null)[]; // цілі метри н. р. м.; null — море (≤ 0 м)
+}
+
 export const DATA_FILES = ['meta', 'profile', 'galileo', 'kp', 'climate'] as const;
 export type DataFile = (typeof DATA_FILES)[number];

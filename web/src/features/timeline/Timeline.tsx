@@ -2,10 +2,17 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useApp } from '../../app/state';
 import { useVerdicts } from '../../app/useVerdict';
-import { kyivHM, type Level } from '../../core';
+import { useT } from '../../app/lang';
+import { kyivHM, type Lang, type Level } from '../../core';
 import { LEVEL_COLOR } from '../layers/colors';
 import { daySegments, nextPlayHour } from './days';
 import './timeline.css';
+
+// Доступні імена смуги uk/en (issue #116).
+const S: Record<Lang, { play: string; pause: string; hours: string }> = {
+  uk: { play: 'Програти 48 год', pause: 'Пауза', hours: 'Година прогнозу' },
+  en: { play: 'Play 48 h', pause: 'Pause', hours: 'Forecast hour' },
+};
 
 const HOUR_PX = 32;
 const PLAY_MS = 700;
@@ -14,7 +21,9 @@ export interface TimelineProps { times: string[]; levels: Level[]; hour: number;
 
 export function TimelineView({ times, levels, hour, onPick }: TimelineProps) {
   const [playing, setPlaying] = useState(false);
-  const days = useMemo(() => daySegments(times), [times]);
+  const { lang } = useT();
+  const L = S[lang];
+  const days = useMemo(() => daySegments(times, 2, lang), [times, lang]);
 
   useEffect(() => {
     if (!playing) return;
@@ -34,7 +43,7 @@ export function TimelineView({ times, levels, hour, onPick }: TimelineProps) {
 
   return (
     <div className="tl">
-      <button className="tl-play" aria-label={playing ? 'Пауза' : 'Програти 48 год'} onClick={toggle}>
+      <button className="tl-play" aria-label={playing ? L.pause : L.play} onClick={toggle}>
         {playing ? '⏸' : '▶'}
       </button>
       <div className="tl-scroll">
@@ -44,7 +53,7 @@ export function TimelineView({ times, levels, hour, onPick }: TimelineProps) {
               style={{ flexGrow: d.len, width: d.len * HOUR_PX }}>{d.label}</span>
           ))}
         </div>
-        <nav className="hours" aria-label="Година прогнозу">
+        <nav className="hours" aria-label={L.hours}>
           {times.map((t, h) => (
             <button key={t} data-hour={h} className={h === hour ? 'on' : ''} aria-pressed={h === hour}
               style={{ background: LEVEL_COLOR[levels[h]] }}

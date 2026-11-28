@@ -17,6 +17,7 @@ const files = [
   ['profiles', 'web/public/data/static/profiles.json'],
   ['cities', 'web/public/data/static/cities.json'],
   ['borders', 'web/public/data/static/borders.json'],
+  ['relief', 'web/public/data/static/relief.json'],
 ];
 let bad = 0;
 for (const [schema, file] of files) {
