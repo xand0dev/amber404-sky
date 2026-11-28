@@ -81,18 +81,51 @@ def test_fresh_data_never_touches_pages():
     assert "xand0dev.github.io" not in hosts
 
 
-def test_partial_fresh_is_kept_never_mixed_with_old():
-    second = f.grid_points()[114]  # перша точка пакета 2 — він падає і в основному проході, і у фінальній спробі
+SECOND = f.grid_points()[114]  # перша точка пакета 2
 
-    def om(req: httpx.Request) -> httpx.Response:
-        first = (float(req.url.params["latitude"].split(",")[0]), float(req.url.params["longitude"].split(",")[0]))
-        return httpx.Response(429) if first == second else _ok(req)
 
-    c, hosts = _client(om, _old(3))
+def _south_down(req: httpx.Request) -> httpx.Response:
+    """Пакет 2 падає і в основному проході, і у фінальній спробі; решта — ок. Бракує 114 / 684 ≈ 17 % точок."""
+    first = (float(req.url.params["latitude"].split(",")[0]), float(req.url.params["longitude"].split(",")[0]))
+    return httpx.Response(429) if first == SECOND else _ok(req)
+
+
+def test_partial_fresh_with_complete_previous_uses_whole_previous():
+    """#139 C: свіжий partial (бракує > 10 %) + попередній ok ≤ 12 год → цілий попередній, нічого не змішуємо."""
+    prof, meta = _old(3)
+    c, _ = _client(_south_down, (prof, meta))
+    p = f.fetch(NOW, client=c, sleep=lambda s: None)
+    assert p["_status"] == "partial"
+    assert "неповний" in p["_note"] and prof["generatedAt"] in p["_note"] and "пакет 2" in p["_note"]
+    assert p["_fetchedAt"] == p["generatedAt"] == prof["generatedAt"]
+    assert p["times"] == meta["times"]
+    assert p["spd"] == prof["spd"] and p["temp"] == prof["temp"]  # усі точки — зі старого, жодної свіжої
+
+
+def test_partial_fresh_kept_when_previous_was_partial_too():
+    """Попередній сам неповний (або сам план Б) — не кращий; лишаємо свіжий з діркою, не змішуємо."""
+    c, _ = _client(_south_down, _old(3, status="partial"))
     p = f.fetch(NOW, client=c, sleep=lambda s: None)
     assert p["_status"] == "partial" and "пакет 2" in p["_note"]
+    assert "_fetchedAt" not in p
     assert all(p["temp"][0][i] is None for i in range(114, 228))  # дірка лишається діркою
-    assert "xand0dev.github.io" not in hosts
+    assert all(p["temp"][0][i] is not None for i in range(114))  # свіже — свіже
+
+
+def test_partial_fresh_kept_when_previous_too_old_or_unreachable():
+    for pages in (_old(13), None, "broken"):
+        c, _ = _client(_south_down, pages)
+        p = f.fetch(NOW, client=c, sleep=lambda s: None)
+        assert p["_status"] == "partial" and "пакет 2" in p["_note"]
+        assert "_fetchedAt" not in p
+        assert all(p["temp"][0][i] is None for i in range(114, 228))
+
+
+def test_missing_share_threshold():
+    """Поріг #139 C: план Б для partial — лише якщо бракує понад 10 % точок сітки."""
+    assert f.PARTIAL_MAX_MISSING == 0.10
+    assert f.missing_share([None] * 68 + [{}] * 616) <= f.PARTIAL_MAX_MISSING  # 68 / 684 ≈ 9.9 %
+    assert f.missing_share([None] * 114 + [{}] * 570) > f.PARTIAL_MAX_MISSING  # один пакет ≈ 16.7 %
 
 
 def test_previous_older_than_12h_is_not_used():
