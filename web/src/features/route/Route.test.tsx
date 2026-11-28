@@ -10,14 +10,30 @@ function view(extra: Partial<Parameters<typeof RouteView>[0]> = {}) {
   const sum = routeSummary(A, B, 15, 100, () => [0, 5], () => false);
   return render(
     <RouteView a={A} b={B} altM={100} summary={sum} battery={batteryCheck(sum.route, 480)} usableS={480} why="паспорт 10 хв"
-      onSetA={() => {}} onSetB={() => {}} onClear={() => {}} {...extra} />,
+      onPick={() => {}} onClear={() => {}} {...extra} />,
   );
 }
 
 describe('F4-AC3: режим маршруту на екрані', () => {
-  it('без точок — підказка поставити A і B', () => {
-    render(<RouteView a={null} b={null} altM={100} summary={null} battery={null} usableS={480} why="" onSetA={() => {}} onSetB={() => {}} onClear={() => {}} />);
-    expect(screen.getByText(/Поставте A і B/)).toBeTruthy();
+  it('без B — пояснення, навіщо маршрут, і одна кнопка «Обрати B на карті»', () => {
+    render(<RouteView a={A} b={null} altM={100} summary={null} battery={null} usableS={480} why="" onPick={() => {}} onClear={() => {}} />);
+    expect(screen.getByText(/вистачить батареї/)).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Обрати B на карті' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /Скинути/ })).toBeNull();
+    expect(screen.queryAllByTestId('cut-bar')).toHaveLength(0);
+  });
+  it('режим вибору — підказка тапнути карту й «Скасувати»', () => {
+    let n = 0;
+    render(<RouteView a={A} b={null} altM={100} summary={null} battery={null} usableS={480} why="" picking onPick={() => {}} onCancel={() => n++} onClear={() => {}} />);
+    expect(screen.getByRole('status').textContent).toMatch(/Торкніться карти/);
+    fireEvent.click(screen.getByRole('button', { name: 'Скасувати' }));
+    expect(n).toBe(1);
+  });
+  it('A = B (ближче 300 м) — без розрізу й вердикту, просимо точку далі', () => {
+    render(<RouteView a={A} b={{ lat: 50.001, lon: 30 }} altM={100} summary={null} battery={null} usableS={480} why="" onPick={() => {}} onClear={() => {}} />);
+    expect(screen.getByText(/ближче ніж 300 м/)).toBeTruthy();
+    expect(screen.queryAllByTestId('cut-bar')).toHaveLength(0);
+    expect(screen.queryByTestId('route-battery')).toBeNull();
   });
   it('розріз: 40 стовпців, попутний і зустрічний', () => {
     view();
@@ -33,29 +49,28 @@ describe('F4-AC3: режим маршруту на екрані', () => {
     expect(screen.getByText(/Найкраща висота/).parentElement?.textContent).toMatch(/\d+ м/);
     expect(screen.getByTestId('route-battery').textContent).toMatch(/GO|CAUTION|NO-GO/);
   });
-  it('кнопки A, B і скинути', () => {
+  it('з B — «Змінити B» і «Скинути»', () => {
     let n = 0;
-    view({ onSetA: () => n++, onSetB: () => n++, onClear: () => n++ });
-    fireEvent.click(screen.getByRole('button', { name: /A = точка/ }));
-    fireEvent.click(screen.getByRole('button', { name: /B = точка/ }));
-    fireEvent.click(screen.getByRole('button', { name: /Скинути/ }));
-    expect(n).toBe(3);
+    view({ onPick: () => n++, onClear: () => n++ });
+    fireEvent.click(screen.getByRole('button', { name: 'Змінити B' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Скинути' }));
+    expect(n).toBe(2);
   });
 });
 
 describe('uk/en: маршрут англійською (SPEC §11 — англійські рядки інтерфейсу)', () => {
-  it('Given EN Then заголовок, кнопки, підказка англійською', () => {
-    render(<RouteView a={null} b={null} altM={100} summary={null} battery={null} usableS={480} why="" lang="en" onSetA={() => {}} onSetB={() => {}} onClear={() => {}} />);
+  it('Given EN Then заголовок, кнопка, пояснення англійською', () => {
+    render(<RouteView a={A} b={null} altM={100} summary={null} battery={null} usableS={480} why="" lang="en" onPick={() => {}} onClear={() => {}} />);
     expect(screen.getByRole('region', { name: 'Route A → B' })).toBeTruthy();
     expect(screen.getByRole('heading').textContent).toBe('Route A → B · 100 m');
-    for (const n of ['A = point', 'B = point', 'Reset']) expect(screen.getByRole('button', { name: n })).toBeTruthy();
-    expect(screen.getByText(/Set A and B/)).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Pick B on the map' })).toBeTruthy();
+    expect(screen.getByText(/battery/)).toBeTruthy();
     expect(document.body.textContent).not.toMatch(/[А-Яа-яІіЇїЄє]/);
   });
   it('Given EN і маршрут Then значення, розріз і батарея англійською, без кирилиці', () => {
     const sum = routeSummary(A, B, 15, 100, () => [0, 5], () => false);
     render(<RouteView a={A} b={B} altM={100} summary={sum} battery={batteryCheck(sum.route, 480, false, 'en')} usableS={480} why="datasheet 10 min" lang="en"
-      onSetA={() => {}} onSetB={() => {}} onClear={() => {}} />);
+      onPick={() => {}} onClear={() => {}} />);
     expect(screen.getByText('Out').parentElement?.textContent).toMatch(/min$/);
     expect(screen.getByText('Max headwind').parentElement?.textContent).toContain('5.0 m/s');
     expect(screen.getByText('Distance').parentElement?.textContent).toMatch(/km/);

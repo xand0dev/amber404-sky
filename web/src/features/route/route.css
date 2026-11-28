@@ -6,3 +6,12 @@
 .route .cutlbl{font-size:var(--fs-s);fill:var(--dim)}
 .route .battery{border-left:4px solid;padding:var(--sp-1) var(--sp-2);background:var(--base);margin:var(--sp-2) 0}
 .route .hint{color:var(--dim);font-size:var(--fs-m)}
+.route .primary{background:var(--ink);color:var(--base);border-color:var(--ink);font-weight:700}
+.route .hint{margin:var(--sp-1) 0}
+/* Шар маршруту на карті: лінія A → B; у режимі вибору — прозорий шар ловить тап. */
+.routecv{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.routepick{position:absolute;inset:0;z-index:3;cursor:crosshair;background:transparent}
+.routebanner{position:absolute;top:8px;left:50%;transform:translateX(-50%);margin:0;display:flex;gap:var(--sp-2);align-items:center;
+  padding:var(--sp-1) var(--sp-1) var(--sp-1) var(--sp-3);background:var(--base);color:var(--ink);border:2px solid var(--ink);border-radius:var(--r);
+  font-weight:700;white-space:nowrap;max-width:calc(100% - 16px);cursor:default}
+.routebanner span{overflow:hidden;text-overflow:ellipsis}

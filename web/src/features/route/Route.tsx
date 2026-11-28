@@ -1,13 +1,18 @@
-// F4 (Оля): маршрут A → B (SPEC §7.5a, F4-AC3). Точки лише в стані браузера — на сервер не йдуть.
-import { useMemo, useState } from 'react';
+// F4 (Оля): маршрут A → B (SPEC §7.5a, F4-AC3). A — обрана точка (старт), B — тап по карті (RouteLayer).
+// Точки лише в пам'яті сторінки — на сервер не йдуть.
+import { useMemo } from 'react';
 import { useApp } from '../../app/state';
 import { useT } from '../../app/lang';
-import { effectiveEndurance, evaluate, usableSeconds, weatherAt, windAt, type Lang, type Level, type Pt, type Wind3Fn } from '../../core';
+import { distanceM, effectiveEndurance, evaluate, usableSeconds, weatherAt, windAt, type Lang, type Level, type Pt, type Wind3Fn } from '../../core';
 import { LEVEL_COLOR } from '../layers/colors';
 import { batteryCheck, routeSummary, type RouteSummary } from './routeLogic';
 import { energyInput, energyWhy, type AnyProfile } from '../panel/zoneLogic';
 import { pt as tr, type PKey } from '../panel/strings';
+import { resetRoute, setRoute, useRoute } from './routeStore';
 import './route.css';
+
+/** Ближче — маршрут не має сенсу (A і B майже збігаються). */
+export const MIN_ROUTE_M = 300;
 
 const n1 = (x: number) => x.toFixed(1);
 const min = (s: number | null, lang: Lang) => (s == null ? tr('rt.cant', lang) : `${(s / 60).toFixed(1)} ${tr('unit.min', lang)}`);
@@ -17,7 +22,8 @@ export interface RouteViewProps {
   a: Pt | null; b: Pt | null; altM: number;
   summary: RouteSummary | null; battery: { level: Level; reasons: string[] } | null;
   usableS: number; why: string;
-  onSetA: () => void; onSetB: () => void; onClear: () => void;
+  picking?: boolean;
+  onPick: () => void; onCancel?: () => void; onClear: () => void;
   lang?: Lang; // без провайдера мови — українська
 }
 
@@ -45,20 +51,26 @@ function Cut({ cut, lang }: { cut: RouteSummary['cut']; lang: Lang }) {
   );
 }
 
-export function RouteView({ a, b, altM, summary, battery, usableS, why, onSetA, onSetB, onClear, lang = 'uk' }: RouteViewProps) {
+export function RouteView({ a, b, altM, summary, battery, usableS, why, picking = false, onPick, onCancel = () => {}, onClear, lang = 'uk' }: RouteViewProps) {
   const L = (k: PKey, p?: Record<string, string | number>) => tr(k, lang, p);
   const m = L('unit.m'), ms = L('unit.ms');
+  const near = !!(a && b && distanceM(a, b) < MIN_ROUTE_M);
   return (
     <section className="route" aria-label={L('rt')}>
       <h3>{L('rt')} · {altM} {m}</h3>
+      <p className="hint">{L('rt.why')}</p>
       <div className="routebtns">
-        <button type="button" onClick={onSetA}>{L('rt.setA')}</button>
-        <button type="button" onClick={onSetB}>{L('rt.setB')}</button>
-        <button type="button" onClick={onClear}>{L('rt.clear')}</button>
+        {picking ? (
+          <button type="button" className="primary" aria-pressed="true" onClick={onCancel}>{L('rt.cancel')}</button>
+        ) : (
+          <button type="button" className="primary" onClick={onPick}>{L(b ? 'rt.change' : 'rt.pick')}</button>
+        )}
+        {b && !picking && <button type="button" onClick={onClear}>{L('rt.clear')}</button>}
       </div>
-      <p className="coord">A: {pt(a)} · B: {pt(b)}</p>
-      {!summary || !battery ? (
-        <p className="hint">{L('rt.hint')}</p>
+      {picking && <p className="hint" role="status">{L('rt.tapMap')}</p>}
+      {b && <p className="coord">A: {pt(a)} · B: {pt(b)}</p>}
+      {!b || picking ? null : near || !summary || !battery ? (
+        <p className="hint">{L('rt.near', { m: MIN_ROUTE_M })}</p>
       ) : (
         <>
           <Cut cut={summary.cut} lang={lang} />
@@ -83,19 +95,19 @@ export function RouteView({ a, b, altM, summary, battery, usableS, why, onSetA, 
 export function Route() {
   const { data, s } = useApp();
   const { lang } = useT();
-  const [a, setA] = useState<Pt | null>(null);
-  const [b, setB] = useState<Pt | null>(null);
+  const { b, picking } = useRoute();
+  const a: Pt = useMemo(() => ({ lat: s.lat, lon: s.lon }), [s.lat, s.lon]);
   const prof: AnyProfile = data.profiles.find((p) => p.id === s.droneId) ?? data.profiles[0];
 
   const calc = useMemo(() => {
     const src = { meta: data.meta, profile: data.profile, kp: data.kp, galileo: data.galileo };
-    const tA = a ? weatherAt(src, a.lat, a.lon, 10, s.hour).t : null;
+    const tA = weatherAt(src, a.lat, a.lon, 10, s.hour).t;
     // Свій дрон (F4-AC6): вантаж і паливо з профілю, якщо є.
     const ei = energyInput(prof, tA);
     const e = effectiveEndurance(ei);
     const why = energyWhy(ei, lang);
     const usableS = usableSeconds(e.min);
-    if (!a || !b) return { usableS, why, summary: null, battery: null };
+    if (!b || distanceM(a, b) < MIN_ROUTE_M) return { usableS, why, summary: null, battery: null };
     const wind: Wind3Fn = (lat, lon, alt) => windAt(data.meta.grid, data.profile, alt, s.hour, lat, lon);
     const mid = { lat: (a.lat + b.lat) / 2, lon: (a.lon + b.lon) / 2 };
     // assumption: NO-GO висоти перевіряємо в A, середині й B маршруту.
@@ -104,9 +116,13 @@ export function Route() {
     return { usableS, why, summary, battery: batteryCheck(summary.route, usableS, summary.noData, lang) };
   }, [data, prof, a, b, s.altM, s.hour, lang]);
 
+  const pick = () => {
+    setRoute({ picking: true });
+    // На телефоні панель під картою — показуємо карту, щоб було куди тапнути.
+    document.querySelector('.map')?.scrollIntoView?.({ behavior: 'smooth', block: 'center' });
+  };
   return (
-    <RouteView a={a} b={b} altM={s.altM} lang={lang} {...calc}
-      onSetA={() => setA({ lat: s.lat, lon: s.lon })} onSetB={() => setB({ lat: s.lat, lon: s.lon })}
-      onClear={() => { setA(null); setB(null); }} />
+    <RouteView a={a} b={b} altM={s.altM} lang={lang} picking={picking} {...calc}
+      onPick={pick} onCancel={() => setRoute({ picking: false })} onClear={resetRoute} />
   );
 }

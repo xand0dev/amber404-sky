@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { useCallback, useMemo, useState } from 'react';
 import type { DroneProfile } from '../../contracts';
 import { AppCtx, useApp, type AppState } from '../../app/state';
@@ -7,6 +7,7 @@ import type { Bundle } from '../../app/data';
 import { Panel } from './Panel';
 import { dropOwn, fromProfile, loadOwn, OWN_ID, OWN_KEY, saveOwn, toProfile, upsertOwn, validate } from './ownDroneStore';
 import { fixture } from './fixture.test-util';
+import { resetRoute, setRoute } from '../route/routeStore';
 
 const FPV: DroneProfile = {
   id: 'fpv7', name: 'FPV 7″', use: '', massKg: 1, energy: 'battery', enduranceMin: 10, cruiseMs: 22, windMs: 10, gustMs: 13,
@@ -95,10 +96,10 @@ describe('F4-AC6: свій дрон у панелі', () => {
     expect(screen.getByTestId('zone-time').textContent).toMatch(/вантаж 0.35/);
     // Маршрут: та сама розкладка.
     const route = screen.getByRole('region', { name: /Маршрут/ });
-    fireEvent.click(within(route).getByRole('button', { name: 'A = точка' }));
-    fireEvent.click(screen.getByRole('button', { name: 'move' }));
-    fireEvent.click(within(route).getByRole('button', { name: 'B = точка' }));
+    // A — обрана точка, B — тап по карті (RouteLayer пише в routeStore).
+    act(() => setRoute({ b: { lat: 50.6, lon: 30.6 } }));
     expect(within(route).getByText(/вантаж 0.35/)).toBeTruthy();
+    act(() => resetRoute());
     // Лише localStorage.
     expect(JSON.parse(localStorage.getItem(OWN_KEY) ?? '{}')).toMatchObject({ windMs: 4, payloadKg: 2 });
     expect(screen.getByRole('status').textContent).toMatch(/рахуються за своїм дроном/);
