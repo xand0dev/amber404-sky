@@ -77,11 +77,11 @@ def test_fresh_data_never_touches_pages():
 
 
 def test_partial_fresh_is_kept_never_mixed_with_old():
-    seen = {"n": 0}
+    second = f.grid_points()[114]  # перша точка пакета 2 — він падає і в основному проході, і у фінальній спробі
 
     def om(req: httpx.Request) -> httpx.Response:
-        seen["n"] += 1
-        return httpx.Response(429) if 2 <= seen["n"] <= 7 else _ok(req)
+        first = (float(req.url.params["latitude"].split(",")[0]), float(req.url.params["longitude"].split(",")[0]))
+        return httpx.Response(429) if first == second else _ok(req)
 
     c, hosts = _client(om, _old(3))
     p = f.fetch(NOW, client=c, sleep=lambda s: None)

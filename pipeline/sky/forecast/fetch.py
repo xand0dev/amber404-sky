@@ -1,6 +1,7 @@
 """Прогноз Open-Meteo (SPEC §6.2, §7.1, §8): 684 вузли сітки → запити пакетами ≤ 120 точок.
 
-F1-AC1: пауза між пакетами; 429 / 5xx / таймаут / порожня відповідь → повтор з наростаючою паузою до 5 разів;
+F1-AC1: пауза між пакетами; 429 / 5xx / таймаут / порожня відповідь → повтор з паузою до 5 разів
+(#139: на 429 — `Retry-After` або ≥ 60 с; усі паузи запуску — у бюджеті 15 хв; пакети, що не пройшли, — ще раз у кінці);
 кожна відповідь перевіряється (кількість точок = розмір пакета, `times` = спільні для всіх пакетів).
 F1-AC2: пакет, що так і не завантажився, дає `None` для своїх точок і статус `partial` з причиною.
 Дані іншого пакета чи попереднього запуску ніколи не підставляються.
@@ -26,9 +27,13 @@ from ..contracts import GRID, HOURS, LEVELS, NPTS, point
 
 URL = "https://api.open-meteo.com/v1/forecast"
 BATCH = 114  # 684 = 6 × 114, ліміт Open-Meteo — ≤ 120 точок за запит (§8)
-PAUSE_S = 1.5  # між пакетами; на 6-му запиті без паузи був 429 (§8)
+PAUSE_S = 10.0  # між пакетами; 1.5 с не вистачало — 28.11 пакети 5–6 отримали 429 (#139)
 RETRIES = 5
-BACKOFF_S = 2.0  # паузи повторів: 2, 4, 8, 16, 32 с
+BACKOFF_S = 2.0  # паузи повторів на 5xx / таймаут: 2, 4, 8, 16, 32 с
+MIN_429_S = 60.0  # на 429 без Retry-After: ліміти Open-Meteo хвилинні й годинні (§8)
+MAX_RETRY_AFTER_S = 300.0
+TAIL_PAUSE_S = 60.0  # перед фінальною спробою пакетів, що не пройшли
+SLEEP_BUDGET_S = 900.0  # усі паузи одного запуску — не більше 15 хв, щоб деплой не зависав
 TIMEOUT_S = 30.0
 
 HOURLY = (
@@ -89,18 +94,49 @@ def _check(data: object, n: int) -> list[dict]:
     return data
 
 
-def get_batch(client: httpx.Client, batch: Sequence[Point], sleep: Sleep = time.sleep) -> list[dict]:
-    """Один пакет з повторами. Після 5 повторів — BatchError з останньою причиною."""
+class Budget:
+    """Скільки секунд пауз ще можна витратити за запуск (спільний для всіх пакетів)."""
+
+    def __init__(self, seconds: float = SLEEP_BUDGET_S) -> None:
+        self.left = seconds
+
+    def take(self, s: float) -> bool:
+        if s > self.left:
+            return False
+        self.left -= s
+        return True
+
+
+def _wait_429(r: httpx.Response) -> float:
+    try:
+        return min(max(float(r.headers["Retry-After"]), 0.0), MAX_RETRY_AFTER_S)
+    except (KeyError, ValueError):
+        return MIN_429_S
+
+
+def get_batch(
+    client: httpx.Client, batch: Sequence[Point], sleep: Sleep = time.sleep, budget: Budget | None = None
+) -> list[dict]:
+    """Один пакет з повторами. Після 5 повторів або коли вичерпано бюджет пауз — BatchError з причиною."""
+    budget = budget or Budget()
     reason = ""
+    wait = 0.0
     for attempt in range(RETRIES + 1):
         if attempt:
-            sleep(BACKOFF_S * 2 ** (attempt - 1))
+            if not budget.take(wait):
+                raise BatchError(f"{reason}; бюджет повторів вичерпано")
+            sleep(wait)
+        wait = BACKOFF_S * 2**attempt  # пауза перед наступним повтором, якщо знадобиться
         try:
             r = client.get(URL, params=request_params(batch), timeout=TIMEOUT_S)
         except httpx.HTTPError as e:
             reason = f"{type(e).__name__}"
             continue
-        if r.status_code == 429 or r.status_code >= 500:
+        if r.status_code == 429:
+            reason = "HTTP 429"
+            wait = _wait_429(r)
+            continue
+        if r.status_code >= 500:
             reason = f"HTTP {r.status_code}"
             continue
         if r.status_code != 200:
@@ -126,21 +162,34 @@ def collect(
 ) -> Collected:
     out: list[dict | None] = [None] * len(points)
     times: list[str] = []
-    errors: list[tuple[int, str]] = []
+    failed: dict[int, str] = {}
     parts = batches(points, size)
-    for b, batch in enumerate(parts):
-        if b:
-            sleep(pause_s)
+    budget = Budget()
+
+    def one(b: int) -> None:
+        nonlocal times
+        batch = parts[b]
         try:
-            data = get_batch(client, batch, sleep)
+            data = get_batch(client, batch, sleep, budget)
             t = data[0]["hourly"]["time"]
             if any(pt["hourly"]["time"] != t for pt in data) or (times and t != times):
                 raise BatchError("times не збігаються з іншими пакетами")
         except BatchError as e:
-            errors.append((b + 1, str(e)))
-            continue  # точки пакета лишаються None — нічого не підставляємо
+            failed[b] = str(e)  # точки пакета лишаються None — нічого не підставляємо
+            return
+        failed.pop(b, None)
         times = times or t
-        out[b * size : b * size + len(batch)] = data
+        out[b * size : b * size + len(batch)] = data  # пакет цілим, лише власні дані
+
+    for b in range(len(parts)):
+        if b and budget.take(pause_s):  # бюджет вичерпано — Open-Meteo однаково відмовляє, паузи зайві
+            sleep(pause_s)
+        one(b)
+    if failed and len(failed) < len(parts) and budget.take(TAIL_PAUSE_S):
+        sleep(TAIL_PAUSE_S)  # фінальна спроба: вікно ліміту встигло звільнитись (#139)
+        for b in sorted(failed):
+            one(b)
+    errors = sorted((b + 1, why) for b, why in failed.items())
     if not errors:
         return Collected(times, out, "ok")
     note = "Open-Meteo: " + "; ".join(f"пакет {b}/{len(parts)}: {why}" for b, why in errors)
