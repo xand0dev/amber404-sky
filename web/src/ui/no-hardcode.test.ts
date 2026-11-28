@@ -12,8 +12,6 @@ const read = (f: string) => readFileSync(f, 'utf8');
 const CSS_FILES = Object.fromEntries(walk(SRC).filter((f) => f.endsWith('.css')).map((f) => [relative(SRC, f), read(f)]));
 const TS_CSS = Object.fromEntries(['app/night.ts', 'app/lang.tsx'].map((f) => [f, read(join(SRC, f))]));
 
-// Папки F4 (SPEC §9) — окремий PR з гілки feat/F4-88-tokens: guard не пускає їх у PR F3. Прибрати після його мержу.
-const PENDING_F4 = ['features/panel/panel.css', 'features/route/route.css'];
 
 const COLOR = /#[0-9a-f]{3,8}\b|\brgba?\(|\bhsla?\(/i;
 const SPACING_PROP = /^(padding|margin|gap|row-gap|column-gap)(-(top|right|bottom|left|inline|block))?$/;
@@ -55,7 +53,8 @@ describe('AC3: без захардкоджених кольорів, шрифт�
     expect(violations('.a{color:#fff;font-size:13px;padding:0 6px}')).toHaveLength(3);
     expect(violations('.a{color:var(--ink);font-size:var(--fs-s);padding:0 var(--sp-2);gap:2px;margin:0}')).toEqual([]);
   });
-  const files = Object.entries(CSS_FILES).filter(([f]) => !PENDING_F4.includes(f));
+  // Усі фічі F0–F4 (F4 перейшла на токени в #134).
+  const files = Object.entries(CSS_FILES);
   it('є що перевіряти', () => expect(files.length).toBeGreaterThan(10));
   for (const [f, css] of files) it(f, () => expect(violations(css)).toEqual([]));
   for (const [f, src] of Object.entries(TS_CSS)) it(f, () => expect(violations(cssInTs(src))).toEqual([]));
