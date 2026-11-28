@@ -1,0 +1,9 @@
+/* Issue #169: підпис демо-туру внизу екрана. Лише токени (#88); нічний режим перефарбовує токени сам. */
+.demo-cap{position:fixed;left:50%;bottom:var(--sp-3);transform:translateX(-50%);z-index:80;width:min(640px,calc(100vw - 16px));display:grid;grid-template-columns:1fr auto;align-items:center;gap:var(--sp-1) var(--sp-2);padding:var(--sp-2) var(--sp-3);background:var(--panel);color:var(--ink);border:1px solid var(--cau);border-radius:var(--r)}
+.demo-bar{grid-column:1 / -1;height:3px;background:var(--rule);border-radius:var(--r-round);overflow:hidden}
+.demo-bar span{display:block;height:100%;background:var(--cau);transition:width .1s linear}
+.demo-n{grid-column:1 / -1;font-size:var(--fs-s);color:var(--dim)}
+.demo-t{font-size:var(--fs-l);font-weight:600;line-height:1.35;animation:demo-in .4s ease-out}
+.demo-skip{align-self:end}
+@keyframes demo-in{from{opacity:0}to{opacity:1}}
+@media (prefers-reduced-motion: reduce){.demo-bar span{transition:none}.demo-t{animation:none}}

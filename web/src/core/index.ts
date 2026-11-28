@@ -13,4 +13,5 @@ export * from './i18n';
 export * from './affine';
 export * from './projection';
 export * from './geojson';
+export * from './demo';
 export * from './profileHours';
