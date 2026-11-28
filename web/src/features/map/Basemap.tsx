@@ -1,5 +1,7 @@
 // Issue #100 (SPEC §7.6a): підкладка під полем погоди — Без / Рельєф / Супутник / Своя карта (§7.14, F0 — як є).
 // Окремий canvas під canvas.map у спільній проєкції (#64); вибір і прозорість — у localStorage; атрибуція — у куті карти.
+// Issue #130: вибір відкриває кнопка «Підкладка» в ряду інструментів; кнопку форми «Своя карта» (Overlay, F0) ховає CSS,
+// а форму відкриваємо її ж кліком лише після вибору «Своя карта». OK, Esc чи клік поза вікном закривають вибір.
 import { useEffect, useRef, useState } from 'react';
 import { useT } from '../../app/lang';
 import { useView } from '../../app/view/view';
@@ -10,13 +12,21 @@ import { loadBaseImage, setBasemap, useBasemap } from './basemapStore';
 import './basemap.css';
 
 const TXT = {
-  uk: { btn: 'Підкладка карти', menu: 'Підкладка', op: 'Прозорість погоди', own: 'Файл і прив’язка — кнопка ▦ «Підкладка»; прозорість — там само.' },
-  en: { btn: 'Basemap', menu: 'Basemap', op: 'Weather transparency', own: 'File and anchors — the ▦ “Underlay” button; transparency is there too.' },
+  uk: { btn: 'Підкладка', menu: 'Підкладка', op: 'Прозорість погоди', own: 'Файл і прив’язка' },
+  en: { btn: 'Underlay', menu: 'Basemap', op: 'Weather transparency', own: 'File and anchors' },
 };
 const ICON: Record<BaseId, string> = { none: '∅', relief: '⛰', satellite: '🛰', own: '▦' };
 
+/** Відкрити чи закрити форму «Своя карта» (F0) її власною кнопкою — стан форми живе в Overlay. */
+function ownForm(want: boolean) {
+  const b = document.querySelector<HTMLButtonElement>('button.ovbtn');
+  if (b && (b.getAttribute('aria-expanded') === 'true') !== want) b.click();
+}
+
 export function Basemap() {
   const ref = useRef<HTMLCanvasElement>(null);
+  const btn = useRef<HTMLButtonElement>(null);
+  const panel = useRef<HTMLElement>(null);
   const { base, wxTransp } = useBasemap();
   const { view } = useView();
   const { lang } = useT();
@@ -65,22 +75,39 @@ export function Basemap() {
     return () => { alive = false; };
   }, [base, size, view]);
 
+  // Esc і клік поза вікном (і поза кнопкою) закривають вибір.
+  useEffect(() => {
+    if (!open) return;
+    const away = (e: PointerEvent) => {
+      const t = e.target as Node;
+      if (!panel.current?.contains(t) && !btn.current?.contains(t)) setOpen(false);
+    };
+    const esc = (e: KeyboardEvent) => { if (e.key === 'Escape') { setOpen(false); btn.current?.focus(); } };
+    document.addEventListener('pointerdown', away);
+    document.addEventListener('keydown', esc);
+    return () => { document.removeEventListener('pointerdown', away); document.removeEventListener('keydown', esc); };
+  }, [open]);
+
+  const toggle = () => { if (!open) ownForm(false); setOpen(!open); };
+  const setupOwn = () => { setOpen(false); ownForm(true); };
+  const choose = (id: BaseId) => { setBasemap({ base: id }); if (id === 'own') setupOwn(); };
+
   const image = base === 'relief' || base === 'satellite';
   return (
     <>
       <canvas ref={ref} className="basemap" aria-hidden="true" hidden={!image} />
       <p className="baseattr">{attribution(base, lang)}</p>
-      <InBar slot="more">
-        <button type="button" className="basebtn" aria-expanded={open} onClick={() => setOpen(!open)}>
-          <span aria-hidden="true">{ICON[base]} </span>{tx.btn}
+      <InBar>
+        <button ref={btn} type="button" className="basebtn" title={tx.btn} aria-expanded={open} onClick={toggle}>
+          <span className="tb-ico" aria-hidden="true">{ICON[base]}</span><span className="tb-txt">{tx.btn}</span>
         </button>
       </InBar>
       {open && (
-        <section className="basepanel" aria-label={tx.menu}>
+        <section ref={panel} className="basepanel" aria-label={tx.menu}>
           <div role="radiogroup" aria-label={tx.menu} className="basegroup">
             {BASE_IDS.map((id) => (
               <label key={id}>
-                <input type="radio" name="basemap" value={id} checked={base === id} onChange={() => setBasemap({ base: id })} />
+                <input type="radio" name="basemap" value={id} checked={base === id} onChange={() => choose(id)} />
                 {BASE_NAME[lang][id]}
               </label>
             ))}
@@ -91,7 +118,7 @@ export function Basemap() {
                 onChange={(e) => setBasemap({ wxTransp: Number(e.target.value) })} />
             </label>
           )}
-          {base === 'own' && <p className="basenote">{tx.own}</p>}
+          {base === 'own' && <button type="button" className="baseown" onClick={setupOwn}><span aria-hidden="true">▦ </span>{tx.own}</button>}
           <button type="button" className="baseclose" onClick={() => setOpen(false)}>OK</button>
         </section>
       )}

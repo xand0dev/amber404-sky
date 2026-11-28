@@ -1,5 +1,7 @@
 // Issue #100 (§7.6a): меню «Підкладка», збереження вибору, повзунок прозорості, атрибуція, лише статичні файли.
+// Issue #130: одна кнопка «Підкладка» відкриває вибір; форма «Своя карта» (F0) — лише після вибору; OK / Esc / клік поза вікном закривають.
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { useState } from 'react';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { Basemap } from './Basemap';
 import { BASE_KEY } from './basemaps';
@@ -13,7 +15,7 @@ beforeEach(() => {
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
 
 const show = () => render(<div className="mapwrap"><Basemap /></div>);
-const openMenu = () => fireEvent.click(screen.getByRole('button', { name: 'Підкладка карти' }));
+const openMenu = () => fireEvent.click(screen.getByRole('button', { name: 'Підкладка' }));
 
 describe('Given меню «Підкладка» (AC1)', () => {
   it('Без / Рельєф / Супутник / Своя карта; типово — Без', () => {
@@ -34,6 +36,68 @@ describe('Given меню «Підкладка» (AC1)', () => {
     const { container } = show(); openMenu();
     fireEvent.click(screen.getByRole('radio', { name: 'Супутник' }));
     expect(container.querySelector<HTMLElement>('.mapwrap')?.dataset.base).toBe('satellite');
+  });
+});
+
+// Замість Overlay (F0): та сама кнопка .ovbtn, що відкриває/закриває форму прив'язки.
+function withOverlay() {
+  const clicks: boolean[] = [];
+  const Ov = () => {
+    const [open, setOpen] = useState(false);
+    return <button type="button" className="ovbtn" aria-expanded={open} onClick={() => { clicks.push(!open); setOpen(!open); }}>▦</button>;
+  };
+  const r = render(<div className="mapwrap"><Ov /><Basemap /></div>);
+  return { ...r, clicks };
+}
+
+describe('Given одна кнопка «Підкладка» (issue #130)', () => {
+  it('кнопка «Підкладка» відкриває саме вибір, а пункту «Підкладка карти» більше немає', () => {
+    show();
+    expect(screen.queryByRole('button', { name: 'Підкладка карти' })).toBeNull();
+    expect(screen.queryByRole('radiogroup')).toBeNull();
+    openMenu();
+    expect(screen.getByRole('radiogroup', { name: 'Підкладка' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Підкладка' }).getAttribute('aria-expanded')).toBe('true');
+  });
+  it('OK закриває вікно', () => {
+    show(); openMenu();
+    fireEvent.click(screen.getByRole('button', { name: 'OK' }));
+    expect(screen.queryByRole('radiogroup')).toBeNull();
+  });
+  it('Esc закриває вікно', () => {
+    show(); openMenu();
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(screen.queryByRole('radiogroup')).toBeNull();
+  });
+  it('клік поза вікном закриває, клік усередині — ні', () => {
+    const { container } = show(); openMenu();
+    fireEvent.pointerDown(screen.getByRole('radio', { name: 'Рельєф' }));
+    expect(screen.queryByRole('radiogroup')).not.toBeNull();
+    fireEvent.pointerDown(container.querySelector('.mapwrap')!);
+    expect(screen.queryByRole('radiogroup')).toBeNull();
+  });
+  it('форма прив\'язки не відкривається з кнопкою, а лише після вибору «Своя карта»', () => {
+    const { clicks } = withOverlay(); openMenu();
+    expect(clicks).toEqual([]);
+    fireEvent.click(screen.getByRole('radio', { name: 'Рельєф' }));
+    expect(clicks).toEqual([]);
+    fireEvent.click(screen.getByRole('radio', { name: 'Своя карта' }));
+    expect(clicks).toEqual([true]);
+    // Вибір закривається, щоб не лежати поверх форми.
+    expect(screen.queryByRole('radiogroup')).toBeNull();
+  });
+  it('відкриття вибору закриває форму; «Файл і прив’язка» повертає її лише для «Своєї карти»', () => {
+    const { clicks } = withOverlay(); openMenu();
+    fireEvent.click(screen.getByRole('radio', { name: 'Своя карта' }));
+    openMenu();
+    expect(clicks).toEqual([true, false]);
+    fireEvent.click(screen.getByRole('button', { name: 'Файл і прив’язка' }));
+    expect(clicks).toEqual([true, false, true]);
+    openMenu();
+    expect(clicks).toEqual([true, false, true, false]);
+    fireEvent.click(screen.getByRole('radio', { name: 'Без' }));
+    expect(clicks).toEqual([true, false, true, false]);
+    expect(screen.queryByRole('button', { name: 'Файл і прив’язка' })).toBeNull();
   });
 });
 
