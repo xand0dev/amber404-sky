@@ -1,9 +1,41 @@
 /* Панель точки (F4). Кольори, шрифти й відступи — токени (ui/tokens.ts, issue #88); кнопки — база ui/base.css. */
 .panel{min-width:0}.panel>section,.panel>details{min-width:0;max-width:100%}
 .point{margin-top:var(--sp-2)}
-.pointhead{display:flex;align-items:center;justify-content:space-between;gap:var(--sp-2)}
-.pointhead h2{font-size:var(--fs-xl);line-height:1.2;margin:0;overflow-wrap:anywhere}
-.lvl{font-weight:700;font-size:var(--fs-m);padding:2px var(--sp-2);border-radius:var(--r);color:var(--on-lv);white-space:nowrap}
+/* Вердикт-герой (#171 AC1): колір рівня, велике слово, місце, рядок «чому»; колір змінюється плавно. */
+.hero{padding:var(--sp-2) var(--sp-3) var(--sp-3);border-radius:var(--r);color:var(--on-lv);min-width:0;transition:background-color .4s ease,color .4s ease,box-shadow .4s ease}
+.hero.lv-NO-DATA{color:var(--ink)}
+.hero .word{display:block;overflow-wrap:anywhere}
+.hero h2{font-size:var(--fs-xl);line-height:1.2;margin-top:var(--sp-1);overflow-wrap:anywhere}
+.hero .hwhy{margin-top:2px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* Уночі заливка рівня чорна (app/night.ts) — рівень видно смужкою внизу, як у плашці статусу. */
+:root[data-theme="night"] .hero{border:1px solid var(--rule)}
+:root[data-theme="night"] .hero.lv-GO{box-shadow:inset 0 -3px 0 var(--ink)}
+:root[data-theme="night"] .hero.lv-CAUTION{box-shadow:inset 0 -6px 0 var(--ink)}
+:root[data-theme="night"] .hero.lv-NO-GO{box-shadow:inset 0 -10px 0 var(--ink)}
+@media (prefers-reduced-motion:reduce){.hero{transition:none}}
+/* Чипи причин (#171 AC2): найгірша перша, рівень — кольором і товщиною лівої смужки. */
+.chips{list-style:none;padding:0;margin-top:var(--sp-2);display:flex;flex-wrap:wrap;gap:var(--sp-1);max-width:100%}
+.chip{display:inline-flex;align-items:center;gap:var(--sp-1);min-height:32px;max-width:100%;padding:2px var(--sp-2);background:var(--base);border:1px solid var(--rule);border-left-width:4px;border-radius:var(--r);font-size:var(--fs-m);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.chip b{font-weight:700}.chip small{font-size:var(--fs-s);color:var(--dim)}
+.chip .ico{flex:0 0 auto;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.chip.sev-no{border-color:var(--no);border-left-width:8px}.chip.sev-no .ico{color:var(--no-ink)}
+.chip.sev-cau{border-left-color:var(--cau);border-left-width:6px}.chip.sev-cau .ico{color:var(--cau-ink)}
+.chip.sev-ok{border-left-color:var(--go)}
+.chip.sev-nodata{color:var(--dim);border-left-style:dashed}
+/* Вітер на 12 год (#171 AC3) */
+.spark{margin-top:var(--sp-2);max-width:100%;min-width:0}
+.spark figcaption{font-size:var(--fs-s);color:var(--dim)}
+.spark svg{display:block;width:100%;height:64px;background:var(--base)}
+.spark .sp-b{fill-opacity:.4}.spark .sp-b.on{fill-opacity:.9}
+.spark .sp-GO{fill:var(--go)}.spark .sp-CAUTION{fill:var(--cau)}.spark .sp-NO-GO{fill:var(--no)}.spark .sp-NO-DATA{fill:var(--no-data)}
+.spark .sp-lim{stroke:var(--no-ink);stroke-width:1.5;stroke-dasharray:4 3;vector-effect:non-scaling-stroke}
+.spark .sp-line{fill:none;stroke:var(--ink);stroke-width:2;stroke-linejoin:round;vector-effect:non-scaling-stroke}
+.spaxis{display:flex;justify-content:space-between;gap:var(--sp-2);font-size:var(--fs-s);color:var(--dim);font-variant-numeric:tabular-nums}
+.spaxis .splim{color:var(--no-ink)}
+/* Картки погоди (#171 AC4): однакова сітка, вирівняні числа, одиниці дрібніше. */
+.point .vals{grid-auto-rows:1fr}
+.point .vals dd{font-variant-numeric:tabular-nums;font-size:var(--fs-l)}
+.point .vals dd small{font-size:var(--fs-s);font-weight:500;color:var(--dim)}
 .arrow{display:inline-block;margin-right:var(--sp-1);font-weight:700;line-height:1}
 .win{margin-top:var(--sp-1);font-size:var(--fs-m)}.win span{color:var(--dim);margin-right:var(--sp-1)}
 .limits{margin-top:var(--sp-1);font-size:var(--fs-s);color:var(--dim);overflow-wrap:anywhere}
