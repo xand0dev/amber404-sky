@@ -339,9 +339,15 @@ def _log(p: dict) -> None:
 
 PAGES = "https://xand0dev.github.io/amber404-sky/data/"
 FALLBACK_MAX_H = 12  # assumption: старіший прогноз уже не допомагає вирішити «летіти чи ні»
+PARTIAL_MAX_MISSING = 0.10  # #139 C, assumption: бракує більше — краще цілий попередній повний прогноз
 
 
-def previous(client: httpx.Client, now: datetime) -> tuple[dict | None, str]:
+def missing_share(points: Sequence[dict | None]) -> float:
+    """Частка точок сітки без відповіді Open-Meteo (пакет не прийшов)."""
+    return sum(pt is None for pt in points) / len(points) if points else 1.0
+
+
+def previous(client: httpx.Client, now: datetime, need_ok: bool = False) -> tuple[dict | None, str]:
     """План Б §12 (#93): цілий попередній профіль з Pages (profile/index.json + години, #165), якщо він справжній
     і не старший за 12 год. Повертає (профіль з times, причина відмови)."""
     try:
@@ -360,6 +366,8 @@ def previous(client: httpx.Client, now: datetime) -> tuple[dict | None, str]:
         return None, f"попередній прогноз недоступний ({type(e).__name__})"
     if src.get("status") not in ("ok", "partial"):
         return None, "у попередньому прогнозі теж немає даних Open-Meteo"
+    if need_ok and src.get("status") != "ok":
+        return None, "попередній прогноз теж неповний"
     if (now - gen).total_seconds() > FALLBACK_MAX_H * 3600:
         return None, f"попередній прогноз старший за {FALLBACK_MAX_H} год"
     if len(times) != HOURS or len(prof.get("spd") or []) != len(LEVELS):
@@ -368,9 +376,23 @@ def previous(client: httpx.Client, now: datetime) -> tuple[dict | None, str]:
 
 
 def _fetch(now: datetime, client: httpx.Client, sleep: Sleep) -> dict:
-    p = pack(collect(grid_points(), client, sleep), now)
-    if p["_status"] != "nodata":
-        return p  # ok або partial — свіжі дані, ніколи не змішуємо зі старими
+    col = collect(grid_points(), client, sleep)
+    p = pack(col, now)
+    if p["_status"] == "ok":
+        return p
+    if p["_status"] == "partial":
+        # #139 C: свіжий без частини сітки → цілий попередній повний прогноз; інакше свіжий з діркою. Не змішуємо.
+        miss = missing_share(col.points)
+        if miss <= PARTIAL_MAX_MISSING:
+            return p
+        old, why = previous(client, now, need_ok=True)
+        if old is None:
+            return p | {"_note": f"{p['_note']}; план Б: {why}"[:200]}
+        note = (
+            f"Свіжий прогноз неповний ({miss:.0%} сітки без даних); "
+            f"показано повний від {old['generatedAt']} ({p['_note'][12:]})"
+        )
+        return old | {"_status": "partial", "_note": note[:200], "_fetchedAt": old["generatedAt"]}
     old, why = previous(client, now)
     if old is None:
         return p | {"_note": f"{why}; {p['_note']}"[:200]}
