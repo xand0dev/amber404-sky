@@ -1,4 +1,4 @@
-# AMBER Sky — five-slide pitch
+# AMBER Sky — six-slide pitch
 
 Presenter notes: Nastia and Maksym present in English. This outline describes the product specified in the repository; show only features available in the demonstrated build. Keep source, forecast time, MOCK labels and missing-data or stale-data warnings visible. Use public demonstration imagery without crew locations or operational routes.
 
@@ -12,15 +12,18 @@ Presenter notes: Nastia and Maksym present in English. This outline describes th
 
 **Sources:** [SPEC, user and requirements](../SPEC.md#2-користувач); [Submission, problem and users](submission.md#description); [Demo, jury answer 5](demo.md#5-why-use-this-instead-of-windy-or-uav-forecast).
 
-## Slide 2: Solution — weather and profile verdicts on one map
+## Slide 2: Product — weather and profile verdicts on one map
 
 - AMBER Sky brings altitude-aware wind, cloud base, gusts and icing together on a weather map of Ukraine.
 - A selected point and drone profile provide GO / CAUTION / NO-GO with reasons and the next weather window; the timeline covers 48 hours.
 - GO means “within profile”, never “safe”; missing data stays missing data. This is a demonstration model, not an official forecast or flight clearance.
+- Optional online maps — OpenStreetMap streets and EOX Sentinel-2 cloudless satellite tiles — require an explicit choice with an OPSEC warning: the map server sees which area you view.
+- “My location” centres the map on the browser-provided position and shows an accuracy circle.
+- The static satellite basemap loads sharper image pieces when zooming in; these are shared static files, separate from the optional online satellite tiles.
 
 **What to show:** [SCREENSHOT PLACEHOLDER — replace with the demonstrated build.] Capture a public demonstration point with the wind map, selected profile and altitude, point panel and timeline. Preserve source, forecast time and warnings. If a feature is unavailable, label it unavailable rather than supplying an invented result.
 
-**Sources:** [Submission, product description](submission.md#description); [Demo, recording notes](demo.md#recording-notes); [Demo, screen sequence](demo.md#30-second-demo).
+**Sources:** [Submission, product description](submission.md#description); [Demo, recording notes](demo.md#recording-notes); [Demo, screen sequence](demo.md#30-second-demo); [SPEC §7.6a, basemaps](../SPEC.md#76a-підкладки-рельєф-супутник-вода-v15); [My location implementation](../../web/src/features/map/Locate.tsx).
 
 ## Slide 3: EU space data — Copernicus ERA5 and Galileo
 
@@ -51,3 +54,13 @@ Presenter notes: Nastia and Maksym present in English. This outline describes th
 **What to show:** Five name-and-role cards using the submission's handles: Oleksandr @xand0dev; Maksym @kingsneverdie17; Nastia @Bulka0801; Ivan @gonivanko; Olia @oljyaaa. Mark Nastia and Maksym as presenters and Ivan as the on-site contact.
 
 **Sources:** [Submission, team and roles](submission.md#team-and-roles); [Demo, presenters](demo.md).
+
+## Slide 6: Privacy by design
+
+- The app, forecast data and default offline basemaps are served as static files, the same for everyone, without an application backend.
+- “My location” is handled in the browser: the position is not sent to the server by the app, logged or saved to local storage.
+- Online tiles load only after an explicit choice. The OPSEC warning explains that tile requests reveal the viewed area to the map provider; the online choice is not restored after restart.
+
+**What to show:** The basemap menu with its online-map warning beside a diagram of shared static files and browser-local position. Use a public demonstration point, never a crew location.
+
+**Sources:** [SPEC §5, static architecture](../SPEC.md#5-архітектура); [SPEC §7.11, offline and OPSEC](../SPEC.md#711-телефон-і-офлайн-pwa); [SPEC §7.6a, explicit online choice](../SPEC.md#76a-підкладки-рельєф-супутник-вода-v15); [My location implementation](../../web/src/features/map/Locate.tsx); [Basemap preferences](../../web/src/features/map/basemaps.ts).

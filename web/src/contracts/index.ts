@@ -44,6 +44,32 @@ export interface Profile {
   vis: Field2; // м / 100
 }
 
+/** §6.2 (#165): на диску профіль розбитий за годинами — profile/index.json + profile/hNN.json.
+ *  Сайт збирає їх у Profile (core/profileHours); година, якої ще нема, — undefined (= немає даних). */
+export type ProfileVar = 'spd' | 'dir' | 'gust' | 'temp' | 'precip' | 'rh' | 'vis';
+
+export interface ProfileIndex {
+  generatedAt: string;
+  sources: string[];
+  grid: Grid;
+  levels: number[];
+  vars: { id: string; perLevel: boolean; unit: string }[];
+  hours: { t: string; file: string }[]; // 48 годин, file — «h00.json» у теці profile/
+}
+
+export interface ProfileHour {
+  generatedAt: string; // = index.generatedAt, інакше година з іншого запуску
+  hour: number;
+  t: string;
+  spd: (number | null)[][]; // [рівень][точка]
+  dir: (number | null)[][];
+  gust: (number | null)[]; // [точка]
+  temp: (number | null)[];
+  precip: (number | null)[];
+  rh: (number | null)[];
+  vis: (number | null)[];
+}
+
 export interface Galileo {
   generatedAt: string;
   sources: string[];
@@ -107,5 +133,6 @@ export interface Relief {
   elev: (number | null)[]; // цілі метри н. р. м.; null — море (≤ 0 м)
 }
 
-export const DATA_FILES = ['meta', 'profile', 'galileo', 'kp', 'climate'] as const;
+// Години профілю (profile/hNN.json) перелічені в profile/index.json.
+export const DATA_FILES = ['meta', 'profile/index', 'galileo', 'kp', 'climate'] as const;
 export type DataFile = (typeof DATA_FILES)[number];

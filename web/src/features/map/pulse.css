@@ -1,0 +1,8 @@
+/* Issue #167: пульсуюче бурштинове кільце обраної точки — окремий шар над картою; статичне кільце — на canvas.map.
+   Токени — #88; уночі — червоне (#36); prefers-reduced-motion — без анімації. Кліки проходять до карти. */
+.pulsebox{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+.pulse{position:absolute;left:0;top:0;width:0;height:0;pointer-events:none}
+.pulse-ring{position:absolute;left:-10px;top:-10px;width:20px;height:20px;box-sizing:border-box;border:2px solid var(--cau);border-radius:50%;opacity:0;animation:amber-pulse 1.8s ease-out infinite}
+@keyframes amber-pulse{0%{transform:scale(1);opacity:.9}100%{transform:scale(3.2);opacity:0}}
+:root[data-theme="night"] .pulse-ring{border-color:var(--ink)}
+@media (prefers-reduced-motion: reduce){.pulse-ring{animation:none;opacity:0}}

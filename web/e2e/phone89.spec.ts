@@ -1,6 +1,9 @@
 // Прогін демо на телефоні (issue #89): правки, знайдені в сценарії «відкрити → дрон → висота → тап → зона → знімок».
 import { expect, test, type Page } from '@playwright/test';
 
+// Онбординг першого відкриття (#166) лягає поверх карти — у цих тестах його вже пройдено.
+test.beforeEach(({ page }) => page.addInitScript(() => localStorage.setItem('amber404.tour', '1')));
+
 async function open(page: Page, night = false) {
   await page.addInitScript((n) => localStorage.setItem('amber404.night', n ? '1' : '0'), night);
   await page.goto('./');

@@ -3,6 +3,9 @@
 // Назви міст малюються на canvas — їх перевіряє unit-тест map/translit.test.ts.
 import { expect, test } from '@playwright/test';
 
+// Онбординг першого відкриття (#166) лягає поверх карти — у цих тестах його вже пройдено.
+test.beforeEach(({ page }) => page.addInitScript(() => localStorage.setItem('amber404.tour', '1')));
+
 const CYR = /[Ѐ-ӿ]/;
 
 test('EN: смуга годин, ряд інструментів, карта й легенда — без кирилиці в тексті й aria-label/title', async ({ page }) => {
