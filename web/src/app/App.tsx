@@ -6,6 +6,7 @@ import { registerSW } from './pwa';
 import { ThemeProvider } from './theme';
 import { LangProvider, useT } from './lang';
 import { Overlay } from './overlay/Overlay';
+import { RouteLayer } from '../features/route/RouteLayer';
 import { ZoneLayer } from './zone/ZoneLayer';
 import { Draw } from './draw/Draw';
 import { ViewCtx, type ViewState } from './view/view';
@@ -54,7 +55,7 @@ function Main({ ctx, vctx }: { ctx: Ctx; vctx: ViewState }) {
     <ViewCtx.Provider value={vctx}>
       <div className="shell">
         <StatusBar />
-        <MapFrame><Overlay /><MapView /><ZoneLayer /><Draw /><ViewControls /><Onboarding /></MapFrame>
+        <MapFrame><Overlay /><MapView /><ZoneLayer /><RouteLayer /><Draw /><ViewControls /><Onboarding /></MapFrame>
         <LayerPicker />
         <Timeline />
         <Panel />
