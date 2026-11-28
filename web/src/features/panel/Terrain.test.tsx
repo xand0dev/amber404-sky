@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import type { Grid } from '../../contracts';
+import reliefJson from '../../../public/data/static/relief.json';
 import { TerrainView, resetReliefCache, useRelief } from './Terrain';
 import { cellRange, isMountain, isReliefGrid, loadRelief, MOUNTAIN_RANGE_M, terrainAt, type ReliefGrid } from './relief';
 
@@ -9,20 +10,20 @@ afterEach(() => { cleanup(); vi.unstubAllGlobals(); resetReliefCache(); });
 // Сітка прогнозу як у meta.json (§6.1, §7.1).
 const FG: Grid = { lat0: 52.5, lon0: 22, step: 0.5, nr: 18, nc: 38 };
 
-/** Синтетична сітка висот 0,05° (формат #98): рядок 0 — північ. */
+/** Синтетична сітка висот 0,05° (контракт Relief): рядок 0 — ПІВДЕНЬ (lat0). */
 function relief(lat0: number, lon0: number, nr: number, nc: number, f: (lat: number, lon: number) => number | null): ReliefGrid {
   const elev: (number | null)[] = [];
   for (let r = 0; r < nr; r++) for (let c = 0; c < nc; c++) {
-    const v = f(lat0 - r * 0.05, lon0 + c * 0.05);
+    const v = f(lat0 + r * 0.05, lon0 + c * 0.05);
     elev.push(v == null ? null : Math.round(v));
   }
   return { source: 'cop-dem', lat0, lon0, step: 0.05, nr, nc, elev };
 }
 
 // Рівнина під Києвом: 150–190 м.
-const PLAIN = relief(51.0, 30.0, 21, 21, (la, lo) => 150 + (51 - la) * 20 + (lo - 30) * 20);
+const PLAIN = relief(50.0, 30.0, 21, 21, (la, lo) => 150 + (51 - la) * 20 + (lo - 30) * 20);
 // Карпати: конус до 2000 м навколо Говерли (48.16, 24.50) на тлі 600 м.
-const CARP = relief(48.5, 24.0, 11, 21, (la, lo) => 600 + Math.max(0, 1400 - Math.hypot(la - 48.16, (lo - 24.5) * 0.67) * 7000));
+const CARP = relief(48.0, 24.0, 11, 21, (la, lo) => 600 + Math.max(0, 1400 - Math.hypot(la - 48.16, (lo - 24.5) * 0.67) * 7000));
 
 describe('#101 AC1: висота місцевості в точці', () => {
   it('Given рівнина під Києвом When точка Then висота з сітки (білінійно)', () => {
@@ -39,11 +40,11 @@ describe('#101 AC1: висота місцевості в точці', () => {
     expect(t.kind === 'land' && t.elevM > 1800).toBe(true);
   });
   it('море (null у вузлах) → «море», не 0 м', () => {
-    const sea = relief(46.5, 30.5, 3, 3, () => null);
+    const sea = relief(46.4, 30.5, 3, 3, () => null);
     expect(terrainAt(sea, 46.45, 30.55)).toEqual({ kind: 'sea' });
   });
   it('берег: частина вузлів море → найближчий вузол', () => {
-    const coast = relief(46.5, 30.5, 2, 2, (_la, lo) => (lo > 30.52 ? null : 12));
+    const coast = relief(46.45, 30.5, 2, 2, (_la, lo) => (lo > 30.52 ? null : 12));
     expect(terrainAt(coast, 46.49, 30.51)).toEqual({ kind: 'land', elevM: 12 });
     expect(terrainAt(coast, 46.46, 30.54)).toEqual({ kind: 'sea' });
   });
@@ -70,7 +71,7 @@ describe('#101 AC2: перепад висот у клітинці прогноз
     expect(isMountain(null)).toBe(false);
   });
   it('море не входить у перепад; немає сітки → null', () => {
-    const half = relief(46.5, 30.5, 11, 11, (la) => (la > 46.25 ? 40 : null));
+    const half = relief(46.0, 30.5, 11, 11, (la) => (la > 46.25 ? 40 : null));
     expect(cellRange(half, FG, 46.3, 30.7)).toBe(0);
     expect(cellRange(null, FG, 50.45, 30.52)).toBeNull();
   });
@@ -118,5 +119,34 @@ describe('#101 AC1–AC3: на екрані', () => {
     render(<TerrainView terrain={{ kind: 'land', elevM: 1890 }} range={1320} lang="en" />);
     expect(screen.getByTestId('terrain').textContent).toContain('Terrain 1890 m a.s.l. · flight altitudes are above ground');
     expect(screen.getByTestId('terrain-mtn').textContent).toContain('mountains: forecast grid ~50 km, local wind may differ');
+  });
+});
+
+describe('контракт Relief (#128): рядок 0 — південь', () => {
+  it('висота росте на північ — значить і в точці північніше більше', () => {
+    const north = relief(48.0, 30.0, 11, 3, (la) => Math.round((la - 48) * 1000)); // 0 м на півдні, 500 м на півночі
+    const s = terrainAt(north, 48.05, 30.05), n = terrainAt(north, 48.45, 30.05);
+    expect(s.kind === 'land' && n.kind === 'land' && n.elevM > s.elevM).toBe(true);
+    if (n.kind === 'land') expect(n.elevM).toBeCloseTo(450, 0);
+  });
+});
+
+describe('справжній static/relief.json (Copernicus DEM, #98)', () => {
+  const real: unknown = reliefJson;
+  it('відповідає контракту', () => expect(isReliefGrid(real)).toBe(true));
+  const g = real as ReliefGrid;
+  const FGR: Grid = { lat0: 52.5, lon0: 22, step: 0.5, nr: 18, nc: 38 };
+  it('Київ: 50–250 м, без плашки «гори»', () => {
+    const t = terrainAt(g, 50.45, 30.52);
+    expect(t.kind === 'land' && t.elevM > 50 && t.elevM < 250).toBe(true);
+    expect(isMountain(cellRange(g, FGR, 50.45, 30.52))).toBe(false);
+  });
+  it('Говерла: гори (перепад у клітинці > 500 м); висота > 900 м на сітці 0,15°', () => {
+    const t = terrainAt(g, 48.16, 24.5);
+    expect(t.kind === 'land' && t.elevM > 900).toBe(true);
+    expect(isMountain(cellRange(g, FGR, 48.16, 24.5))).toBe(true);
+  });
+  it('Чорне море під Одесою — море', () => {
+    expect(terrainAt(g, 46.3, 31.0)).toEqual({ kind: 'sea' });
   });
 });

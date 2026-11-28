@@ -1,15 +1,11 @@
 // F4 #101 (SPEC §7.6a): висота місцевості в точці й перепад висот у клітинці прогнозу. Чистий TS без DOM, крім loadRelief.
-import type { Grid } from '../../contracts';
+import type { Grid, Relief } from '../../contracts';
 
 /**
- * Сітка висот Copernicus DEM (`static/relief.json`, формат з issue #98).
- * TODO(contract): типу ще немає в web/src/contracts — запит F0 окремою issue з міткою `contract`.
- * assumption: рядок 0 = lat0 (північ), стовпець 0 = lon0 (захід), індекс r * nc + c — як у meta.grid (§6.1).
+ * Сітка висот Copernicus DEM (`static/relief.json`, контракт `Relief`, #102 / #128).
+ * Рядок 0 = lat0 — ПІВДЕНЬ (не як meta.grid): вузол (r, c) — lat0 + r·step, lon0 + c·step, індекс r·nc + c.
  */
-export interface ReliefGrid {
-  source: string; lat0: number; lon0: number; step: number; nr: number; nc: number;
-  elev: (number | null)[]; // цілі метри н. р. м., null — море
-}
+export type ReliefGrid = Relief;
 
 export const RELIEF_PATH = './data/static/relief.json';
 /** Перепад висот у клітинці прогнозу, після якого показуємо плашку «гори» (SPEC §7.6a). */
@@ -41,7 +37,7 @@ export type Terrain =
 /** Висота в точці: білінійно по 4 вузлах; якщо серед них є море — найближчий вузол. */
 export function terrainAt(g: ReliefGrid | null, lat: number, lon: number): Terrain {
   if (!g) return { kind: 'nodata' };
-  const fr = (g.lat0 - lat) / g.step, fc = (lon - g.lon0) / g.step;
+  const fr = (lat - g.lat0) / g.step, fc = (lon - g.lon0) / g.step; // рядки — з півдня на північ
   if (fr < 0 || fc < 0 || fr > g.nr - 1 || fc > g.nc - 1) return { kind: 'nodata' };
   const r0 = Math.min(Math.floor(fr), g.nr - 2), c0 = Math.min(Math.floor(fc), g.nc - 2);
   const dr = fr - r0, dc = fc - c0;
@@ -65,7 +61,7 @@ export function cellRange(g: ReliefGrid | null, fg: Grid, lat: number, lon: numb
   const north = fg.lat0 - r0 * fg.step, south = north - fg.step;
   const west = fg.lon0 + c0 * fg.step, east = west + fg.step;
   const eps = 1e-9;
-  const rA = Math.max(0, Math.ceil((g.lat0 - north) / g.step - eps)), rB = Math.min(g.nr - 1, Math.floor((g.lat0 - south) / g.step + eps));
+  const rA = Math.max(0, Math.ceil((south - g.lat0) / g.step - eps)), rB = Math.min(g.nr - 1, Math.floor((north - g.lat0) / g.step + eps));
   const cA = Math.max(0, Math.ceil((west - g.lon0) / g.step - eps)), cB = Math.min(g.nc - 1, Math.floor((east - g.lon0) / g.step + eps));
   let lo = Infinity, hi = -Infinity;
   for (let r = rA; r <= rB; r++) for (let c = cA; c <= cB; c++) {
