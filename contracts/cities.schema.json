@@ -1,2 +1,3 @@
 { "$schema": "https://json-schema.org/draft/2020-12/schema", "title": "static/cities.json (SPEC §6.6)", "type": "array", "minItems": 16,
-  "items": { "type": "object", "required": ["name", "lat", "lon"] } }
+  "items": { "type": "object", "required": ["name", "lat", "lon"],
+    "properties": { "nameEn": { "type": "string", "minLength": 1 } } } }
