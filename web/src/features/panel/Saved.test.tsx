@@ -95,3 +95,25 @@ describe('F4-AC4: кнопки на екрані', () => {
     expect((screen.getByRole('textbox') as HTMLTextAreaElement).value).toContain('AMBER Sky');
   });
 });
+
+describe('#101: рельєф у звіті', () => {
+  it('рівнина: рядок «Місцевість …» після часу, без плашки', () => {
+    const txt = reportText(E(1, { terrain: { kind: 'land', elevM: 169.4 }, reliefRange: 20 }), 'uk', 'x').split('\n');
+    expect(txt[3]).toBe('Місцевість 169 м н. р. м. · висоти польоту — над землею');
+    expect(txt.join('\n')).not.toContain('гори');
+    expect(txt).toHaveLength(9);
+  });
+  it('гори: ще рядок assumption з перепадом', () => {
+    const txt = reportText(E(1, { terrain: { kind: 'land', elevM: 1890 }, reliefRange: 1320.6 }), 'uk', 'x').split('\n');
+    expect(txt[4]).toBe('assumption · гори: сітка прогнозу ~50 км, локальний вітер може відрізнятися (перепад висот у клітинці прогнозу 1321 м)');
+  });
+  it('англійською, море і немає даних', () => {
+    expect(reportText(E(1, { terrain: { kind: 'land', elevM: 1890 }, reliefRange: 1320 }), 'en', 'x'))
+      .toContain('Terrain 1890 m a.s.l. · flight altitudes are above ground\nassumption · mountains: forecast grid ~50 km, local wind may differ');
+    expect(reportText(E(1, { terrain: { kind: 'sea' }, reliefRange: null }), 'uk', 'x')).toContain('Місцевість море ·');
+    expect(reportText(E(1, { terrain: { kind: 'nodata' }, reliefRange: null }), 'uk', 'x')).toContain('Місцевість немає даних ·');
+  });
+  it('старий запис без рельєфу (localStorage до #101) — звіт як раніше, 8 рядків', () => {
+    expect(reportText(E(1), 'uk', 'x').split('\n')).toHaveLength(8);
+  });
+});

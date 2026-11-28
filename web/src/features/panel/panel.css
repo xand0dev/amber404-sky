@@ -50,3 +50,6 @@
 .perr{color:var(--no);font-size:13px;margin-top:6px}.pok{color:var(--go);font-size:13px;margin-top:6px}
 details.psec>summary{min-height:44px;display:flex;align-items:center;cursor:pointer;font-weight:600}
 @media (max-width:420px){.ownform{grid-template-columns:1fr}}
+/* Рельєф (§7.6a, #101) */
+.terrain{margin-top:6px;font-size:14px}.terrain span{color:var(--dim)}
+.terrain .mtn{margin-top:4px;padding:6px 8px;border-left:4px solid var(--cau);background:var(--base);font-size:13px}
