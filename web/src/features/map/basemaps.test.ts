@@ -15,7 +15,12 @@ describe('Given меню «Підкладка» (AC1)', () => {
     expect(parsePrefs(null)).toEqual(DEFAULT_PREFS);
     expect(parsePrefs('{oops')).toEqual(DEFAULT_PREFS);
     expect(parsePrefs(JSON.stringify({ base: 'osm', wxTransp: 500 }))).toEqual(DEFAULT_PREFS);
-    expect(DEFAULT_PREFS.base).toBe('none');
+  });
+  it('issue #167: за замовчуванням — Рельєф (статичний, офлайн), прозорість погоди 40 %', () => {
+    expect(DEFAULT_PREFS).toEqual({ base: 'relief', wxTransp: 40 });
+    expect(ONLINE.has(DEFAULT_PREFS.base)).toBe(false);
+    // Вибір людини, як і раніше, зберігається й переважає типове.
+    expect(parsePrefs(JSON.stringify({ base: 'none', wxTransp: 40 }))).toEqual({ base: 'none', wxTransp: 40 });
   });
 });
 

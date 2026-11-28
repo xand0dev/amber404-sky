@@ -1,6 +1,9 @@
 // Smoke сайту на mocks (issue #34): плашка вердикту, карта, 48 годин, панель, клік по карті, консоль без помилок.
 import { expect, test, type Page } from '@playwright/test';
 
+// Онбординг першого відкриття (#166) лягає поверх карти — у цих тестах його вже пройдено.
+test.beforeEach(({ page }) => page.addInitScript(() => localStorage.setItem('amber404.tour', '1')));
+
 // Збирає помилки консолі й невловлені винятки сторінки.
 function watchErrors(page: Page): string[] {
   const errors: string[] = [];

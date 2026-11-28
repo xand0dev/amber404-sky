@@ -1,6 +1,9 @@
 // Доступність і 400 px (issue #47, SPEC §7.10, F3-AC5): скрол, кнопки ≥ 44 px, доступні імена, видимий фокус, reduced motion.
 import { expect, test, type Locator, type Page } from '@playwright/test';
 
+// Онбординг першого відкриття (#166) лягає поверх карти — у цих тестах його вже пройдено.
+test.beforeEach(({ page }) => page.addInitScript(() => localStorage.setItem('amber404.tour', '1')));
+
 // Збирає помилки консолі й невловлені винятки сторінки.
 function watchErrors(page: Page): string[] {
   const errors: string[] = [];

@@ -1,6 +1,7 @@
 // F3 (Іван): карта — плавне поле шару, кордони, міста, частинки вітру (reduced motion → стрілки), вибір точки, легенда.
 // Issue #161: «Де я» — позиція з GPS лише в пам'яті сторінки (Locate).
 // Issue #100: підкладка (рельєф / супутник) під полем, поле — з повзунком прозорості; ріки й озера — над полем, під частинками.
+// Issue #167: віньєтка поза Україною, кордон з ореолом, більші підписи з м'якою тінню, пульсуюче кільце обраної точки.
 import { useEffect, useRef, useState } from 'react';
 import { useApp } from '../../app/state';
 import { useView } from '../../app/view/view';
@@ -11,7 +12,7 @@ import { makeProjection } from '../../core';
 import { Legend } from '../layers/Legend';
 import { drawWindArrows } from './arrows';
 import { fieldPixels, nodeStep } from './field';
-import { placeLabels } from './labels';
+import { labelStyle, placeLabels } from './labels';
 import { drawNodata, nodataCells } from './nodata';
 import { SnapButton } from './SnapButton';
 import { Locate } from './Locate';
@@ -21,6 +22,8 @@ import { useReducedMotion } from './useReducedMotion';
 import { Basemap } from './Basemap';
 import { drawWater, fieldAlpha, IMAGE_BASES, ONLINE, type WaterLine } from './basemaps';
 import { loadWater, useBasemap } from './basemapStore';
+import { dataBox, drawUkraineBorder, drawVignette, ukraineRings } from './vignette';
+import './pulse.css';
 
 /** Поле рахуємо в сітці кожні FIELD_PX css-пікселів і згладжуємо при масштабуванні (≤ 300 мс, F3-AC2). */
 const FIELD_PX = 3;
@@ -32,6 +35,7 @@ export function MapView() {
   // Кольори карти — з палітри теми: уночі (#36, #89) лише червоні, щоб не збивати нічний зір.
   const { night, colors } = useTheme();
   const ref = useRef<MapCanvas>(null);
+  const pulse = useRef<HTMLDivElement>(null);
   const reduce = useReducedMotion();
   const { view } = useView();
   const [hover, setHover] = useState<HoverPos | null>(null);
@@ -67,6 +71,9 @@ export function MapView() {
       ctx.drawImage(off, 0, 0, fw * FIELD_PX, fh * FIELD_PX);
       ctx.globalAlpha = 1;
     }
+    // Фокус на Україні (#167): поза кордоном і рамкою даних — затемнення тлом теми (уночі чорне).
+    const ukr = ukraineRings(data.borders);
+    drawVignette(ctx, ukr, dataBox(data.meta.grid), px, W, H, colors.base);
     // Місця без даних (#140) — штрихування поверх поля, щоб прогалину не плутали з «поле не домалювалось».
     drawNodata(ctx, nodataCells(data, s), data.meta.grid.step, px, colors.ink, W, H);
     ctx.globalAlpha = night ? 0.6 : 1;
@@ -75,30 +82,45 @@ export function MapView() {
     ctx.globalAlpha = 1;
 
     for (const f of data.borders.features) {
-      ctx.strokeStyle = colors.ink; ctx.globalAlpha = f.iso === 'UKR' ? 1 : 0.35;
-      ctx.lineWidth = f.iso === 'UKR' ? 1.6 : 0.8;
+      if (f.iso === 'UKR') continue;
+      ctx.strokeStyle = colors.ink; ctx.globalAlpha = 0.35; ctx.lineWidth = 0.8;
       for (const ring of f.rings) { ctx.beginPath(); ring.forEach(([lo, la], i) => { const [x, y] = px(la, lo); if (i) ctx.lineTo(x, y); else ctx.moveTo(x, y); }); ctx.stroke(); }
     }
     ctx.globalAlpha = 1;
+    drawUkraineBorder(ctx, ukr, px, colors.ink);
     // prefers-reduced-motion (§7.10): замість частинок — статичні стрілки вітру обраної висоти.
     if (reduce) drawWindArrows(ctx, data, s, px, night ? colors.ink : undefined);
-    // Підписи міст з темною обводкою, щоб читались на будь-якому кольорі поля; без накладань (#89, labels.ts).
-    ctx.font = '600 12px system-ui'; ctx.lineJoin = 'round';
+    // Підписи міст (#167): обласні центри більшим шрифтом, Київ — найбільшим; м'яка тінь тлом теми замість обводки,
+    // щоб читались на будь-якому кольорі поля; без накладань (#89, labels.ts).
     const names = data.cities.map((c) => cityName(c, lang));
+    const styles = data.cities.map((c) => labelStyle(c.name));
     const pts = data.cities.map((c) => px(c.lat, c.lon));
-    const [mx, my] = px(s.lat, s.lon); // маркер обраної точки (хрестик 32 px) — підписи його не закривають
-    const spots = placeLabels(pts.map(([x, y], i) => ({ x, y, w: ctx.measureText(names[i]).width, h: 14 })), W, H, [{ x: mx - 18, y: my - 18, w: 36, h: 36 }]);
+    const [mx, my] = px(s.lat, s.lon); // маркер обраної точки (кільце 32 px) — підписи його не закривають
+    const spots = placeLabels(pts.map(([x, y], i) => { ctx.font = styles[i].font; return { x, y, w: ctx.measureText(names[i]).width, h: styles[i].h }; }),
+      W, H, [{ x: mx - 18, y: my - 18, w: 36, h: 36 }]);
     ctx.fillStyle = colors.ink;
     for (const [x, y] of pts) ctx.fillRect(x - 2, y - 2, 4, 4);
-    ctx.strokeStyle = colors.base; ctx.lineWidth = 3;
+    ctx.save();
+    ctx.shadowColor = colors.base; ctx.shadowBlur = 4;
     spots.forEach((sp, i) => {
       if (!sp) return;
-      ctx.strokeText(names[i], sp.tx, sp.by);
+      ctx.font = styles[i].font;
+      // Два проходи — тінь щільніша під літерами, але без різкого контуру.
+      ctx.fillText(names[i], sp.tx, sp.by);
       ctx.fillText(names[i], sp.tx, sp.by);
     });
-    const [cx, cy] = px(s.lat, s.lon);
-    ctx.strokeStyle = night ? colors.ink : colors.cau; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.arc(cx, cy, 9, 0, Math.PI * 2); ctx.moveTo(cx - 16, cy); ctx.lineTo(cx + 16, cy); ctx.moveTo(cx, cy - 16); ctx.lineTo(cx, cy + 16); ctx.stroke();
+    ctx.restore();
+    // Маркер обраної точки (#167): бурштинове кільце з центром — статична частина (вона ж на знімку 📷);
+    // пульсацію малює окремий шар .pulse (CSS), reduced-motion — без неї.
+    const mark = night ? colors.ink : colors.cau;
+    ctx.save();
+    ctx.strokeStyle = colors.base; ctx.lineWidth = 4; ctx.globalAlpha = 0.6;
+    ctx.beginPath(); ctx.arc(mx, my, 10, 0, Math.PI * 2); ctx.stroke();
+    ctx.globalAlpha = 1; ctx.strokeStyle = mark; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.arc(mx, my, 10, 0, Math.PI * 2); ctx.stroke();
+    ctx.fillStyle = mark; ctx.beginPath(); ctx.arc(mx, my, 3.5, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+    if (pulse.current) pulse.current.style.transform = `translate(${mx}px, ${my}px)`;
   }, [data, s, reduce, view, lang, alpha, clear, water, night, colors, prefs.base]);
 
   return (
@@ -120,6 +142,7 @@ export function MapView() {
         }}
         onPointerLeave={() => setHover(null)} />
       {!reduce && <WindParticles />}
+      <div className="pulsebox" aria-hidden="true"><div ref={pulse} className="pulse" aria-hidden="true"><span className="pulse-ring" /></div></div>
       <Legend />
       <Locate />
       <SnapButton reduce={reduce} />

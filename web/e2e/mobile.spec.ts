@@ -1,6 +1,9 @@
 // Мобільний екран (issue #85, F3): карта велика, інструменти в один ряд над нею, легенда смужкою, шари під картою.
 import { expect, test, type Page } from '@playwright/test';
 
+// Онбординг першого відкриття (#166) лягає поверх карти — у цих тестах його вже пройдено.
+test.beforeEach(({ page }) => page.addInitScript(() => localStorage.setItem('amber404.tour', '1')));
+
 async function open(page: Page) {
   await page.goto('./');
   await expect(page.locator('header.status')).toBeVisible();

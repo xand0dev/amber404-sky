@@ -18,19 +18,19 @@ const show = () => render(<div className="mapwrap"><Basemap /></div>);
 const openMenu = () => fireEvent.click(screen.getByRole('button', { name: 'Підкладка' }));
 
 describe('Given меню «Підкладка» (AC1)', () => {
-  it('Без / Рельєф / Супутник / Своя карта; типово — Без', () => {
+  it('Без / Рельєф / Супутник / Своя карта; типово — Рельєф (issue #167)', () => {
     show(); openMenu();
     const g = screen.getByRole('radiogroup', { name: 'Підкладка' });
     expect([...g.querySelectorAll('label')].map((l) => l.textContent)).toEqual(['Без', 'Рельєф', 'Супутник', 'Своя карта', '🛰 Супутник 10 м', '🗺 Вулиці']);
-    expect(screen.getByRole('radio', { name: 'Без' })).toHaveProperty('checked', true);
+    expect(screen.getByRole('radio', { name: 'Рельєф' })).toHaveProperty('checked', true);
   });
   it('вибір зберігається в браузері й підхоплюється після перезавантаження', () => {
     const { unmount } = show(); openMenu();
-    fireEvent.click(screen.getByRole('radio', { name: 'Рельєф' }));
-    expect(JSON.parse(localStorage.getItem(BASE_KEY) ?? '{}').base).toBe('relief');
+    fireEvent.click(screen.getByRole('radio', { name: 'Без' }));
+    expect(JSON.parse(localStorage.getItem(BASE_KEY) ?? '{}').base).toBe('none');
     unmount(); resetBasemap();
     show(); openMenu();
-    expect(screen.getByRole('radio', { name: 'Рельєф' })).toHaveProperty('checked', true);
+    expect(screen.getByRole('radio', { name: 'Без' })).toHaveProperty('checked', true);
   });
   it('mapwrap знає обрану підкладку (чужу «Свою карту» ховаємо, коли обрано іншу)', () => {
     const { container } = show(); openMenu();
@@ -104,6 +104,7 @@ describe('Given одна кнопка «Підкладка» (issue #130)', () =
 describe('Given рельєф чи супутник (AC2)', () => {
   it('повзунок прозорості погоди є лише для них і зберігається', () => {
     show(); openMenu();
+    fireEvent.click(screen.getByRole('radio', { name: 'Без' }));
     expect(screen.queryByRole('slider')).toBeNull();
     fireEvent.click(screen.getByRole('radio', { name: 'Рельєф' }));
     const sl = screen.getByRole('slider', { name: 'Прозорість погоди' });
@@ -121,6 +122,8 @@ describe('Given обрана підкладка (AC4)', () => {
   it('атрибуція в куті карти змінюється з вибором', () => {
     const { container } = show(); openMenu();
     const attr = () => container.querySelector('.baseattr')?.textContent ?? '';
+    expect(attr()).toMatch(/Copernicus DEM GLO-90/); // типово — Рельєф (#167)
+    fireEvent.click(screen.getByRole('radio', { name: 'Без' }));
     expect(attr()).toBe('Ріки й озера: Natural Earth');
     fireEvent.click(screen.getByRole('radio', { name: 'Супутник' }));
     expect(attr()).toMatch(/Sentinel-2 cloudless by EOX/);
@@ -148,12 +151,12 @@ describe('Given ріки й озера (AC3, AC5)', () => {
 });
 
 describe('Given перший екран на телефоні (#89, Lighthouse)', () => {
-  it('типово «Без»: зображення не вантажаться на старті, а лише коли браузер вільний (офлайн-кеш AC5 лишається)', () => {
+  it('типово «Рельєф» (#167): на старті — лише relief.png, супутник — коли браузер вільний (офлайн-кеш AC5 лишається)', () => {
     vi.useFakeTimers();
     try {
       vi.stubGlobal('requestIdleCallback', undefined);
       show();
-      expect(imgs).toEqual([]);
+      expect(imgs).toEqual(['./data/static/relief.png']);
       vi.advanceTimersByTime(5000);
       expect(new Set(imgs)).toEqual(new Set(['./data/static/relief.png', './data/static/satellite.jpg']));
     } finally { vi.useRealTimers(); }

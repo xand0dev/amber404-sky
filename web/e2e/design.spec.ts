@@ -2,6 +2,9 @@
 // має контраст ≥ 4.5:1 зі своїм тлом — удень і вночі. Ловить і помилки каскаду (колір, що «протік» з батька).
 import { expect, test, type Page } from '@playwright/test';
 
+// Онбординг першого відкриття (#166) лягає поверх карти — у цих тестах його вже пройдено.
+test.beforeEach(({ page }) => page.addInitScript(() => localStorage.setItem('amber404.tour', '1')));
+
 async function open(page: Page, night: boolean) {
   await page.addInitScript((n) => localStorage.setItem('amber404.night', n ? '1' : '0'), night);
   await page.goto('./');

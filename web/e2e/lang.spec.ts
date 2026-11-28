@@ -2,6 +2,9 @@
 // Проєкти playwright — 400×800 і 1280×800. Назви міст малюються на canvas і в innerText не потрапляють.
 import { expect, test, type Page } from '@playwright/test';
 
+// Онбординг першого відкриття (#166) лягає поверх карти — у цих тестах його вже пройдено.
+test.beforeEach(({ page }) => page.addInitScript(() => localStorage.setItem('amber404.tour', '1')));
+
 const CYR = /[Ѐ-ӿ]/;
 
 // Видимий текст ряду інструментів, карти (зона, панелі малювання й підкладки), шарів і легенди.
