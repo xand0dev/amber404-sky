@@ -53,3 +53,14 @@ describe('AC2: контраст тексту ≥ 4.5:1', () => {
     }
   }
 });
+
+// Issue #172: нічні години смуги — затемнений колір рівня, текст --ink (≥ 4.5:1); темніший за денний.
+describe('Given нічна година на смузі (issue #172)', () => {
+  for (const lv of ['--go', '--cau', '--no', '--no-data']) {
+    it(`Then --ink на ${lv}-nt ≥ 4.5:1, ${lv}-nt темніший за ${lv}`, () => {
+      expect(DAY[`${lv}-nt`]).toMatch(/^#/);
+      expect(contrast(DAY['--ink'], DAY[`${lv}-nt`])).toBeGreaterThanOrEqual(4.5);
+      expect(contrast('#000000', DAY[`${lv}-nt`])).toBeLessThan(contrast('#000000', DAY[lv]));
+    });
+  }
+});

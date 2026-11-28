@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { daySegments, nextPlayHour } from './days';
+import { daySegments, nextPlayHour, nowOffset, scrubHour, sunMarks, windowSpan } from './days';
+import type { Level } from '../../core';
 
 // 48 годин від 2026-11-27 10:00 UTC (12:00 за Києвом, UTC+2).
 const times = Array.from({ length: 48 }, (_, h) => new Date(Date.UTC(2026, 10, 27, 10 + h)).toISOString());
@@ -37,5 +38,58 @@ describe('F3-AC4: ▶ програвання', () => {
 describe('Given EN (issue #116)', () => {
   it('Then позначки днів — Fri 27, Sat 28, Sun 29', () => {
     expect(daySegments(times, 2, 'en').map((x) => x.label)).toEqual(['Fri 27', 'Sat 28', 'Sun 29']);
+  });
+});
+
+// Issue #172: день/ніч, «зараз», скраб, вікно — чиста логіка смуги.
+
+describe('Given Київ і смуга від пт 27 12:00 (issue #172 AC1)', () => {
+  const m = sunMarks(times, 50.45, 30.52);
+  it('Then години між заходом і сходом — ніч', () => {
+    // 15:00 пт (h=3) — день, 17:00 пт (h=5) — ніч, 03:00 сб (h=15) — ніч, 10:00 сб (h=22) — день.
+    expect([m.night[3], m.night[5], m.night[15], m.night[22]]).toEqual([false, true, true, false]);
+  });
+  it('Then ☾ на межі заходу і ☀ на межі сходу, за годинами', () => {
+    expect(m.edges.map((e) => [e.h, e.kind])).toEqual([[4, 'set'], [20, 'rise'], [28, 'set'], [44, 'rise']]);
+    // Захід 28.11 — 15:59 за Києвом (13:59 UTC), ±5 хв.
+    const set28 = m.edges[2].at!;
+    expect(Math.abs(set28 - Date.UTC(2026, 10, 28, 13, 59))).toBeLessThanOrEqual(5 * 60_000);
+  });
+  it('Then порожній ряд — без позначок', () => expect(sunMarks([], 50, 30)).toEqual({ night: [], edges: [] }));
+});
+
+describe('Given час «зараз» (issue #172 AC2)', () => {
+  it('Then зміщення в годинах від початку смуги', () => {
+    expect(nowOffset(times, Date.parse(times[0]))).toBe(0);
+    expect(nowOffset(times, Date.parse(times[3]) + 30 * 60_000)).toBe(3.5);
+  });
+  it('Then поза смугою — null', () => {
+    expect(nowOffset(times, Date.parse(times[0]) - 1)).toBeNull();
+    expect(nowOffset(times, Date.parse(times[47]) + 3600_000)).toBeNull();
+    expect(nowOffset([], 0)).toBeNull();
+  });
+});
+
+describe('Given перетягування по смузі (issue #172 AC3)', () => {
+  it('Then година = початкова + зсув / ширина години, у межах смуги', () => {
+    expect(scrubHour(5, 0, 48)).toBe(5);
+    expect(scrubHour(5, 15, 48)).toBe(5);
+    expect(scrubHour(5, 17, 48)).toBe(6);
+    expect(scrubHour(5, 32 * 3, 48)).toBe(8);
+    expect(scrubHour(5, -32 * 3, 48)).toBe(2);
+    expect(scrubHour(5, -32 * 10, 48)).toBe(0);
+    expect(scrubHour(45, 32 * 10, 48)).toBe(47);
+  });
+});
+
+describe('Given рівні годин (issue #172 AC4)', () => {
+  const L = (s: string): Level[] => [...s].map((c) => ({ G: 'GO', C: 'CAUTION', N: 'NO-GO' }[c] as Level));
+  const tt = (n: number) => times.slice(0, n);
+  it('Then вікно — перші ≥ 2 год МОЖНА поспіль від «зараз»', () => {
+    expect(windowSpan(L('CGNGGGC'), tt(7), 0)).toEqual({ start: 3, len: 3 });
+    expect(windowSpan(L('GGCGG'), tt(5), 1)).toEqual({ start: 3, len: 2 });
+  });
+  it('Then немає ≥ 2 год поспіль — немає вікна', () => {
+    expect(windowSpan(L('GCGCG'), tt(5), 0)).toBeNull();
   });
 });

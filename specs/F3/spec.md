@@ -113,6 +113,12 @@
 - T3 (AC1, AC3, AC5) `map/WindParticles.tsx`: `drawTrails` — один stroke на кошик; зміна вигляду → `clearRect` і нові частинки; `visibilitychange` → пауза; семплер бере актуальні дані й годину через ref.
 - T4 (AC6) `particles.test.ts`, `WindParticles.test.tsx`; знімки `img/168-{before,after}-{400x800,1280x800}.png`.
 
+**#172 — смуга 48 год: день/ніч, «зараз», скраб, вікно:**
+- T1 (AC1, AC5) `core/sun.ts`: `sunElevation`, `isNightAt`, `sunTimes` — формули NOAA GML (рівняння часу, схилення, зеніт 90.833°), без мережі; тест — Київ 28.11.2026, схід 07:32 / захід 15:59 (timeanddate.com) ±5 хв.
+- T2 (AC1–4) `timeline/days.ts`: `sunMarks` (ніч = середина години між заходом і сходом, межі ☀/☾), `nowOffset`, `scrubHour`, `windowSpan` (через `nextWindow` з `core/verdict`, від години «зараз»).
+- T3 (AC1–4) `Timeline.tsx` + `timeline.css`: нічні години — колір рівня вдвічі темніший (`--*-nt` в `ui/tokens.ts`, цифра `--ink` ≥ 4.5:1; уночі — `--dim`), ☀/☾ на межах з часом у title, лінія «зараз» на рядку годин, риска на межі доби під підписом дня, скраб pointer events (година під пальцем + зсув / 32 px, `touch-action: pan-y`, без інерції й анімацій), ←/→, пунктирна рамка вікна з підписом «вікно» / «window».
+- T4 (AC5) `days.test.ts`, `Timeline.test.tsx`, `tokens.test.ts`; e2e `timeline.spec.ts` (400×800, годинник на mock-прогноз); знімки `img/172-{before,after}-{400x800,1280x800}.png`.
+
 ## Відкриті питання
 | Питання | Хто | Коли | План Б |
 |---|---|---|---|

@@ -9,9 +9,10 @@ const times = Array.from({ length: 48 }, (_, h) => new Date(Date.UTC(2026, 10, 2
 const order: Level[] = ['GO', 'CAUTION', 'NO-GO', 'NO-DATA'];
 const levels = times.map((_, h) => order[h % 4]);
 
-function Harness({ start = 0 }: { start?: number }) {
+const NOW = Date.parse(times[0]) + 15 * 60_000;
+function Harness({ start = 0, lv = levels }: { start?: number; lv?: Level[] }) {
   const [hour, setHour] = useState(start);
-  return <TimelineView times={times} levels={levels} hour={hour} onPick={setHour} />;
+  return <TimelineView times={times} levels={lv} hour={hour} onPick={setHour} lat={50.45} lon={30.52} now={NOW} />;
 }
 const hourButtons = () => screen.getAllByRole('button').filter((b) => b.dataset.hour != null);
 const selected = () => hourButtons().filter((b) => b.getAttribute('aria-pressed') === 'true');
@@ -78,5 +79,74 @@ describe('Given EN (issue #116)', () => {
     expect(screen.getByRole('button', { name: 'Pause' })).toBeTruthy();
     const attrs = [...container.querySelectorAll('[aria-label],[title]')].map((e) => `${e.getAttribute('aria-label') ?? ''} ${e.getAttribute('title') ?? ''}`);
     expect(attrs.join('\n') + container.textContent).not.toMatch(/[Ѐ-ӿ]/);
+  });
+});
+
+// Issue #172: день/ніч, «зараз», скраб, вікно.
+describe('Given смуга для Києва від пт 27 12:00 (issue #172)', () => {
+  it('AC1: нічні години затемнені (клас nt), ☾ на заході, ☀ на сході', () => {
+    render(<Harness />);
+    const bs = hourButtons();
+    expect(bs[3].classList.contains('nt')).toBe(false);
+    expect(bs[5].classList.contains('nt')).toBe(true);
+    expect(bs[15].classList.contains('nt')).toBe(true);
+    expect(bs[22].classList.contains('nt')).toBe(false);
+    const edges = screen.getAllByTestId('sun-edge');
+    expect(edges.map((e) => e.textContent)).toEqual(['☾', '☀', '☾', '☀']);
+    expect(edges[0].style.left).toBe(`${4 * 32}px`);
+    expect(edges[0].getAttribute('title')).toMatch(/^Захід сонця \d\d:\d\d$/);
+    expect(edges[1].getAttribute('title')).toMatch(/^Схід сонця \d\d:\d\d$/);
+  });
+  it('AC2: вертикальна лінія «зараз» на своїй хвилині; межа доби — підпис дня й риска', () => {
+    render(<Harness />);
+    const now = screen.getByTestId('now-line');
+    expect(now.style.left).toBe(`${0.25 * 32}px`);
+    expect(now.getAttribute('title')).toBe('зараз');
+    expect(hourButtons()[12].classList.contains('d0')).toBe(true);
+    expect(hourButtons()[11].classList.contains('d0')).toBe(false);
+    expect(screen.getAllByTestId('day-mark')[1].textContent).toBe('сб 28');
+  });
+  it('AC3: перетягування пальцем/мишею — година йде за вказівником, після відпускання — стоп', () => {
+    render(<Harness />);
+    const nav = screen.getByRole('navigation');
+    fireEvent.pointerDown(hourButtons()[5], { clientX: 100, pointerId: 1 });
+    expect(selected()[0].dataset.hour).toBe('5');
+    fireEvent.pointerMove(nav, { clientX: 100 + 32 * 2, pointerId: 1 });
+    expect(selected()[0].dataset.hour).toBe('7');
+    fireEvent.pointerMove(nav, { clientX: 100 - 32 * 3, pointerId: 1 });
+    expect(selected()[0].dataset.hour).toBe('2');
+    fireEvent.pointerUp(nav, { clientX: 100 - 32 * 3, pointerId: 1 });
+    fireEvent.pointerMove(nav, { clientX: 100 + 32 * 10, pointerId: 1 });
+    expect(selected()[0].dataset.hour).toBe('2');
+  });
+  it('AC3: клавіатура ←/→ — година назад/вперед у межах смуги', () => {
+    render(<Harness start={1} />);
+    const nav = screen.getByRole('navigation');
+    fireEvent.keyDown(nav, { key: 'ArrowRight' });
+    expect(selected()[0].dataset.hour).toBe('2');
+    fireEvent.keyDown(nav, { key: 'ArrowLeft' });
+    fireEvent.keyDown(nav, { key: 'ArrowLeft' });
+    fireEvent.keyDown(nav, { key: 'ArrowLeft' });
+    expect(selected()[0].dataset.hour).toBe('0');
+  });
+  it('AC4: найближче вікно (перші ≥ 2 год МОЖНА поспіль) — рамка й підпис «вікно»', () => {
+    const lv = times.map((_, h): Level => (h === 1 || (h >= 6 && h <= 8) || h >= 20 ? 'GO' : 'CAUTION'));
+    render(<Harness lv={lv} />);
+    const w = screen.getByTestId('win');
+    expect(w.style.left).toBe(`${6 * 32}px`);
+    expect(w.style.width).toBe(`${3 * 32}px`);
+    expect(w.textContent).toBe('вікно');
+  });
+  it('AC4: вікна немає — немає й рамки', () => {
+    render(<Harness lv={times.map((): Level => 'CAUTION')} />);
+    expect(screen.queryByTestId('win')).toBeNull();
+  });
+  it('Given EN — «now», «window», «Sunset»/«Sunrise»', () => {
+    localStorage.setItem(LANG_KEY, 'en');
+    render(<LangProvider><Harness lv={times.map((): Level => 'GO')} /></LangProvider>);
+    expect(screen.getByTestId('now-line').getAttribute('title')).toBe('now');
+    expect(screen.getByTestId('win').textContent).toBe('window');
+    expect(screen.getAllByTestId('sun-edge')[0].getAttribute('title')).toMatch(/^Sunset /);
+    localStorage.clear();
   });
 });
