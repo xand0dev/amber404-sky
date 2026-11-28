@@ -3,8 +3,7 @@
 .drawlayer.drawing{pointer-events:auto;cursor:crosshair;touch-action:manipulation}
 .drawtext{font:700 14px/1 "DIN Alternate","Barlow",system-ui,sans-serif;paint-order:stroke;stroke:#11150e;stroke-width:3px;stroke-linejoin:round}
 .drawtext.big{font-size:18px}
-.drawbtn{position:absolute;top:8px;left:8px;z-index:2;min-height:44px;padding:0 12px;background:rgba(28,33,23,.88);border:1px solid var(--rule)}
-.drawpanel{position:absolute;top:60px;left:8px;right:8px;z-index:2;max-height:min(70vh,560px);overflow:auto;display:grid;gap:8px;padding:10px;background:var(--panel);border:1px solid var(--rule);font-size:14px}
+.drawpanel{position:absolute;top:8px;left:8px;right:8px;z-index:2;max-height:min(70vh,560px);overflow:auto;display:grid;gap:8px;padding:10px;background:var(--panel);border:1px solid var(--rule);font-size:14px}
 .drawpanel label{display:grid;gap:4px;color:var(--dim)}
 .drawtools{display:flex;flex-wrap:wrap;gap:4px}
 .drawtools button,.drawlist button{min-height:44px;padding:0 12px;background:var(--base);border:1px solid var(--rule)}

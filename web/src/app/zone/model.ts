@@ -1,6 +1,6 @@
 // Стан шару «Зона польоту» (SPEC §7.5b, issue #22): розрахунок через core/zone.ts, час — core/energy.ts.
 // Мемоізація за точкою, висотою, годиною й дроном; картка зони в панелі (F4) може брати стан звідси через useZone().
-import { effectiveEndurance, offset, usableSeconds, weatherAt, windAt, zoneCalc, type Projection, type ZonePoint } from '../../core';
+import { effectiveEndurance, energyInput, offset, usableSeconds, weatherAt, windAt, zoneCalc, type EnergyInput, type Projection, type ZonePoint } from '../../core';
 import type { DroneProfile } from '../../contracts';
 import type { Bundle } from '../data';
 
@@ -9,7 +9,8 @@ export interface ZoneState extends ZoneKey {
   prof: DroneProfile;
   mode: 'roundtrip';
   enduranceMin: number; // ефективний T без резерву
-  why: string; // з чого порахований T
+  why: string; // з чого порахований T (uk)
+  energy: EnergyInput; // вхід T — щоб підпис зони пояснив його мовою інтерфейсу (#119)
   usableS: number; // T × (1 − резерв 20%)
   wind: [number, number] | null; // u, v у точці старту
   points: ZonePoint[];
@@ -42,7 +43,9 @@ export function zoneFor(data: Bundle, k: ZoneKey): ZoneState | null {
 
   const src = { meta: data.meta, profile: data.profile, kp: data.kp, galileo: data.galileo };
   const t = weatherAt(src, k.lat, k.lon, k.altM, k.hour).t;
-  const e = effectiveEndurance({ energy: prof.energy, enduranceMin: prof.enduranceMin, massKg: prof.massKg, kind: prof.kind, t });
+  // Свій дрон (F4-AC6) несе payloadKg / fuelL / burnLh поза контрактом — той самий вхід, що й картка зони в панелі (#107).
+  const energy = energyInput(prof, t);
+  const e = effectiveEndurance(energy);
   const usableS = usableSeconds(e.min);
   // Крок уздовж променя: ~80 кроків на радіус у штиль, не дрібніше 250 м — щоб крило на 300 хв теж рахувалось ≤ 100 мс.
   const stepM = Math.max(250, Math.round((prof.cruiseMs * usableS) / 2 / 80));
@@ -53,7 +56,7 @@ export function zoneFor(data: Bundle, k: ZoneKey): ZoneState | null {
   );
   const maxDistM = Math.max(0, ...points.map((p) => p.distM));
   const z: ZoneState = {
-    ...k, droneId: prof.id, prof, mode: 'roundtrip', enduranceMin: e.min, why: e.why, usableS,
+    ...k, droneId: prof.id, prof, mode: 'roundtrip', enduranceMin: e.min, why: e.why, energy, usableS,
     wind: windAt(g, P, k.altM, k.hour, k.lat, k.lon), points, cut: points.filter((p) => p.stop === 'wind-limit'),
     maxDistM, rings: ringSteps(maxDistM),
   };

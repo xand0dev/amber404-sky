@@ -4,6 +4,8 @@ import { useEffect, useRef } from 'react';
 import { FULL_VIEW, fitView, gestureStep, zoomAt } from '../../core';
 import { useZone } from '../zone/ZoneLayer';
 import { useView } from './view';
+import { useT } from '../lang';
+import { InBar, useMapWrap } from '../../ui/MapFrame';
 import './view.css';
 
 /** Рух, після якого дотик — уже перетягування, а не тап (px). assumption. */
@@ -18,9 +20,12 @@ export function ViewControls() {
   const ref = useRef<HTMLDivElement>(null);
   const { setView } = useView();
   const z = useZone();
+  const { t } = useT();
+  // Кнопки — у ряду над картою (issue #85), тож жести слухаємо на mapwrap з рамки; без рамки — на батьківському елементі.
+  const frame = useMapWrap();
 
   useEffect(() => {
-    const wrap = ref.current?.parentElement;
+    const wrap = frame ?? ref.current?.parentElement;
     if (!wrap) return;
     const size = (): [number, number] => [wrap.clientWidth, wrap.clientHeight];
     const local = (e: MouseEvent): XY => { const r = wrap.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
@@ -70,10 +75,10 @@ export function ViewControls() {
       wrap.removeEventListener('click', click, true);
       wrap.removeEventListener('wheel', wheel);
     };
-  }, [setView]);
+  }, [setView, frame]);
 
   const size = (): [number, number] => {
-    const wrap = ref.current?.parentElement;
+    const wrap = frame ?? ref.current?.parentElement;
     return wrap ? [wrap.clientWidth, wrap.clientHeight] : [0, 0];
   };
   const zoomBy = (f: number) => { const [W, H] = size(); setView((v) => zoomAt(v, W, H, f, W / 2, H / 2)); };
@@ -84,11 +89,13 @@ export function ViewControls() {
   };
 
   return (
-    <div ref={ref} className="viewctl" role="group" aria-label="Масштаб карти">
-      <button type="button" aria-label="Наблизити" onClick={() => zoomBy(BTN_FACTOR)}>+</button>
-      <button type="button" aria-label="Віддалити" onClick={() => zoomBy(1 / BTN_FACTOR)}>−</button>
-      <button type="button" aria-label="До зони" title="До зони" onClick={toZone} disabled={!z}>◎</button>
-      <button type="button" aria-label="Україна" title="Вся Україна" onClick={() => setView(FULL_VIEW)}>⤢</button>
-    </div>
+    <InBar>
+      <div ref={ref} className="viewctl" role="group" aria-label={t('view.group')}>
+        <button type="button" aria-label={t('view.in')} onClick={() => zoomBy(BTN_FACTOR)}>+</button>
+        <button type="button" aria-label={t('view.out')} onClick={() => zoomBy(1 / BTN_FACTOR)}>−</button>
+        <button type="button" aria-label={t('view.zone')} title={t('view.zone')} onClick={toZone} disabled={!z}>◎</button>
+        <button type="button" aria-label={t('view.full')} title={t('view.fullTitle')} onClick={() => setView(FULL_VIEW)}>⤢</button>
+      </div>
+    </InBar>
   );
 }

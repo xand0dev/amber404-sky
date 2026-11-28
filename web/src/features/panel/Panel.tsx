@@ -3,7 +3,7 @@
 import { useApp } from '../../app/state';
 import { useVerdicts } from '../../app/useVerdict';
 import { useT, windowLabel } from '../../app/lang';
-import { t as coreT, type Lang, type Verdict, type Weather } from '../../core';
+import { profileName, t as coreT, type Lang, type Verdict, type Weather } from '../../core';
 import type { DroneProfile } from '../../contracts';
 import { Route } from '../route/Route';
 import { arrowDeg, coordText, dayHM, nearestCity, placeText } from './place';
@@ -79,7 +79,7 @@ export function Panel() {
   // Знімок для «Зберегти погоду» / «Копіювати звіт» (F4-AC4): лише в браузері.
   const snapshot = (): SavedWx => ({
     id: `${s.lat.toFixed(3)},${s.lon.toFixed(3)},${s.altM},${time},${prof.id}`, savedAt: new Date().toISOString(),
-    place: placeText(data.cities, s.lat, s.lon), lat: s.lat, lon: s.lon, altM: s.altM, time, drone: prof.name,
+    place: placeText(data.cities, s.lat, s.lon), lat: s.lat, lon: s.lon, altM: s.altM, time, drone: profileName(prof, lang),
     ws: wx.ws, dir: wx.dir, g: wx.g, cb: wx.cb, t: wx.t, level: now.level, reasons: now.reasons, window: win,
     source: data.meta.sources.map((x) => x.name).join(', ') || data.profile.sources.join(', '),
     generatedAt: data.meta.generatedAt, mock: data.meta.mock, terrain, reliefRange,
@@ -89,7 +89,7 @@ export function Panel() {
       <div className="row">
         <label>{pt('drone', lang)}
           <select value={s.droneId} onChange={(e) => { const p = data.profiles.find((x) => x.id === e.target.value); set({ droneId: e.target.value, altM: p?.defaultAltM ?? s.altM }); }}>
-            {data.profiles.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+            {data.profiles.map((p) => <option key={p.id} value={p.id}>{profileName(p, lang)}</option>)}
           </select>
         </label>
         <label>{pt('alt', lang)}: <b>{s.altM} {pt('unit.m', lang)}</b>

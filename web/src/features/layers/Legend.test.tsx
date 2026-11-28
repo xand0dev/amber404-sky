@@ -3,6 +3,8 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { cleanup, render, screen } from '@testing-library/react';
 import { AppCtx, type Ctx, type LayerId } from '../../app/state';
 import { Legend } from './Legend';
+import { LayerPicker } from './LayerPicker';
+import { LANG_KEY, LangProvider } from '../../app/lang';
 import { bundle, state } from '../map/fixture.test-util';
 
 afterEach(cleanup);
@@ -34,5 +36,34 @@ describe('Given обраний шар; When відкрито карту; Then л
     show('icing');
     expect(screen.getByText('так')).toBeTruthy();
     expect(screen.getByText('ні')).toBeTruthy();
+  });
+});
+
+// Issue #85 AC3: смужка легенди внизу карти (≤ 32 px + відступ 8 px) не накриває підписів міст на телефоні.
+import { makeProjection, FULL_VIEW } from '../../core';
+import cities from '../../../public/data/static/cities.json';
+
+describe('Given телефон 375×812 і 400×800, вся Україна; When легенда внизу карти; Then підписи міст вище неї', () => {
+  // Висота карти = 55% першого екрана (AC1); ширина = ширина екрана.
+  it.each([[375, 812], [400, 800]])('%i×%i', (W, VH) => {
+    const H = Math.round(VH * 0.55);
+    const { project } = makeProjection(W, H, FULL_VIEW);
+    const stripTop = H - 8 - 32;
+    // Підпис міста: базова лінія y − 4, шрифт 12 px; квадратик міста — до y + 2.
+    const low = cities.map((c) => ({ name: c.name, bottom: project(c.lat, c.lon)[1] + 2 })).filter((c) => c.bottom >= stripTop);
+    expect(low).toEqual([]);
+  });
+});
+
+describe('Issue #119: EN', () => {
+  it('шари й легенда англійською, без кирилиці', () => {
+    localStorage.setItem(LANG_KEY, 'en');
+    try {
+      const { container } = render(<LangProvider><AppCtx.Provider value={{ data: bundle(), s: state({ layer: 'wind', altM: 50 }), set: () => {} } as Ctx}><LayerPicker /><Legend /></AppCtx.Provider></LangProvider>);
+      expect(screen.getByRole('radiogroup', { name: 'Map layer' })).toBeTruthy();
+      expect(screen.getByRole('figure', { name: 'Legend: Wind · 50 m' })).toBeTruthy();
+      expect(container.textContent).toContain('26 m/s');
+      expect(container.textContent).not.toMatch(/[Ѐ-ӿ]/);
+    } finally { localStorage.removeItem(LANG_KEY); }
   });
 });

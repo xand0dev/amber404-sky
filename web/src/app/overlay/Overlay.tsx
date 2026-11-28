@@ -1,16 +1,18 @@
 // Власна карта-підкладка (SPEC §7.14, F5-AC1): зображення + 3 точки прив'язки, окремий canvas під полем погоди.
 // Файл користувача не покидає браузер: читається локально, зберігається в IndexedDB.
 import { useEffect, useRef, useState } from 'react';
-import { composeAffine, fitAffine, makeProjection, type Affine, type Anchor } from '../../core';
+import { composeAffine, fitAffine, makeProjection, type Affine, type Anchor, type Key } from '../../core';
+import { useT } from '../lang';
 import { clearOverlay, loadOverlay, saveOverlay } from './store';
 import { useView } from '../view/view';
+import { InBar } from '../../ui/MapFrame';
 
 type Row = Record<keyof Anchor, string>;
 interface Img { blob: Blob; el: HTMLImageElement; url: string }
 
 const EMPTY: Row[] = [0, 1, 2].map(() => ({ x: '', y: '', lat: '', lon: '' }));
 const TYPES = ['image/png', 'image/jpeg'];
-const FIELDS: [keyof Anchor, string][] = [['x', 'x'], ['y', 'y'], ['lat', 'широта'], ['lon', 'довгота']];
+const FIELDS: [keyof Anchor, Key | null][] = [['x', null], ['y', null], ['lat', 'ov.lat'], ['lon', 'ov.lon']];
 
 const toAnchors = (rows: Row[]): Anchor[] =>
   rows.map((r) => ({ x: parseNum(r.x), y: parseNum(r.y), lat: parseNum(r.lat), lon: parseNum(r.lon) }));
@@ -22,7 +24,7 @@ function loadImage(blob: Blob): Promise<Img> {
   return new Promise((res, rej) => {
     const el = new Image();
     el.onload = () => res({ blob, el, url });
-    el.onerror = () => { URL.revokeObjectURL(url); rej(new Error('не вдалося прочитати зображення')); };
+    el.onerror = () => { URL.revokeObjectURL(url); rej(new Error('image')); };
     el.src = url;
   });
 }
@@ -36,9 +38,10 @@ export function Overlay() {
   const [opacity, setOpacity] = useState(50);
   const [fit, setFit] = useState<{ m: Affine; anchors: Anchor[] } | null>(null);
   const [err, setErr] = useState<string | null>(null);
-  const [note, setNote] = useState<string | null>(null);
+  const [unsaved, setUnsaved] = useState(false);
   const [size, setSize] = useState<[number, number]>([0, 0]);
   const { view } = useView();
+  const { t } = useT();
 
   // Відновлення з IndexedDB.
   useEffect(() => {
@@ -95,7 +98,7 @@ export function Overlay() {
   useEffect(() => {
     if (!img || !fit) return;
     void saveOverlay({ image: img.blob, anchors: fit.anchors, opacity }).then((ok) =>
-      setNote(ok ? null : 'Не збережено: сховище браузера недоступне (приватне вікно?)'));
+      setUnsaved(!ok));
   }, [img, fit, opacity]);
 
   const setField = (i: number, k: keyof Anchor, v: string) =>
@@ -103,8 +106,8 @@ export function Overlay() {
 
   const onFile = async (f: File | undefined) => {
     if (!f) return;
-    if (!TYPES.includes(f.type)) { setErr('Потрібне зображення PNG або JPG'); return; }
-    try { setImg(await loadImage(f)); setFit(null); setErr(null); setPick(0); } catch (e) { setErr((e as Error).message); }
+    if (!TYPES.includes(f.type)) { setErr(t('ov.badType')); return; }
+    try { setImg(await loadImage(f)); setFit(null); setErr(null); setPick(0); } catch { setErr(t('ov.readErr')); }
   };
 
   const onPick = (e: React.MouseEvent<HTMLImageElement>) => {
@@ -118,29 +121,33 @@ export function Overlay() {
 
   const apply = () => {
     const anchors = toAnchors(rows), m = fitAffine(anchors);
-    if (!m) { setErr('Потрібні 3 заповнені точки не на одній прямій'); return; }
-    if (!img) { setErr('Спершу оберіть файл карти'); return; }
+    if (!m) { setErr(t('ov.badFit')); return; }
+    if (!img) { setErr(t('ov.noImg')); return; }
     setErr(null); setFit({ m, anchors });
   };
 
   const remove = () => {
     void clearOverlay();
-    setImg(null); setFit(null); setRows(EMPTY); setPick(0); setErr(null); setNote(null);
+    setImg(null); setFit(null); setRows(EMPTY); setPick(0); setErr(null); setUnsaved(false);
   };
 
   return (
     <>
       <canvas ref={ref} className="underlay" aria-hidden="true" />
-      <button type="button" className="ovbtn" aria-expanded={open} onClick={() => setOpen(!open)}>Підкладка</button>
+      <InBar>
+        <button type="button" className="ovbtn" title={t('ov.btn')} aria-expanded={open} onClick={() => setOpen(!open)}>
+          <span className="tb-ico" aria-hidden="true">▦</span><span className="tb-txt">{t('ov.btn')}</span>
+        </button>
+      </InBar>
       {open && (
-        <section className="ovpanel" aria-label="Власна карта-підкладка">
-          <label>Файл карти
+        <section className="ovpanel" aria-label={t('ov.panel')}>
+          <label>{t('ov.file')}
             <input type="file" accept={TYPES.join(',')} onChange={(e) => void onFile(e.target.files?.[0])} />
           </label>
-          <p className="ovnote">Файл не покидає браузер: зберігається лише на цьому пристрої.</p>
+          <p className="ovnote">{t('ov.local')}</p>
           {img && (
             <div className="ovprev">
-              <img src={img.url} alt={`Карта користувача; клацніть, щоб поставити точку ${pick + 1}`} onClick={onPick} />
+              <img src={img.url} alt={t('ov.imgAlt', { n: pick + 1 })} onClick={onPick} />
               {rows.map((r, i) => r.x !== '' && r.y !== '' && (
                 <span key={i} className="ovmark" style={{ left: `${(Number(r.x) / img.el.naturalWidth) * 100}%`, top: `${(Number(r.y) / img.el.naturalHeight) * 100}%` }}>{i + 1}</span>
               ))}
@@ -148,25 +155,25 @@ export function Overlay() {
           )}
           {rows.map((r, i) => (
             <fieldset key={i} className={i === pick ? 'ovrow on' : 'ovrow'}>
-              <legend><button type="button" onClick={() => setPick(i)}>Точка {i + 1}</button></legend>
-              {FIELDS.map(([k, name]) => (
+              <legend><button type="button" onClick={() => setPick(i)}>{t('ov.point', { n: i + 1 })}</button></legend>
+              {FIELDS.map(([k, key]) => { const name = key ? t(key) : k; return (
                 <label key={k}>{name}
-                  <input type="number" step="any" inputMode="decimal" aria-label={`Точка ${i + 1}: ${name}`}
+                  <input type="number" step="any" inputMode="decimal" aria-label={t('ov.field', { n: i + 1, name })}
                     value={r[k]} onChange={(e) => setField(i, k, e.target.value)} />
                 </label>
-              ))}
+              ); })}
             </fieldset>
           ))}
-          <label>Прозорість погоди: {opacity}%
-            <input type="range" min="0" max="100" step="5" aria-label="Прозорість погоди"
+          <label>{t('ov.opacity')}: {opacity}%
+            <input type="range" min="0" max="100" step="5" aria-label={t('ov.opacity')}
               value={opacity} onChange={(e) => setOpacity(Number(e.target.value))} />
           </label>
-          <p className="ovnote">assumption: афінна прив'язка за 3 точками — точна лише для невеликої ділянки (десятки км).</p>
+          <p className="ovnote">{t('ov.affine')}</p>
           {err && <p role="alert" className="overr">{err}</p>}
-          {note && <p className="overr">{note}</p>}
+          {unsaved && <p className="overr">{t('store.off')}</p>}
           <div className="ovact">
-            <button type="button" onClick={apply}>Накласти</button>
-            <button type="button" onClick={remove}>Прибрати</button>
+            <button type="button" onClick={apply}>{t('ov.apply')}</button>
+            <button type="button" onClick={remove}>{t('ov.remove')}</button>
           </div>
         </section>
       )}

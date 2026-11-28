@@ -4,15 +4,17 @@ body{background:var(--base);color:var(--ink);font:500 16px/1.4 "DIN Alternate","
 button,select,input{font:inherit;color:inherit}
 button:focus-visible,select:focus-visible,input:focus-visible,canvas:focus-visible{outline:2px solid var(--cau);outline-offset:2px}
 .boot{padding:24px}.boot.err{color:var(--no)}
-.shell{display:grid;grid-template-rows:auto minmax(260px,1fr) auto auto;min-height:100%;max-width:900px;margin:0 auto}
+.shell{display:grid;grid-template-rows:auto auto minmax(260px,1fr) auto auto auto;min-height:100%}
 .status{padding:10px 14px;color:#11150e}.status .word{font:700 34px/1 "DIN Condensed","Barlow Condensed",sans-serif;letter-spacing:.02em}
 .status .why{font-weight:600}.status .sub{font-size:14px}
 .lv-GO{background:var(--go)}.lv-CAUTION{background:var(--cau)}.lv-NO-GO{background:var(--no)}.lv-NO-DATA{background:var(--rule);color:var(--ink)}
 .badges{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}.badge{font-size:12px;font-weight:700;padding:2px 6px;background:#11150e;color:var(--ink)}
 .badge.mock{background:#fff;color:#11150e}.badge.warn{background:#11150e;color:var(--cau)}
-.mapwrap{position:relative;min-height:260px}.map{position:absolute;inset:0;width:100%;height:100%;touch-action:none;cursor:crosshair}
-.layers{position:absolute;left:8px;right:8px;bottom:8px;display:flex;gap:4px;overflow-x:auto}
-.layers button{min-height:44px;padding:0 10px;background:rgba(28,33,23,.88);border:1px solid var(--rule);white-space:nowrap}
+/* Issue #85 AC1: карта ≥ 55% першого екрана на телефоні (58% — запас на рядок адреси; svh — без нього). */
+.mapwrap{position:relative;min-height:max(260px,58vh);min-height:max(260px,58svh);overflow:hidden}.map{position:absolute;inset:0;width:100%;height:100%;touch-action:none;cursor:crosshair}
+/* Issue #85 AC5: смуга шарів під картою, а не поверх неї. */
+.layers{display:flex;gap:4px;overflow-x:auto;padding:4px;background:var(--panel);border-top:1px solid var(--rule)}
+.layers button{flex:0 0 auto;min-height:44px;padding:0 10px;background:var(--base);border:1px solid var(--rule);white-space:nowrap}
 .layers button.on{background:var(--ink);color:#11150e}
 .hours{display:flex;overflow-x:auto;border-top:1px solid var(--rule);min-height:46px}
 .hours button{flex:0 0 32px;min-height:44px;border:0;border-right:1px solid var(--base);font-size:12px;color:#11150e;font-weight:700}
@@ -26,8 +28,7 @@ button:focus-visible,select:focus-visible,input:focus-visible,canvas:focus-visib
 @media (max-width:420px){.panel .row{grid-template-columns:1fr}.vals{grid-template-columns:repeat(2,1fr)}}
 .underlay{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
 .mapwrap.has-underlay .map{opacity:var(--wx-op,1)}
-.ovbtn{position:absolute;top:8px;right:8px;z-index:2;min-height:44px;padding:0 12px;background:rgba(28,33,23,.88);border:1px solid var(--rule)}
-.ovpanel{position:absolute;top:60px;left:8px;right:8px;z-index:2;max-height:min(70vh,560px);overflow:auto;display:grid;gap:8px;padding:10px;background:var(--panel);border:1px solid var(--rule);font-size:14px}
+.ovpanel{position:absolute;top:8px;left:8px;right:8px;z-index:2;max-height:min(70vh,560px);overflow:auto;display:grid;gap:8px;padding:10px;background:var(--panel);border:1px solid var(--rule);font-size:14px}
 .ovpanel label{display:grid;gap:4px;color:var(--dim)}.ovpanel input[type=range]{min-height:44px;accent-color:var(--cau)}
 .ovpanel input[type=number]{min-height:44px;min-width:0;width:100%;background:var(--base);border:1px solid var(--rule);padding:0 6px}
 .ovrow{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;border:1px solid var(--rule);padding:6px}.ovrow.on{border-color:var(--cau)}
@@ -36,3 +37,22 @@ button:focus-visible,select:focus-visible,input:focus-visible,canvas:focus-visib
 .ovprev{position:relative}.ovprev img{display:block;width:100%;cursor:crosshair}
 .ovmark{position:absolute;transform:translate(-50%,-50%);min-width:20px;height:20px;border-radius:50%;background:var(--cau);color:#11150e;font-size:12px;font-weight:700;text-align:center;line-height:20px;pointer-events:none}
 @media (max-width:420px){.ovrow{grid-template-columns:repeat(2,1fr)}}
+/* Issue #86: десктоп ≥ 1024 px — дві колонки. Ліворуч ряд інструментів, карта на всю висоту, шари й смуга 48 год;
+   праворуч панель точки 360–420 px із власною прокруткою. Сторінка сама не прокручується.
+   Нижче 1024 px — розкладка телефона на всю ширину (без max-width, тож без порожнеч з боків). */
+@media (min-width:1024px){
+  .shell{height:100vh;height:100dvh;min-height:0;overflow:hidden;grid-template-columns:minmax(0,1fr) clamp(360px,30vw,420px);
+    grid-template-rows:auto auto minmax(0,1fr) auto auto;grid-template-areas:"hd hd" "bar side" "map side" "lay side" "tl side"}
+  .shell>.status{grid-area:hd}.shell>.mapbarwrap{grid-area:bar}.shell>.layers{grid-area:lay}.shell>.tl{grid-area:tl}
+  .shell>.mapwrap{grid-area:map;min-height:0}
+  .shell>.panel{grid-area:side;min-height:0;overflow-y:auto;overscroll-behavior:contain;border-left:1px solid var(--rule)}
+  /* Шапка — один рядок ≤ 72 px: вердикт · причина й профіль · бейджі · «Ніч» · UK/EN. */
+  .shell>header.status{display:flex;align-items:center;gap:14px;min-height:0;height:68px;padding:8px 12px;overflow:hidden}
+  .shell>.status .word{flex:0 0 auto;font-size:30px;white-space:nowrap}
+  .shell>.status .why,.shell>.status .sub{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .shell>.status .why{flex:0 1 auto;max-width:40%}.shell>.status .sub{flex:1 1 0}
+  .shell>.status .badges{flex:0 1 auto;flex-wrap:nowrap;min-width:0;overflow:hidden;margin-top:0}
+  .shell>.status .badge{white-space:nowrap}
+  .shell>.status .nightbtn,.shell>.status .langsw{position:static;flex:0 0 auto}
+  .shell>.status .nightbtn{order:2}.shell>.status .langsw{order:3}
+}

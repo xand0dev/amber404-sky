@@ -1,6 +1,11 @@
 // Issue #44: словник uk/en, однаковий набір ключів, вибір мови за замовчуванням.
 import { describe, expect, it } from 'vitest';
-import { DICT, detectLang, parseLang, t, type Key } from './i18n';
+import { effectiveEndurance } from './energy';
+import { DICT, detectLang, parseLang, profileName, t, type Key } from './i18n';
+import type { DroneProfile } from '../contracts';
+import profilesJson from '../../public/data/static/profiles.json';
+
+const profiles = profilesJson as DroneProfile[];
 
 describe('Словник i18n', () => {
   it('в uk і en однаковий набір ключів', () => {
@@ -29,5 +34,34 @@ describe('Мова за замовчуванням: мова браузера (u
     expect(parseLang('uk')).toBe('uk');
     expect(parseLang('fr')).toBeNull();
     expect(parseLang(null)).toBeNull();
+  });
+});
+
+// Issue #108: назва дрона мовою інтерфейсу — nameEn в EN, інакше name (сумісність).
+describe('profileName', () => {
+  const p = { name: 'Агродрон', nameEn: 'Agricultural drone' };
+  it('EN і є nameEn → nameEn', () => expect(profileName(p, 'en')).toBe('Agricultural drone'));
+  it('UK → name', () => expect(profileName(p, 'uk')).toBe('Агродрон'));
+  it('EN без nameEn → name', () => expect(profileName({ name: 'Агродрон' }, 'en')).toBe('Агродрон'));
+  it('EN з порожнім nameEn → name', () => expect(profileName({ name: 'Агродрон', nameEn: '' }, 'en')).toBe('Агродрон'));
+  it('static/profiles.json: у кожного з 7 класів є nameEn з issue #108', () => {
+    const want: Record<string, string> = {
+      fpv7: 'FPV 7″', fpv10: 'FPV 10″ with payload', recon: 'Recon quadcopter', heavy: 'Heavy multirotor',
+      wingE: 'Electric fixed wing', wingF: 'Fuel fixed wing (ICE)', agro: 'Agricultural drone',
+    };
+    expect(Object.fromEntries(profiles.map((x) => [x.id, x.nameEn]))).toEqual(want);
+  });
+});
+
+describe('Issue #119: пояснення часу польоту на карті мовою інтерфейсу', () => {
+  const batt = { energy: 'battery' as const, enduranceMin: 10, massKg: 1, payloadKg: 0, kind: 'multirotor' as const, t: -20 };
+  it('uk — як і раніше', () => {
+    expect(effectiveEndurance(batt).why).toBe('паспорт 10 хв × холод 0.70 × вантаж 1.00');
+    expect(effectiveEndurance(batt, 'uk').why).toBe('паспорт 10 хв × холод 0.70 × вантаж 1.00');
+  });
+  it('en — без кирилиці', () => {
+    expect(effectiveEndurance(batt, 'en').why).toBe('datasheet 10 min × cold 0.70 × payload 1.00');
+    expect(effectiveEndurance({ energy: 'fuel', fuelL: 5, burnLh: 1, massKg: 20, kind: 'wing', t: 0 }, 'en').why).toBe('5 L / 1 L/h');
+    expect(effectiveEndurance({ energy: 'fuel', enduranceMin: 90, massKg: 20, kind: 'wing', t: 0 }, 'en').why).toBe('datasheet 90 min (fuel)');
   });
 });

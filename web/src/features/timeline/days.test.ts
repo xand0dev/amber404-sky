@@ -32,3 +32,10 @@ describe('F3-AC4: ▶ програвання', () => {
     expect(nextPlayHour(47, 48)).toBeNull();
   });
 });
+
+// Issue #116: позначки днів англійською.
+describe('Given EN (issue #116)', () => {
+  it('Then позначки днів — Fri 27, Sat 28, Sun 29', () => {
+    expect(daySegments(times, 2, 'en').map((x) => x.label)).toEqual(['Fri 27', 'Sat 28', 'Sun 29']);
+  });
+});

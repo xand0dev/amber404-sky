@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import type { DroneProfile, Grid, Profile } from '../../contracts';
 import type { Bundle } from '../data';
-import { makeProjection } from '../../core';
+import { makeProjection, windAt } from '../../core';
+import { stepFor, zoneFor as panelZone } from '../../features/panel/zoneLogic';
 import { clearZoneCache, ringSteps, zoneFor, zoneShapes } from './model';
 
 const G: Grid = { lat0: 52.5, lon0: 22, step: 0.5, nr: 18, nc: 38 };
@@ -59,6 +60,30 @@ describe('Given обрана точка, висота, година й дрон 
   it('When немає дрона з таким id; Then береться перший профіль', () => {
     clearZoneCache();
     expect(zoneFor(bundle(0.0001, 0), { ...S, droneId: 'nope' })!.prof.id).toBe('fpv7');
+  });
+});
+
+describe('Given свій дрон з вантажем (issue #107, SPEC §7.3a)', () => {
+  // Мультиротор 2 кг + вантаж 2 кг, паспорт 10 хв, +20 °C: множник вантажу (2 / 4)^1.5 = 0.35.
+  const OWN = { ...DRONE, id: 'own', massKg: 2, payloadKg: 2, source: 'користувач (свій дрон)' };
+  const withOwn = (spd: number, dir: number) => { const b = bundle(spd, dir, 20); return { ...b, profiles: [...b.profiles, OWN] }; };
+
+  it('When шар «Зона»; Then T = 3.5 хв (вантаж враховано), у підписі множник вантажу 0.35', () => {
+    clearZoneCache();
+    const z = zoneFor(withOwn(0.0001, 0), { ...S, droneId: 'own' })!;
+    expect(z.enduranceMin).toBeCloseTo(10 * 0.5 ** 1.5);
+    expect(z.enduranceMin.toFixed(1)).toBe('3.5');
+    expect(z.why).toContain('вантаж 0.35');
+  });
+
+  it('When вітер 6 м/с; Then радіус контуру на карті = радіус картки в панелі (±1 крок)', () => {
+    clearZoneCache();
+    const b = withOwn(6, 300), s = { ...S, droneId: 'own' };
+    const z = zoneFor(b, s)!;
+    const card = panelZone(OWN, s.lat, s.lon, 20, (la, lo) => windAt(b.meta.grid, b.profile, s.altM, s.hour, la, lo), 'roundtrip');
+    const step = Math.max(stepFor(OWN.cruiseMs, card.usableS), 250);
+    expect(z.usableS).toBeCloseTo(card.usableS);
+    expect(Math.abs(z.maxDistM - card.maxM)).toBeLessThanOrEqual(step);
   });
 });
 

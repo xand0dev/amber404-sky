@@ -7,7 +7,7 @@ const DATA = `amber-data-${VERSION}`;
 const CORE = ['./', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png'];
 // Пакет даних — ті самі файли, що читає web/src/app/data.ts.
 const DATA_FILES = ['meta.json', 'profile.json', 'galileo.json', 'kp.json', 'climate.json',
-  'static/profiles.json', 'static/cities.json', 'static/borders.json'].map((f) => `data/${f}`);
+  'static/profiles.json', 'static/cities.json', 'static/borders.json', 'static/relief.json'].map((f) => `data/${f}`);
 const NET_TIMEOUT_MS = 5000;
 
 const abs = (p) => new URL(p, self.location.href).href;
