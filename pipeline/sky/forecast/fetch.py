@@ -23,7 +23,7 @@ from datetime import datetime
 
 import httpx
 
-from ..contracts import GRID, HOURS, LEVELS, NPTS, point
+from ..contracts import GRID, HOURS, LEVELS, NPTS, join_profile, point
 
 URL = "https://api.open-meteo.com/v1/forecast"
 BATCH = 114  # 684 = 6 × 114, ліміт Open-Meteo — ≤ 120 точок за запит (§8)
@@ -342,11 +342,17 @@ FALLBACK_MAX_H = 12  # assumption: старіший прогноз уже не �
 
 
 def previous(client: httpx.Client, now: datetime) -> tuple[dict | None, str]:
-    """План Б §12 (#93): цілий попередній profile.json з Pages, якщо він справжній і не старший за 12 год.
-    Повертає (профіль з times, причина відмови)."""
+    """План Б §12 (#93): цілий попередній профіль з Pages (profile/index.json + години, #165), якщо він справжній
+    і не старший за 12 год. Повертає (профіль з times, причина відмови)."""
     try:
         meta = client.get(PAGES + "meta.json", timeout=TIMEOUT_S).raise_for_status().json()
-        prof = client.get(PAGES + "profile.json", timeout=TIMEOUT_S).raise_for_status().json()
+        # §6.2 (#165): на Pages профіль розбитий за годинами; join_profile відмовить, якщо години з різних запусків
+        index = client.get(PAGES + "profile/index.json", timeout=TIMEOUT_S).raise_for_status().json()
+        hours = [
+            client.get(PAGES + "profile/" + h["file"], timeout=TIMEOUT_S).raise_for_status().json()
+            for h in index["hours"]
+        ]
+        prof = join_profile(index, hours)
         src = next(s for s in meta["sources"] if s["id"] == "openmeteo")
         gen = datetime.strptime(prof["generatedAt"], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=now.tzinfo)
         times = meta["times"]

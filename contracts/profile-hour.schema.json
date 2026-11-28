@@ -1,0 +1,12 @@
+{ "$schema": "https://json-schema.org/draft/2020-12/schema", "title": "profile/hNN.json — одна година профілю (SPEC §6.2, #165)", "type": "object",
+  "required": ["generatedAt", "hour", "t", "spd", "dir", "gust", "temp", "precip", "rh", "vis"],
+  "$defs": {
+    "row": { "type": "array", "minItems": 684, "maxItems": 684, "items": {"type":["number","null"]} },
+    "lv": { "type": "array", "minItems": 16, "maxItems": 16, "items": { "$ref": "#/$defs/row" } } },
+  "properties": {
+    "generatedAt": { "type": "string", "format": "date-time", "description": "= index.generatedAt; інша — година з іншого запуску, не змішувати" },
+    "hour": { "type": "integer", "minimum": 0, "maximum": 47 },
+    "t": { "type": "string", "format": "date-time" },
+    "spd": { "$ref": "#/$defs/lv" }, "dir": { "$ref": "#/$defs/lv" },
+    "gust": { "$ref": "#/$defs/row" }, "temp": { "$ref": "#/$defs/row" }, "precip": { "$ref": "#/$defs/row" },
+    "rh": { "$ref": "#/$defs/row" }, "vis": { "$ref": "#/$defs/row" } } }

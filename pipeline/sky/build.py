@@ -18,7 +18,7 @@ import json
 from datetime import UTC, datetime
 from pathlib import Path
 
-from .contracts import SourceMeta
+from .contracts import PROFILE_DIR, SourceMeta, split_profile
 from .mocks import build_mock
 
 OUT = Path(__file__).resolve().parents[2] / "web" / "public" / "data"
@@ -35,6 +35,16 @@ REAL = {
 def write(name: str, data: dict, out: Path) -> None:
     out.mkdir(parents=True, exist_ok=True)
     (out / f"{name}.json").write_text(json.dumps(data, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+
+
+def write_profile(prof: dict, times: list[str], out: Path) -> None:
+    """§6.2 (#165): profile/index.json + profile/h00…h47.json; старого profile.json більше немає."""
+    index, hours = split_profile(prof, times)
+    d = out / PROFILE_DIR
+    for hf, h in zip(hours, index["hours"], strict=True):
+        write(h["file"].removesuffix(".json"), hf, d)
+    write("index", index, d)  # index останнім: поки його немає, сайт не бачить напівзаписаних годин
+    (out / "profile.json").unlink(missing_ok=True)
 
 
 def generated_at(statuses: list[dict], gen: str, mock_only: bool) -> str:
@@ -74,7 +84,10 @@ def build(mock_only: bool, out: Path = OUT) -> dict:
         files["profile"].pop("times", None)
     files["meta"] = meta
     for name, data in files.items():
-        write(name, data, out)
+        if name == "profile":
+            write_profile(data, meta["times"], out)
+        else:
+            write(name, data, out)
     return meta
 
 

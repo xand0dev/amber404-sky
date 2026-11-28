@@ -4,15 +4,18 @@ import { expect, test, type Page } from '@playwright/test';
 // Онбординг першого відкриття (#166) лягає поверх карти — у цих тестах його вже пройдено.
 test.beforeEach(({ page }) => page.addInitScript(() => localStorage.setItem('amber404.tour', '1')));
 
-/** Вітер 30 м/с скрізь (×10 у profile.json) — понад ліміт будь-якого дрона: «зона відсутня» + причина. */
+/** Вітер 30 м/с скрізь (×10 у годинах профілю, #165) — понад ліміт будь-якого дрона: «зона відсутня» + причина. */
 async function stormy(page: Page) {
-  await page.route('**/data/profile.json', async (route) => {
+  await page.route('**/data/profile/h*.json', async (route) => {
     const res = await route.fetch();
     const p = await res.json();
-    p.spd = p.spd.map((l: (number | null)[][]) => l.map((row) => row.map((v) => (v == null ? v : 300))));
+    p.spd = p.spd.map((row: (number | null)[]) => row.map((v) => (v == null ? v : 300)));
     await route.fulfill({ response: res, json: p });
   });
 }
+
+// Решта годин профілю довантажується у фоні (#165): запити в польоті на кінці тесту — не помилка.
+test.afterEach(async ({ page }) => { await page.unrouteAll({ behavior: 'ignoreErrors' }); });
 
 for (const [locale, word] of [['uk-UA', 'Деталі'], ['en-US', 'Details']]) {
   test.describe(`412×915 ${locale}`, () => {

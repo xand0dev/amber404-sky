@@ -5,7 +5,21 @@ export const DATA_FRESH_H = 3;
 const FUTURE_SLACK_MIN = 10;
 
 // Файли, які пише `make data` (pipeline/sky/build.py); `data/static/*` лежать у репо.
-export const DATA_FILES = ['meta', 'profile', 'galileo', 'kp', 'climate'] as const;
+// Профіль (§6.2, #165) — тека profile/: index.json і години з його переліку (profileFiles).
+export const DATA_FILES = ['meta', 'galileo', 'kp', 'climate'] as const;
+export const PROFILE_INDEX = 'profile/index';
+
+export interface PagesProfileIndex { generatedAt: string; hours: { file: string }[] }
+
+/** Файли годин профілю з index (без «.json», як DATA_FILES). */
+export function profileFiles(index: PagesProfileIndex): string[] {
+  return index.hours.map((h) => `profile/${h.file.replace(/\.json$/, '')}`);
+}
+
+/** Усі години — з того самого запуску, що й index; інакше дані різних запитів змішались би (AGENTS.md). */
+export function sameRun(index: PagesProfileIndex, hours: { generatedAt: string }[]): boolean {
+  return hours.length === index.hours.length && hours.every((h) => h.generatedAt === index.generatedAt);
+}
 
 export interface PagesMeta {
   generatedAt: string;

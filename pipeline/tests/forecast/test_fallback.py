@@ -10,7 +10,7 @@ from pathlib import Path
 
 import httpx
 
-from sky.contracts import HOURS, NPTS
+from sky.contracts import HOURS, NPTS, join_profile, split_profile
 from sky.forecast import fetch as f
 
 FIX = json.loads((Path(__file__).parent / "openmeteo_2x3.json").read_text("utf-8"))
@@ -19,7 +19,7 @@ NOW = datetime(2026, 11, 28, 9, 10, tzinfo=UTC)
 
 
 def _old(age_h: float, status: str = "ok") -> tuple[dict, dict]:
-    """Попередній деплой: profile.json і meta.json, зібрані age_h год тому."""
+    """Попередній деплой: профіль і meta.json, зібрані age_h год тому."""
     t0 = NOW - timedelta(hours=age_h)
     gen = t0.strftime("%Y-%m-%dT%H:%M:%SZ")
     times = [(t0.replace(minute=0) + timedelta(hours=h)).strftime("%Y-%m-%dT%H:00:00Z") for h in range(HOURS)]
@@ -42,7 +42,12 @@ def _client(om, pages: tuple[dict, dict] | None | str) -> tuple[httpx.Client, li
         if pages == "broken":
             return httpx.Response(200, content=b"<html>")
         prof, meta = pages
-        return httpx.Response(200, json=prof if req.url.path.endswith("profile.json") else meta)
+        if req.url.path.endswith("meta.json"):
+            return httpx.Response(200, json=meta)
+        index, hours = split_profile(prof, meta["times"])  # §6.2 (#165): на Pages профіль за годинами
+        if req.url.path.endswith("profile/index.json"):
+            return httpx.Response(200, json=index)
+        return httpx.Response(200, json=hours[int(req.url.path[-7:-5])])
 
     return httpx.Client(transport=httpx.MockTransport(handler)), hosts
 
@@ -127,5 +132,27 @@ def test_build_end_to_end_meta_age_is_old_forecast_time(tmp_path, monkeypatch):
     assert om["fetchedAt"] == prof["generatedAt"]
     assert out["generatedAt"] == prof["generatedAt"]  # плашка віку: 3 год, а не «щойно»
     assert out["times"] == meta["times"]
-    written = json.loads((tmp_path / "profile.json").read_text("utf-8"))
+    d = tmp_path / "profile"
+    index = json.loads((d / "index.json").read_text("utf-8"))
+    written = join_profile(index, [json.loads((d / h["file"]).read_text("utf-8")) for h in index["hours"]])
     assert not any(k.startswith("_") for k in written) and written["spd"] == prof["spd"]
+
+
+def test_previous_with_hours_from_another_run_is_not_used():
+    """§6.2 (#165): на Pages одна з годин — з іншого запуску → план Б не змішує, nodata."""
+    prof, meta = _old(3)
+    index, hours = split_profile(prof, meta["times"])
+    hours[7] = dict(hours[7], generatedAt="2000-01-01T00:00:00Z")
+
+    def handler(req: httpx.Request) -> httpx.Response:
+        if req.url.host == "api.open-meteo.com":
+            return _down(req)
+        if req.url.path.endswith("meta.json"):
+            return httpx.Response(200, json=meta)
+        if req.url.path.endswith("index.json"):
+            return httpx.Response(200, json=index)
+        return httpx.Response(200, json=hours[int(req.url.path[-7:-5])])
+
+    p = f.fetch(NOW, client=httpx.Client(transport=httpx.MockTransport(handler)), sleep=lambda s: None)
+    assert p["_status"] == "nodata"
+    assert "попередній прогноз недоступний" in p["_note"]
