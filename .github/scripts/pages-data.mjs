@@ -6,7 +6,7 @@
 // дані різних запитів не змішуємо (AGENTS.md).
 import { appendFileSync, mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { DATA_FILES, dataPlan } from '../../web/src/core/datasync.ts';
+import { DATA_FILES, PROFILE_INDEX, dataPlan, profileFiles, sameRun } from '../../web/src/core/datasync.ts';
 
 const [base = '', out = 'web/public/data'] = process.argv.slice(2);
 const event = process.env.EVENT ?? '';
@@ -38,8 +38,13 @@ try {
   if (plan.fetch) done(true, plan.reason);
   const files = { meta };
   for (const name of DATA_FILES) if (name !== 'meta') files[name] = await get(name);
-  mkdirSync(out, { recursive: true });
-  for (const name of DATA_FILES) writeFileSync(join(out, `${name}.json`), files[name].text);
+  // §6.2 (#165): профіль — тека profile/ (index + години з його переліку), усі години з того самого запуску
+  files[PROFILE_INDEX] = await get(PROFILE_INDEX);
+  const hours = profileFiles(files[PROFILE_INDEX].json);
+  for (const name of hours) files[name] = await get(name);
+  if (!sameRun(files[PROFILE_INDEX].json, hours.map((n) => files[n].json))) throw new Error('години профілю з різних запусків');
+  mkdirSync(join(out, 'profile'), { recursive: true });
+  for (const name of Object.keys(files)) writeFileSync(join(out, `${name}.json`), files[name].text);
   done(false, plan.reason);
 } catch (e) {
   done(true, `не вдалося взяти дані з Pages: ${e.message}`);
