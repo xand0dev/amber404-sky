@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useApp } from './state';
 import { useVerdicts } from './useVerdict';
-import { AgeBadge } from './pwa';
+import { AgeBadge, OfflineBadge, useOnline } from './pwa';
 import { NightToggle } from './theme';
 import { LangToggle, useT } from './lang';
 import { humanWindow, useNow } from './when';
@@ -13,16 +13,6 @@ const S = {
   uk: { details: 'Деталі', sources: 'Джерела', mock: 'MOCK — синтетичні дані для демонстрації, не прогноз', ok: 'ок', partial: 'частково', nodata: 'немає даних', min: '{n} хв', h: '{n} год' },
   en: { details: 'Details', sources: 'Sources', mock: 'MOCK — synthetic demo data, not a forecast', ok: 'ok', partial: 'partial', nodata: 'no data', min: '{n} min', h: '{n} h' },
 } as const satisfies Record<Lang, Record<string, string>>;
-
-function useOnline(): boolean {
-  const [on, setOn] = useState(() => navigator.onLine);
-  useEffect(() => {
-    const upd = () => setOn(navigator.onLine);
-    window.addEventListener('online', upd); window.addEventListener('offline', upd);
-    return () => { window.removeEventListener('online', upd); window.removeEventListener('offline', upd); };
-  }, []);
-  return on;
-}
 
 /** Вік прогнозу коротко для кнопки «Джерела»: «5 хв», «3 год»; невідомий — «?». */
 function shortAge(generatedAt: string, nowMs: number, lang: Lang): { stale: boolean; text: string } {
@@ -61,6 +51,7 @@ export function StatusBar() {
       <div className="st-top">
         <div className="word">{t(`lv.${now.level}`)}</div>
         {data.meta.mock && <span className="badge mock">MOCK</span>}
+        <OfflineBadge generatedAt={data.meta.generatedAt} />
         <button type="button" className={warn ? 'srcbtn warn' : 'srcbtn'} aria-expanded={open} aria-controls="st-src"
           aria-label={`${L.sources} · ${age.text}`} onClick={() => { setOpen(!open); setDet(false); }}>
           {/* #145: значок — CSS ::before (не текст), тож видимий текст «12 хв» міститься в доступному імені. */}

@@ -4,6 +4,7 @@ import { createContext, useContext, useLayoutEffect, useMemo, useState, type Rea
 import { DAY_PALETTE, paletteFrom, parseNight, type MapPalette } from '../core';
 import { NIGHT_CSS, NIGHT_VARS } from './night';
 import { useT } from './lang';
+import { setThemeColor } from './pwa';
 
 export const NIGHT_KEY = 'amber404.night';
 
@@ -29,7 +30,8 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   // Ті самі значення, що й у CSS-змінних: нічні з NIGHT_VARS, денні — з :root app.css.
   const colors = useMemo(() => (night ? paletteFrom((n) => NIGHT_VARS[n] ?? '') : DAY_PALETTE), [night]);
   // Атрибут ставимо до малювання, щоб карта в тому ж кадрі прочитала нові змінні через readMapColors().
-  useLayoutEffect(() => { document.documentElement.dataset.theme = night ? 'night' : 'day'; }, [night]);
+  // Рядок стану браузера й застосунку — під тему (#170 AC4).
+  useLayoutEffect(() => { document.documentElement.dataset.theme = night ? 'night' : 'day'; setThemeColor(night); }, [night]);
   const toggle = () => { saveNight(!night); setNight(!night); };
   return (
     <ThemeCtx.Provider value={{ night, toggle, colors }}>
