@@ -6,6 +6,8 @@ import { useVerdicts } from '../../app/useVerdict';
 import { useView } from '../../app/view/view';
 import { InBar, useMapWrap } from '../../ui/MapFrame';
 import { composeSnapshot } from './compose';
+import { attribution } from './basemaps';
+import { useBasemap } from './basemapStore';
 import { browserDownload, deliver, fileName, stampLines, type Delivered } from './snapshot';
 import './snap.css';
 
@@ -20,6 +22,7 @@ export function SnapButton({ reduce }: { reduce: boolean }) {
   const { now, prof } = useVerdicts();
   const { view } = useView();
   const frame = useMapWrap();
+  const { base } = useBasemap();
   const ref = useRef<HTMLButtonElement>(null);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState('');
@@ -30,7 +33,7 @@ export function SnapButton({ reduce }: { reduce: boolean }) {
     if (!wrap || busy) return;
     setBusy(true); setMsg('');
     try {
-      const blob = await composeSnapshot(wrap, data, s, reduce, stampLines(data, s, now, prof, lang), view);
+      const blob = await composeSnapshot(wrap, data, s, reduce, stampLines(data, s, now, prof, lang), view, attribution(base, lang));
       const r: Delivered = await deliver(blob, fileName(data.meta.times[s.hour] ?? data.meta.generatedAt), { nav: navigator, download: browserDownload });
       setMsg(tx[r]);
       setTimeout(() => setMsg(''), 3000);

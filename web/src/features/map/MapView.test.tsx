@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { AppCtx, type Ctx } from '../../app/state';
 import { MapView } from './MapView';
+import { LANG_KEY, LangProvider } from '../../app/lang';
 import { bundle, state } from './fixture.test-util';
 
 let reduce = false;
@@ -69,5 +70,15 @@ describe('Given наведення миші на карту (F3-AC6)', () => {
   it('курсор поза сіткою → підказки немає', () => {
     hover('mouse', 2, 2);
     expect(screen.queryByRole('tooltip')).toBeNull();
+  });
+});
+
+// Issue #116: EN — доступне ім'я карти англійською.
+describe('Given EN (issue #116)', () => {
+  afterEach(() => localStorage.clear());
+  it('Then canvas.map — «Map: tap to pick a point»', () => {
+    localStorage.setItem(LANG_KEY, 'en');
+    render(<LangProvider><AppCtx.Provider value={{ data: bundle(), s: state(), set: () => {} } as Ctx}><MapView /></AppCtx.Provider></LangProvider>);
+    expect(document.querySelector('canvas.map')?.getAttribute('aria-label')).toBe('Map: tap to pick a point');
   });
 });

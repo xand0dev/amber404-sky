@@ -4,7 +4,7 @@ import { useApp } from '../../app/state';
 import { useVerdicts } from '../../app/useVerdict';
 import { useT, windowLabel } from '../../app/lang';
 import { humanWindow, useNow } from '../../app/when';
-import { t as coreT, type Lang, type Verdict, type Weather } from '../../core';
+import { profileName, t as coreT, type Lang, type Verdict, type Weather } from '../../core';
 import type { DroneProfile } from '../../contracts';
 import { Route } from '../route/Route';
 import { arrowDeg, coordText, dayHM, nearestCity, placeText } from './place';
@@ -14,6 +14,8 @@ import { Saved } from './Saved';
 import { OwnDrone } from './OwnDrone';
 import type { SavedWx } from './savedStore';
 import { pt } from './strings';
+import { TerrainView, useRelief } from './Terrain';
+import { cellRange, terrainAt } from './relief';
 import './panel.css';
 
 const n = (x: number | null, d = 1) => (x == null ? '—' : x.toFixed(d));
@@ -73,25 +75,28 @@ export function Panel() {
   const { wx, now, window, prof } = useVerdicts();
   const { lang } = useT();
   const nowMs = useNow();
+  const relief = useRelief();
   const city = nearestCity(data.cities, s.lat, s.lon);
   const last = data.meta.times[data.meta.times.length - 1];
   // У звіті — абсолютний час (#87 AC4 «зараз» лише на екрані: збережений звіт читають пізніше).
   const win = windowLabel(window, last, lang);
   const time = data.meta.times[s.hour] ?? '';
+  const terrain = terrainAt(relief, s.lat, s.lon);
+  const reliefRange = cellRange(relief, data.meta.grid, s.lat, s.lon);
   // Знімок для «Зберегти погоду» / «Копіювати звіт» (F4-AC4): лише в браузері.
   const snapshot = (): SavedWx => ({
     id: `${s.lat.toFixed(3)},${s.lon.toFixed(3)},${s.altM},${time},${prof.id}`, savedAt: new Date().toISOString(),
-    place: placeText(data.cities, s.lat, s.lon), lat: s.lat, lon: s.lon, altM: s.altM, time, drone: prof.name,
+    place: placeText(data.cities, s.lat, s.lon), lat: s.lat, lon: s.lon, altM: s.altM, time, drone: profileName(prof, lang),
     ws: wx.ws, dir: wx.dir, g: wx.g, cb: wx.cb, t: wx.t, level: now.level, reasons: now.reasons, window: win,
     source: data.meta.sources.map((x) => x.name).join(', ') || data.profile.sources.join(', '),
-    generatedAt: data.meta.generatedAt, mock: data.meta.mock,
+    generatedAt: data.meta.generatedAt, mock: data.meta.mock, terrain, reliefRange,
   });
   return (
     <section className="panel" aria-label="Точка">
       <div className="row">
         <label>{pt('drone', lang)}
           <select value={s.droneId} onChange={(e) => { const p = data.profiles.find((x) => x.id === e.target.value); set({ droneId: e.target.value, altM: p?.defaultAltM ?? s.altM }); }}>
-            {data.profiles.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+            {data.profiles.map((p) => <option key={p.id} value={p.id}>{profileName(p, lang)}</option>)}
           </select>
         </label>
         <label>{pt('alt', lang)}: <b>{s.altM} {pt('unit.m', lang)}</b>
@@ -99,6 +104,7 @@ export function Panel() {
         </label>
       </div>
       <PointView city={city} lat={s.lat} lon={s.lon} altM={s.altM} wx={wx} verdict={now} windowText={humanWindow(window, last, nowMs, lang)} prof={prof} lang={lang} />
+      <TerrainView terrain={terrain} range={reliefRange} lang={lang} />
       <Saved current={snapshot} />
       <Zone prof={prof} hourLabel={time ? dayHM(time, lang) : '—'} />
       <HeightTable prof={prof} />

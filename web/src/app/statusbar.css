@@ -1,0 +1,56 @@
+/* Шапка (issue #87): ≤ 120 px на телефоні.
+   До 1023 px — сітка з двох рядків: [слово · MOCK · … · Ніч · UK/EN] і [«чому» ▾ · Джерела], тож «чому» має всю ширину.
+   «Деталі» й «Джерела» відкриваються накладкою під шапкою (не зсувають карту), одночасно — лише одна. */
+header.status{position:relative;min-width:0;padding:8px 14px}
+.st-top .word{white-space:nowrap}
+.srcbtn{min-height:44px;min-width:44px;padding:0 8px;background:#11150e;color:var(--ink);border:1px solid var(--rule);font-weight:700;white-space:nowrap;cursor:pointer}
+.srcbtn.warn{color:var(--cau)}
+.srcbtn:focus-visible,.st-more summary:focus-visible{outline:3px solid var(--ink);outline-offset:2px;box-shadow:0 0 0 2px var(--base)}
+.st-more{min-width:0}
+.st-more summary{display:flex;align-items:center;gap:8px;min-height:44px;cursor:pointer;list-style:none}
+.st-more summary::-webkit-details-marker{display:none}
+.st-more .why{flex:0 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:20px}
+.st-det{flex:none;font-size:13px;font-weight:700;text-decoration:underline}
+.st-det::after{content:" ▾"}
+.st-more[open] .st-det::after{content:" ▴"}
+.st-more[open] .why{white-space:normal}
+.st-body,.srcpop{position:absolute;top:100%;left:0;right:0;z-index:30;padding:10px 14px;background:#11150e;color:var(--ink);border-bottom:1px solid var(--rule);font-size:14px;font-weight:400}
+.st-body .sub{font-size:14px}
+.st-reasons{margin:6px 0 0;padding-left:18px}
+.srcpop p,.srcpop ul{margin:0 0 6px}.srcpop ul{padding-left:18px}
+.srcpop li.warn{color:var(--cau)}
+
+@media (max-width:1023px){
+  /* Перша колонка може стискатися: без вбудованого шрифту (Android, Windows, Linux) слово ширше, ніж у DIN Condensed,
+     і сторінка не повинна їхати вбік (F3-AC5). */
+  header.status{display:grid;grid-template-columns:minmax(0,max-content) auto minmax(0,1fr) auto auto;align-items:center;column-gap:6px}
+  .st-top{display:contents}
+  .status .st-top .word{grid-area:1/1}
+  .status .st-top .badge.mock{grid-area:1/2}
+  .status .nightbtn{position:static;grid-area:1/4}
+  .status .langsw{position:static;grid-area:1/5}
+  .status .st-more{grid-area:2/1/3/5}
+  .status .st-top .srcbtn{grid-area:2/5;justify-self:stretch}
+}
+@media (max-width:600px){
+  /* «Деталі» — лише значок ▾, слово лишається доступним ім'ям. */
+  .st-det-t{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+  .st-det{font-size:16px;text-decoration:none;min-width:20px;text-align:center}
+  .st-det::after{content:"▾"}.st-more[open] .st-det::after{content:"▴"}
+}
+@media (max-width:420px){
+  /* Слово менше на вузьких екранах, щоб із запасним шрифтом (≈ Arial / Roboto) рядок [слово · MOCK · Ніч · UK/EN] вміщався;
+     «НЕМАЄ ДАНИХ» тоді переноситься на два рядки, шапка лишається ≤ 120 px. */
+  header.status .word{font-size:min(34px,6.8vw);white-space:normal}
+  .status .nightbtn{padding:0 8px}
+  header.status{padding:8px 10px;column-gap:4px}
+  .st-more summary{gap:4px}
+}
+
+/* Десктоп (#86): шапка — один рядок; «чому» бере вільне місце, накладки не обрізаються шапкою. */
+@media (min-width:1024px){
+  body .shell>header.status{overflow:visible}
+  .shell>header.status .st-top{display:flex;align-items:center;gap:6px;flex:0 0 auto}
+  .shell>header.status .st-more{flex:1 1 auto;position:static}
+  .shell>header.status .st-more .why{max-width:none}
+}

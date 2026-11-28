@@ -1,0 +1,84 @@
+// Issue #100 (§7.6a): меню «Підкладка», збереження вибору, повзунок прозорості, атрибуція, лише статичні файли.
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { Basemap } from './Basemap';
+import { BASE_KEY } from './basemaps';
+import { resetBasemap } from './basemapStore';
+
+const imgs: string[] = [];
+beforeEach(() => {
+  localStorage.clear(); resetBasemap(); imgs.length = 0;
+  vi.stubGlobal('Image', class { onload: (() => void) | null = null; onerror: (() => void) | null = null; set src(v: string) { imgs.push(v); } });
+});
+afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
+
+const show = () => render(<div className="mapwrap"><Basemap /></div>);
+const openMenu = () => fireEvent.click(screen.getByRole('button', { name: 'Підкладка карти' }));
+
+describe('Given меню «Підкладка» (AC1)', () => {
+  it('Без / Рельєф / Супутник / Своя карта; типово — Без', () => {
+    show(); openMenu();
+    const g = screen.getByRole('radiogroup', { name: 'Підкладка' });
+    expect([...g.querySelectorAll('label')].map((l) => l.textContent)).toEqual(['Без', 'Рельєф', 'Супутник', 'Своя карта']);
+    expect(screen.getByRole('radio', { name: 'Без' })).toHaveProperty('checked', true);
+  });
+  it('вибір зберігається в браузері й підхоплюється після перезавантаження', () => {
+    const { unmount } = show(); openMenu();
+    fireEvent.click(screen.getByRole('radio', { name: 'Рельєф' }));
+    expect(JSON.parse(localStorage.getItem(BASE_KEY) ?? '{}').base).toBe('relief');
+    unmount(); resetBasemap();
+    show(); openMenu();
+    expect(screen.getByRole('radio', { name: 'Рельєф' })).toHaveProperty('checked', true);
+  });
+  it('mapwrap знає обрану підкладку (чужу «Свою карту» ховаємо, коли обрано іншу)', () => {
+    const { container } = show(); openMenu();
+    fireEvent.click(screen.getByRole('radio', { name: 'Супутник' }));
+    expect(container.querySelector<HTMLElement>('.mapwrap')?.dataset.base).toBe('satellite');
+  });
+});
+
+describe('Given рельєф чи супутник (AC2)', () => {
+  it('повзунок прозорості погоди є лише для них і зберігається', () => {
+    show(); openMenu();
+    expect(screen.queryByRole('slider')).toBeNull();
+    fireEvent.click(screen.getByRole('radio', { name: 'Рельєф' }));
+    const sl = screen.getByRole('slider', { name: 'Прозорість погоди' });
+    fireEvent.change(sl, { target: { value: '70' } });
+    expect(JSON.parse(localStorage.getItem(BASE_KEY) ?? '{}').wxTransp).toBe(70);
+  });
+  it('canvas підкладки під полем не перехоплює кліки й прихований від читачів екрана', () => {
+    const { container } = show();
+    const cv = container.querySelector('canvas.basemap');
+    expect(cv?.getAttribute('aria-hidden')).toBe('true');
+  });
+});
+
+describe('Given обрана підкладка (AC4)', () => {
+  it('атрибуція в куті карти змінюється з вибором', () => {
+    const { container } = show(); openMenu();
+    const attr = () => container.querySelector('.baseattr')?.textContent ?? '';
+    expect(attr()).toBe('Ріки й озера: Natural Earth');
+    fireEvent.click(screen.getByRole('radio', { name: 'Супутник' }));
+    expect(attr()).toMatch(/Sentinel-2 cloudless by EOX/);
+  });
+});
+
+describe('Given офлайн і OPSEC (AC5)', () => {
+  it('зображення — лише однакові для всіх статичні файли, без координат у запиті', () => {
+    show(); openMenu();
+    fireEvent.click(screen.getByRole('radio', { name: 'Рельєф' }));
+    fireEvent.click(screen.getByRole('radio', { name: 'Супутник' }));
+    expect(new Set(imgs)).toEqual(new Set(['./data/static/relief.png', './data/static/satellite.jpg']));
+  });
+});
+
+describe('Given ріки й озера (AC3, AC5)', () => {
+  it('water.json — один статичний файл, читається раз', async () => {
+    const { loadWater } = await import('./basemapStore');
+    const urls: string[] = [];
+    const fake = (u: string) => { urls.push(u); return Promise.resolve({ ok: true, json: () => Promise.resolve({ features: [{ geometry: { type: 'LineString', coordinates: [[30, 50], [31, 50]] } }] }) } as Response); };
+    expect(await loadWater(fake)).toEqual([[[30, 50], [31, 50]]]);
+    expect(await loadWater(fake)).toHaveLength(1);
+    expect(urls).toEqual(['./data/static/water.json']);
+  });
+});

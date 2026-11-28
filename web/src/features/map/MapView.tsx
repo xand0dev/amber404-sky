@@ -1,7 +1,10 @@
 // F3 (Іван): карта — плавне поле шару, кордони, міста, частинки вітру (reduced motion → стрілки), вибір точки, легенда.
+// Issue #100: підкладка (рельєф / супутник) під полем, поле — з повзунком прозорості; ріки й озера — над полем, під частинками.
 import { useEffect, useRef, useState } from 'react';
 import { useApp } from '../../app/state';
 import { useView } from '../../app/view/view';
+import { useT } from '../../app/lang';
+import { cityName } from './translit';
 import { makeProjection } from '../../core';
 import { Legend } from '../layers/Legend';
 import { drawWindArrows } from './arrows';
@@ -10,6 +13,9 @@ import { SnapButton } from './SnapButton';
 import { WindParticles } from './WindParticles';
 import { HoverTip, type HoverPos } from './HoverTip';
 import { useReducedMotion } from './useReducedMotion';
+import { Basemap } from './Basemap';
+import { drawWater, fieldAlpha, type WaterLine } from './basemaps';
+import { loadWater, useBasemap } from './basemapStore';
 
 /** Поле рахуємо в сітці кожні FIELD_PX css-пікселів і згладжуємо при масштабуванні (≤ 300 мс, F3-AC2). */
 const FIELD_PX = 3;
@@ -17,10 +23,15 @@ type MapCanvas = HTMLCanvasElement & { unproject?: (x: number, y: number) => [nu
 
 export function MapView() {
   const { data, s, set } = useApp();
+  const { lang } = useT();
   const ref = useRef<MapCanvas>(null);
   const reduce = useReducedMotion();
   const { view } = useView();
   const [hover, setHover] = useState<HoverPos | null>(null);
+  const prefs = useBasemap();
+  const alpha = fieldAlpha(prefs), clear = prefs.base === 'relief' || prefs.base === 'satellite';
+  const [water, setWater] = useState<WaterLine[]>([]);
+  useEffect(() => { let alive = true; void loadWater().then((w) => { if (alive) setWater(w); }); return () => { alive = false; }; }, []);
 
   useEffect(() => {
     const cv = ref.current;
@@ -34,7 +45,8 @@ export function MapView() {
     const { project: px, unproject } = makeProjection(W, H, view);
     cv.unproject = unproject;
 
-    ctx.fillStyle = '#1c2117'; ctx.fillRect(0, 0, W, H);
+    // Над рельєфом і супутником тло прозоре — підкладку видно (canvas.basemap під картою).
+    if (!clear) { ctx.fillStyle = '#1c2117'; ctx.fillRect(0, 0, W, H); }
     // Плавне поле: значення в кожній точці з core (білінійно), далі згладжене масштабування.
     const fw = Math.max(1, Math.ceil(W / FIELD_PX)), fh = Math.max(1, Math.ceil(H / FIELD_PX));
     const off = document.createElement('canvas');
@@ -44,8 +56,11 @@ export function MapView() {
       const fu = (x: number, y: number) => unproject(x * FIELD_PX, y * FIELD_PX);
       octx.putImageData(new ImageData(fieldPixels(data, s, fw, fh, fu, nodeStep(fu)), fw, fh), 0, 0);
       ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
+      ctx.globalAlpha = alpha;
       ctx.drawImage(off, 0, 0, fw * FIELD_PX, fh * FIELD_PX);
+      ctx.globalAlpha = 1;
     }
+    drawWater(ctx, water, px);
 
     for (const f of data.borders.features) {
       ctx.strokeStyle = f.iso === 'UKR' ? '#e6e2cc' : 'rgba(230,226,204,.35)';
@@ -59,17 +74,18 @@ export function MapView() {
     for (const c of data.cities) {
       const [x, y] = px(c.lat, c.lon);
       ctx.fillStyle = '#e6e2cc'; ctx.fillRect(x - 2, y - 2, 4, 4);
-      ctx.strokeStyle = 'rgba(17,21,14,.85)'; ctx.lineWidth = 3; ctx.strokeText(c.name, x + 5, y - 4);
-      ctx.fillText(c.name, x + 5, y - 4);
+      ctx.strokeStyle = 'rgba(17,21,14,.85)'; ctx.lineWidth = 3; ctx.strokeText(cityName(c, lang), x + 5, y - 4);
+      ctx.fillText(cityName(c, lang), x + 5, y - 4);
     }
     const [cx, cy] = px(s.lat, s.lon);
     ctx.strokeStyle = '#e2a72e'; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.arc(cx, cy, 9, 0, Math.PI * 2); ctx.moveTo(cx - 16, cy); ctx.lineTo(cx + 16, cy); ctx.moveTo(cx, cy - 16); ctx.lineTo(cx, cy + 16); ctx.stroke();
-  }, [data, s, reduce, view]);
+  }, [data, s, reduce, view, lang, alpha, clear, water]);
 
   return (
     <>
-      <canvas ref={ref} className="map" aria-label="Карта: торкніться, щоб обрати точку"
+      <Basemap />
+      <canvas ref={ref} className="map" aria-label={lang === 'en' ? 'Map: tap to pick a point' : 'Карта: торкніться, щоб обрати точку'}
         onClick={(e) => {
           const cv = e.currentTarget as MapCanvas;
           const r = cv.getBoundingClientRect();

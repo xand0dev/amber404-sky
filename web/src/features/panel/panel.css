@@ -54,3 +54,6 @@ details.psec>summary{min-height:44px;display:flex;align-items:center;cursor:poin
 .pdetails summary{display:flex;align-items:center;min-height:44px;width:max-content;font-weight:700;cursor:pointer}
 .pdetails summary:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
 .pdetails summary::after{content:" ▾";white-space:pre}.pdetails[open] summary::after{content:" ▴"}
+/* Рельєф (§7.6a, #101) */
+.terrain{margin-top:6px;font-size:14px}.terrain span{color:var(--dim)}
+.terrain .mtn{margin-top:4px;padding:6px 8px;border-left:4px solid var(--cau);background:var(--base);font-size:13px}
