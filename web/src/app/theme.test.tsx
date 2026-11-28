@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { NIGHT_CSS as css, NIGHT_VARS } from './night';
+import { DAY_VARS } from '../ui/tokens';
 import { NIGHT_KEY, NightToggle, ThemeProvider, readMapColors, useTheme } from './theme';
 
 function Probe() {
@@ -60,7 +61,7 @@ describe('Карта читає кольори з CSS-змінних або з �
   });
 });
 
-describe('CSS: нічна палітра, приглушена плашка, кнопка ≥ 44 px і видимий фокус', () => {
+describe('CSS: нічна палітра, плашка з рівнем формою (#88), кнопка ≥ 44 px і видимий фокус', () => {
   const night = css.match(/:root\[data-theme="night"\]\{([^}]*)\}/)?.[1] ?? '';
   it('нічний блок перевизначає всі змінні палітри', () => {
     for (const v of ['--base', '--panel', '--rule', '--ink', '--dim', '--go', '--cau', '--no']) expect(night).toContain(`${v}:${NIGHT_VARS[v]}`);
@@ -68,7 +69,7 @@ describe('CSS: нічна палітра, приглушена плашка, к�
   it('з <style> провайдера змінні реально застосовуються до :root у нічному режимі', () => {
     ui();
     fireEvent.click(screen.getByRole('button', { name: 'Ніч' }));
-    expect(readMapColors()).toMatchObject({ base: '#000000', ink: '#c8372a' });
+    expect(readMapColors()).toMatchObject({ base: '#000000', ink: NIGHT_VARS['--ink'] });
     expect(screen.getByTestId('probe').textContent).toBe('night|#000000');
   });
   it('усі кольори нічної палітри — червоні або чорні (G і B ≤ R/2)', () => {
@@ -79,14 +80,19 @@ describe('CSS: нічна палітра, приглушена плашка, к�
       expect(g <= r / 2 && b <= r / 2, `#${h}`).toBe(true);
     }
   });
-  it('яскравість плашки вердикту знижена', () => {
-    const f = css.match(/\[data-theme="night"\] \.status\{[^}]*filter:brightness\((0?\.\d+)\)/)?.[1];
-    expect(Number(f)).toBeLessThan(1);
+  // #88 AC2: замість приглушеної яскравості (контраст 1.2–1.9) — чорна плашка з червоним текстом, рівень — формою.
+  it('плашка вердикту без filter; рівні розрізняються висотою смужки', () => {
+    expect(css).not.toMatch(/filter:brightness/);
+    expect(css).toMatch(/\[data-theme="night"\] \.lv-GO,[^{]*\{background:var\(--base\);color:var\(--ink\)\}/);
+    const bar = (lv: string) => Number(css.match(new RegExp(`\\.status\\.lv-${lv}\\{box-shadow:inset 0 -(\\d+)px`))?.[1]);
+    expect(bar('GO')).toBeLessThan(bar('CAUTION'));
+    expect(bar('CAUTION')).toBeLessThan(bar('NO-GO'));
   });
   it('кнопка ≥ 44 px і видимий фокус', () => {
     const btn = css.match(/\.nightbtn\{([^}]*)\}/)?.[1] ?? '';
-    expect(btn).toMatch(/min-height:44px/);
-    expect(btn).toMatch(/min-width:44px/);
+    expect(btn).toMatch(/min-height:var\(--btn-h\)/);
+    expect(btn).toMatch(/min-width:var\(--btn-h\)/);
+    expect(DAY_VARS['--btn-h']).toBe('44px');
     expect(css).toMatch(/\.nightbtn:focus-visible\{[^}]*outline:3px solid/);
   });
 });

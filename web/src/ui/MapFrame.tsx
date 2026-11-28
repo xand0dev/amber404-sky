@@ -5,6 +5,9 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from '
 import { createPortal } from 'react-dom';
 import { useT } from '../app/lang';
 import type { Lang } from '../core';
+// Візуальна система (issue #88): токени вставляються в <head> при імпорті модуля — App імпортує рамку ще до першого рендеру.
+import './tokens';
+import './base.css';
 import './mapframe.css';
 
 // Доступні імена ряду uk/en (issue #116).

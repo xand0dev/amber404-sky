@@ -4,7 +4,6 @@ import { useApp } from '../../app/state';
 import { useVerdicts } from '../../app/useVerdict';
 import { useT } from '../../app/lang';
 import { kyivHM, type Lang, type Level } from '../../core';
-import { LEVEL_COLOR } from '../layers/colors';
 import { daySegments, nextPlayHour } from './days';
 import './timeline.css';
 
@@ -55,8 +54,7 @@ export function TimelineView({ times, levels, hour, onPick }: TimelineProps) {
         </div>
         <nav className="hours" aria-label={L.hours}>
           {times.map((t, h) => (
-            <button key={t} data-hour={h} className={h === hour ? 'on' : ''} aria-pressed={h === hour}
-              style={{ background: LEVEL_COLOR[levels[h]] }}
+            <button key={t} data-hour={h} className={`lv-${levels[h]}${h === hour ? ' on' : ''}`} aria-pressed={h === hour}
               aria-label={`${kyivHM(t)} ${levels[h]}`} onClick={() => { setPlaying(false); onPick(h); }}>
               {kyivHM(t).slice(0, 2)}
             </button>

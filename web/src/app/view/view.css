@@ -1,4 +1,3 @@
-/* Масштаб карти (issue #64): чотири іконки в ряду інструментів над картою (issue #85), центр карти вільний для тапу. */
+/* Масштаб карти (issue #64): чотири іконки в ряду інструментів над картою (issue #85), центр карти вільний для тапу. Токени — #88. */
 .viewctl{display:flex;gap:2px}
-.viewctl button{width:44px;min-height:44px;padding:0;font-weight:700;font-size:20px;line-height:1}
-.viewctl button:disabled{opacity:.5}
+.viewctl button{width:var(--btn-h);padding:0;font-weight:700;font-size:var(--fs-xl);line-height:1}

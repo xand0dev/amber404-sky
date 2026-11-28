@@ -1,9 +1,9 @@
 /* F3: легенда шару — смужка ≤ 32 px унизу карти (issue #85 AC3). Унизу рамки України на телефоні порожньо, тож міста не накриває. */
-.legend{position:absolute;left:8px;right:8px;bottom:8px;z-index:1;display:flex;align-items:center;gap:8px;max-width:520px;height:28px;padding:0 8px;background:rgba(28,33,23,.88);border:1px solid var(--rule);font-size:12px;line-height:1;white-space:nowrap;overflow:hidden;pointer-events:none}
+.legend{position:absolute;left:8px;right:8px;bottom:8px;z-index:1;display:flex;align-items:center;gap:var(--sp-2);max-width:520px;height:28px;padding:0 var(--sp-2);background:var(--scrim);border:1px solid var(--rule);font-size:var(--fs-s);line-height:1;white-space:nowrap;overflow:hidden;pointer-events:none}
 .legend .lg-title{flex:0 1 auto;font-weight:700;overflow:hidden;text-overflow:ellipsis}
-.legend .lg-ramp{flex:1 1 auto;display:flex;align-items:center;gap:6px;min-width:0;font-variant-numeric:tabular-nums;color:var(--dim)}
+.legend .lg-ramp{flex:1 1 auto;display:flex;align-items:center;gap:var(--sp-1);min-width:0;font-variant-numeric:tabular-nums;color:var(--dim)}
 .legend .lg-bar{flex:1 1 auto;height:10px;min-width:40px}
 .legend .lg-mid{display:none}
-.legend .lg-classes{flex:1 1 auto;list-style:none;padding:0;display:flex;gap:8px;min-width:0;overflow:hidden}
-.legend .lg-classes li{display:flex;align-items:center;gap:4px}
+.legend .lg-classes{flex:1 1 auto;list-style:none;padding:0;display:flex;gap:var(--sp-2);min-width:0;overflow:hidden}
+.legend .lg-classes li{display:flex;align-items:center;gap:var(--sp-1)}
 .legend .lg-classes i{display:inline-block;width:10px;height:10px;border:1px solid var(--rule)}

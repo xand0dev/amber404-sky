@@ -1,4 +1,4 @@
-/* F3-AC7: кнопка 📷 у ряду інструментів над картою (issue #85). */
-.snapbtn{min-width:44px;min-height:44px;padding:0;font-size:20px;line-height:1}
+/* F3-AC7: кнопка 📷 у ряду інструментів над картою (issue #85). Токени — #88. */
+.snapbtn{min-width:var(--btn-h);padding:0;font-size:var(--fs-xl);line-height:1}
 .snapbtn:disabled{opacity:.6;cursor:progress}
-.snapmsg{position:absolute;top:8px;left:8px;z-index:1;padding:4px 8px;font-size:13px;background:rgba(17,21,14,.92);border:1px solid var(--rule);pointer-events:none}
+.snapmsg{position:absolute;top:8px;left:8px;z-index:1;padding:var(--sp-1) var(--sp-2);font-size:var(--fs-m);background:var(--scrim);border:1px solid var(--rule);pointer-events:none}

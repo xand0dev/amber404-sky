@@ -1,23 +1,20 @@
-/* Шар малюнків (SPEC §7.13): над полем погоди, під кнопками шарів; кліки проходять на карту, поки інструмент не обрано. */
+/* Шар малюнків (SPEC §7.13), токени — #88: над полем погоди, під кнопками шарів; кліки проходять на карту, поки інструмент не обрано. */
 .drawlayer{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:hidden}
 .drawlayer.drawing{pointer-events:auto;cursor:crosshair;touch-action:manipulation}
-.drawtext{font:700 14px/1 "DIN Alternate","Barlow",system-ui,sans-serif;paint-order:stroke;stroke:#11150e;stroke-width:3px;stroke-linejoin:round}
-.drawtext.big{font-size:18px}
-.drawpanel{position:absolute;top:8px;left:8px;right:8px;z-index:2;max-height:min(70vh,560px);overflow:auto;display:grid;gap:8px;padding:10px;background:var(--panel);border:1px solid var(--rule);font-size:14px}
-.drawpanel label{display:grid;gap:4px;color:var(--dim)}
-.drawtools{display:flex;flex-wrap:wrap;gap:4px}
-.drawtools button,.drawlist button{min-height:44px;padding:0 12px;background:var(--base);border:1px solid var(--rule)}
-.drawtools button[aria-pressed=true]{background:var(--ink);color:#11150e}
-.drawrow{display:grid;grid-template-columns:1fr 2fr;gap:8px}
-.drawrow select,.drawrow input{min-height:44px;min-width:0;width:100%;background:var(--base);border:1px solid var(--rule);padding:0 6px}
-.drawpanel button:disabled{opacity:.5}
-.drawlist{list-style:none;padding:0;display:grid;gap:4px}
-.drawlist li{display:flex;align-items:center;gap:8px}.drawlist button{margin-left:auto}
+.drawtext{font:700 var(--fs-m)/1 var(--font);paint-order:stroke;stroke:var(--on-lv);stroke-width:3px;stroke-linejoin:round}
+.drawtext.big{font-size:var(--fs-xl)}
+.drawpanel{position:absolute;top:8px;left:8px;right:8px;z-index:2;max-height:min(70vh,560px);overflow:auto;display:grid;gap:var(--sp-2);padding:var(--sp-2);background:var(--panel);border:1px solid var(--rule);font-size:var(--fs-m)}
+.drawpanel label{display:grid;gap:var(--sp-1);color:var(--dim)}
+.drawtools{display:flex;flex-wrap:wrap;gap:var(--sp-1)}
+.drawrow{display:grid;grid-template-columns:1fr 2fr;gap:var(--sp-2)}
+.drawrow select,.drawrow input{min-width:0;width:100%}
+.drawlist{list-style:none;padding:0;display:grid;gap:var(--sp-1)}
+.drawlist li{display:flex;align-items:center;gap:var(--sp-2)}.drawlist button{margin-left:auto}
 .drawsw{flex:0 0 14px;height:14px;border:1px solid var(--rule)}
 @media (max-width:420px){.drawrow{grid-template-columns:1fr}}
-.drawmore{display:grid;gap:8px}
-.drawpanel.active{top:8px;z-index:3;display:flex;align-items:center;gap:6px;padding:4px;overflow-x:auto;overflow-y:hidden;max-height:none}
+.drawmore{display:grid;gap:var(--sp-2)}
+.drawpanel.active{top:8px;z-index:3;display:flex;align-items:center;gap:var(--sp-1);padding:var(--sp-1);overflow-x:auto;overflow-y:hidden;max-height:none}
 .drawpanel.active>*{flex:0 0 auto}.drawpanel.active .drawtools{flex-wrap:nowrap}
-.drawpanel.active .drawrow{display:flex;gap:4px}.drawpanel.active .drawrow input{width:130px}
+.drawpanel.active .drawrow{display:flex;gap:var(--sp-1)}.drawpanel.active .drawrow input{width:130px}
 .drawpanel.active .drawlbl{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 .drawpanel.active .ovnote,.drawpanel.active .drawmore{display:none}
