@@ -98,9 +98,9 @@ test.describe('заставка', () => {
   });
 
   test('швидкі дані (< 300 мс) → заставки немає', async ({ page }) => {
-    // Дані — з пам'яті, без мережі (profile.json ~4 МБ); решта часу — розбір JSON.
+    // Дані — з пам'яті, без мережі (зокрема години профілю profile/hNN.json, #165); решта часу — розбір JSON.
     const cache = new Map<string, { body: Buffer; type: string }>();
-    await page.route('**/data/*.json', async (r) => {
+    await page.route('**/data/**/*.json', async (r) => {
       const u = r.request().url();
       if (!cache.has(u)) { const res = await r.fetch(); cache.set(u, { body: await res.body(), type: res.headers()['content-type'] ?? 'application/json' }); }
       const c = cache.get(u)!;
