@@ -1,7 +1,7 @@
 # AMBER Sky — Taikai submission (draft)
 
-> **Чернетка** (F0, Олександр + Настя @Bulka0801) — готова до сб 01:00. Настя переносить у Taikai як чернетку, о 14:00 у неділю оновлює розділ «Status» і вставляє відео, **подає в нд о 15:00 CET** (запасний — Максим). Дедлайн — 16:00 Київ (14:00 UTC).
-> Джерело правди — `docs/SPEC.md`. Чисел, яких немає в SPEC або на живому сайті, сюди не додаємо.
+> **Draft** (F0, Oleksandr + Nastia @Bulka0801) — ready by Saturday 01:00. Nastia copies the draft to Taikai, updates Status and adds the video on Sunday at 14:00, and **submits on Sunday at 15:00 CET** (backup: Maksym). Deadline: 16:00 Kyiv (14:00 UTC).
+> Source of truth: `docs/SPEC.md`. Add no figures absent from SPEC or the live build.
 
 ## Taikai fields
 
@@ -13,7 +13,7 @@
 | Tagline | Wind at every altitude and a GO / CAUTION / NO-GO verdict for your drone, hour by hour, over all of Ukraine. |
 | Live demo | https://xand0dev.github.io/amber404-sky/ |
 | Repository | https://github.com/xand0dev/amber404-sky (MIT) |
-| Video | TODO (Настя, нд 14:00) |
+| Video | TODO (Nastia, Sunday 14:00) |
 | Pitch | Nastia and Maksym |
 
 ## Description
@@ -26,6 +26,9 @@
 
 **What it does.**
 - A live wind map of Ukraine: particles flow with the wind at the chosen altitude, colour shows speed. Layers: wind, cloud base, gusts, "Can fly" verdict, icing, temperature, visibility.
+- Offline basemaps include Relief and Satellite. The sharper Satellite view loads four static image sections at about 290 m per pixel when zooming in, identical for everyone and available offline once cached. Maximum zoom shows about 0.8 km across the screen; this is the view width, not the satellite or forecast resolution.
+- Optional online basemaps: "Streets" (OpenStreetMap) and "Satellite 10 m" (EOX Sentinel-2 cloudless WMTS), only by explicit user choice. The menu warns that the map server sees which area you view. The online choice is not saved: restarting returns to an offline basemap.
+- "My location" centres the map on the phone's position. GPS stays on the device and is not sent anywhere by the app; location permission is required. Online basemap requests can still reveal the viewed area.
 - Click any point: verdict with up to four reasons and numbers, the next flight window of at least 2 GO hours, and an hourly table of altitudes by hours.
 - A 48-hour timeline with play: watch a front pass and see when the window opens.
 - Seven drone classes (FPV 7 and 10 inch, recon quadcopter, heavy multicopter, electric and fuel fixed wing, agro drone) plus "my drone": mass, payload, battery or fuel. Flight time accounts for cold and payload, with a 20% reserve.
@@ -35,7 +38,9 @@
 
 **How the verdict works.** NO-GO if wind or gusts exceed the drone limits, the drone would be inside cloud, temperature is below the minimum, precipitation exceeds the limit, or icing conditions apply. CAUTION near the limits, with visibility under 1 km, Kp of 5 or more, or weak Galileo geometry (fewer than 6 satellites or PDOP above 4). Otherwise GO, shown as "within profile", never as "safe". No data is shown as "no data", never as GO. Drone limits and the icing rule are marked as assumptions until checked against manufacturer data and operators.
 
-**Phone first and OPSEC.** AMBER Sky is a static Progressive Web App on GitHub Pages: no backend, no accounts, no keys in the browser. The phone downloads the same forecast file as everyone else and never sends coordinates; saved points, routes and custom drones stay in the browser. After one visit it works offline with a banner showing the forecast age. The product answers one question only: can we fly, at what altitude, and where can we reach. No targets, no guidance, no front line, no tracking.
+**Phone first and OPSEC.** AMBER Sky is a static Progressive Web App: no backend, accounts or browser keys. Everyone downloads identical forecast files; saved points, routes and custom drones stay in the browser. Offline basemaps and Own map are the default options. Online tile requests reveal the viewed area to the provider. Cached forecasts work offline with their age visible; online basemaps need connectivity. Weather and flight readiness only: no targets, guidance, front line or tracking.
+
+Basemap behaviour follows [SPEC §7.6a, v16](../SPEC.md) and the map code. GO means "within profile", never "safe".
 
 **How it is built.** A Python pipeline runs every 3 hours in GitHub Actions: it collects a 48-hour forecast on a 0.5 degree grid over Ukraine (684 points), interpolates wind (u, v) from model levels to 16 altitudes, computes Galileo visibility and PDOP from Celestrak orbits, reads Kp from NOAA, validates every file against JSON schemas and deploys static JSON. The web app is React and TypeScript with Canvas 2D and SVG; the verdict, flight range, route and energy logic is pure TypeScript, ready for a native app via Capacitor. Borders are the Natural Earth Ukraine point-of-view version (Crimea is Ukraine). The code was written during the hackathon by Claude Code and Codex agents from a specification; humans wrote the specification and check acceptance criteria. Every AI session is logged in the repository.
 
@@ -75,19 +80,20 @@ The app itself has no API server: it reads static JSON files (`meta.json`, `prof
 
 ## Status
 
-Оновлює Настя в нд о 14:00 за живим сайтом; у Taikai — лише те, що реально працює (на момент чернетки, сб 28.11):
+Nastia updates this from the live site on Sunday at 14:00; submit only what actually works (draft snapshot: Saturday 28 November):
 
 | Part | Draft | Sunday 14:00 |
 |---|---|---|
 | Verdict, flight window, flight range, route, energy (core) | merged | |
 | Map, layers, 48-hour timeline, PWA offline | merged / in progress | |
+| Optional online basemaps, sharper static Satellite, My location, zoom to about 0.8 km | implemented in code; verify in the presented build | |
 | A to B route panel | merged | |
 | Galileo visibility and PDOP | merged | |
 | Real forecast pipeline (Open-Meteo) | in progress, site runs on MOCK data | |
 | Kp, ERA5 climate | in progress | |
 
 ## Before submitting (checklist)
-- [ ] Сайт показує справжній прогноз, не старший за 6 год, без бейджа MOCK.
-- [ ] Розділ Description: прибрати пункти, яких немає на живому сайті.
-- [ ] Відео й посилання на пітч у Taikai.
-- [ ] Усі 5 учасників у проєкті на Taikai, проєкт позначено «completed».
+- [ ] The site shows a real forecast no older than 6 hours, without a MOCK badge.
+- [ ] Remove Description items unavailable in the live build.
+- [ ] Add the video and pitch link to Taikai.
+- [ ] All 5 members are in the Taikai project and the project is marked "completed".
