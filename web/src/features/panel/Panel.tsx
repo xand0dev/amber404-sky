@@ -16,6 +16,7 @@ import type { SavedWx } from './savedStore';
 import { pt } from './strings';
 import { TerrainView, useRelief } from './Terrain';
 import { WindProfile } from './WindProfile';
+import { Climate } from './Climate';
 import { cellRange, terrainAt } from './relief';
 import './panel.css';
 
@@ -109,6 +110,7 @@ export function Panel() {
       <Saved current={snapshot} />
       <Zone prof={prof} hourLabel={time ? dayHM(time, lang) : '—'} />
       <WindProfile prof={prof} hourLabel={time ? dayHM(time, lang) : '—'} />
+      <Climate prof={prof} timeIso={time} />
       <HeightTable prof={prof} />
       <Route />
       <OwnDrone base={prof} />
