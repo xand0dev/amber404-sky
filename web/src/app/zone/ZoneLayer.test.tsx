@@ -74,6 +74,22 @@ describe('Given шар «Зона» (SPEC §7.5b)', () => {
   });
 });
 
+// Issue #87 AC2: у згорнутому підписі — лише відстань і вітер; формула часу й assumption — тапом («Деталі»).
+describe('Given підпис зони (issue #87)', () => {
+  it('Then згорнутий: без формули й assumption; When тап; Then деталі видно', () => {
+    const { container } = view();
+    const det = container.querySelector('.zonecap .zonedet') as HTMLElement;
+    expect(det.hidden).toBe(true);
+    expect(det.textContent).toMatch(/резерв 20%/);
+    expect(det.textContent).toMatch(/assumption/);
+    const rest = container.querySelector('.zonecap .zonetxt')!.textContent!.replace(det.textContent!, '');
+    expect(rest).not.toMatch(/assumption|хв/);
+    expect(rest).toMatch(/Деталі/);
+    fireEvent.click(container.querySelector('.zonecap button')!);
+    expect(det.hidden).toBe(false);
+  });
+});
+
 describe('Issue #119: EN', () => {
   it('Then кнопка й підпис зони англійською, без кирилиці; uk не змінився', () => {
     localStorage.setItem(LANG_KEY, 'en');
@@ -81,7 +97,7 @@ describe('Issue #119: EN', () => {
       const { container } = render(<LangProvider><AppCtx.Provider value={ctx}><main className="mapwrap"><ZoneLayer /></main></AppCtx.Provider></LangProvider>);
       expect(screen.getByRole('button', { name: 'Zone' })).toBeTruthy();
       const cap = container.querySelector('.zonecap')!.textContent!;
-      expect(cap).toMatch(/^Round-trip zone up to .* km · .* min \(datasheet 10 min × cold .* × payload .*\) − 20% reserve · 22 m\/s/);
+      expect(cap).toMatch(/^Round-trip zone up to .* km · wind .* · Details ▾ · .* min \(datasheet 10 min × cold .* × payload .*\) − 20% reserve · 22 m\/s/);
       expect(cap).not.toMatch(/[Ѐ-ӿ]/);
     } finally { localStorage.removeItem(LANG_KEY); }
   });

@@ -20,6 +20,9 @@ export function useZone(): ZoneState | null {
 const MIN_RING_PX = 14;
 const km = (m: number, unit: string) => (m >= 10_000 ? `${Math.round(m / 1000)} ${unit}` : `${+(m / 1000).toFixed(1)} ${unit}`);
 
+// Issue #87: підпис кнопки «Деталі» в згорнутому підписі зони.
+const DETAILS = { uk: 'Деталі', en: 'Details' } as const;
+
 export function ZoneLayer() {
   const ref = useRef<HTMLCanvasElement>(null);
   const [on, setOn] = useState(true);
@@ -93,15 +96,15 @@ export function ZoneLayer() {
     <>
       <canvas ref={ref} className="zone" aria-hidden="true" hidden={!on} />
       <InBar slot="more"><button type="button" className="zonebtn" aria-pressed={on} onClick={() => setOn(!on)}>{t('zone.btn')}</button></InBar>
-      {/* Issue #85 AC4: підпис згорнутий до одного рядка, деталі — тапом. */}
+      {/* Issue #85 AC4, #87 AC2: згорнутий підпис — відстань і вітер в один рядок; формула часу, крейсер і assumption — тапом («Деталі»). */}
       {on && z && (
         <p className={full ? 'zonecap open' : 'zonecap'}>
           <button type="button" aria-expanded={full} onClick={() => setFull(!full)}><span className="zonetxt">
           <b>{t('zone.title')}</b> {z.maxDistM > 0 ? t('zone.upTo', { d: km(z.maxDistM, t('unit.km')) }) : t('zone.none')}
-          {' · '}{t('zone.time', { min: z.enduranceMin.toFixed(1), why: effectiveEndurance(z.energy, lang).why })} · {t('zone.cruise', { v: z.prof.cruiseMs })}
           {' · '}{ws == null ? t('zone.noWind') : t('zone.wind', { v: ws.toFixed(1) })}
           {z.cut.length > 0 && <> · <span className="zonedot" aria-hidden="true" /> {t('zone.cut', { v: z.prof.windMs })}</>}
-          {' · '}assumption
+          {!full && <span className="zonemore"> · {DETAILS[lang]} ▾</span>}
+          <span className="zonedet" hidden={!full}> · {t('zone.time', { min: z.enduranceMin.toFixed(1), why: effectiveEndurance(z.energy, lang).why })} · {t('zone.cruise', { v: z.prof.cruiseMs })} · assumption</span>
           </span></button>
         </p>
       )}
