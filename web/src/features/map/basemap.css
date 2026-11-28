@@ -12,5 +12,9 @@
 .basegroup label{display:flex;align-items:center;gap:6px;min-height:44px;padding:0 8px;background:var(--base);border:1px solid var(--rule)}
 .basegroup input{accent-color:var(--cau)}
 .baseop{display:grid;gap:4px;color:var(--dim)}.baseop input{min-height:44px;accent-color:var(--cau)}
-.basenote{font-size:12px;color:var(--dim)}
-.baseclose{min-height:44px;background:var(--base);border:1px solid var(--rule)}
+.baseclose,.baseown{min-height:44px;background:var(--base);border:1px solid var(--rule)}
+/* Issue #130: одна кнопка «Підкладка» в ряду — на місці кнопки форми «Своя карта» (F0), яку відкриваємо з вибору. */
+.mapbar .basebtn{order:2}
+.mapbar .ovbtn{display:none}
+/* Вікно вибору — у куті карти, не на всю карту (400 px і десктоп); якщо карта низька — власна прокрутка. */
+.basepanel{max-height:calc(100% - 16px);overflow:auto}
