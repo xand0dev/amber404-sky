@@ -18,9 +18,9 @@ RAW = [pt for b in FIX for pt in b["response"]]
 NOW = datetime(2026, 11, 28, 9, 10, tzinfo=UTC)
 
 
-def _old(age_h: float, status: str = "ok") -> tuple[dict, dict]:
-    """Попередній деплой: профіль і meta.json, зібрані age_h год тому."""
-    t0 = NOW - timedelta(hours=age_h)
+def _old(age_h: float, status: str = "ok", now: datetime = NOW) -> tuple[dict, dict]:
+    """Попередній деплой: профіль і meta.json, зібрані age_h год тому відносно now."""
+    t0 = now - timedelta(hours=age_h)
     gen = t0.strftime("%Y-%m-%dT%H:%M:%SZ")
     times = [(t0.replace(minute=0) + timedelta(hours=h)).strftime("%Y-%m-%dT%H:00:00Z") for h in range(HOURS)]
     col = f.Collected([t[:16] for t in times], [RAW[k % 6] for k in range(NPTS)], "ok")
@@ -121,7 +121,9 @@ def test_build_end_to_end_meta_age_is_old_forecast_time(tmp_path, monkeypatch):
     """Справжній build + fetch: Open-Meteo лежить → meta.generatedAt і fetchedAt = час старого прогнозу."""
     from sky import build as b
 
-    prof, meta = _old(3)
+    # build бере справжній годинник (datetime.now), тож і «старий» прогноз — 3 год від справжнього now,
+    # інакше з фіксованим NOW тест падає, щойно минає 12 год (вік > 12 → план Б не застосовується).
+    prof, meta = _old(3, now=datetime.now(UTC))
     mock_client, _ = _client(_down, (prof, meta))  # до підміни httpx.Client, інакше рекурсія
     monkeypatch.setattr(httpx, "Client", lambda *a, **k: mock_client)
     monkeypatch.setattr(f.fetch, "__defaults__", (None, lambda s: None))  # build кличе fetch(now) без sleep
