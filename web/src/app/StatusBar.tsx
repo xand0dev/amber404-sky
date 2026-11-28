@@ -63,7 +63,8 @@ export function StatusBar() {
         {data.meta.mock && <span className="badge mock">MOCK</span>}
         <button type="button" className={warn ? 'srcbtn warn' : 'srcbtn'} aria-expanded={open} aria-controls="st-src"
           aria-label={`${L.sources} · ${age.text}`} onClick={() => { setOpen(!open); setDet(false); }}>
-          <span aria-hidden="true">{warn ? '⚠' : 'ⓘ'}</span> {age.text}
+          {/* #145: значок — CSS ::before (не текст), тож видимий текст «12 хв» міститься в доступному імені. */}
+          {age.text}
         </button>
       </div>
       <details className="st-more" open={det} onToggle={(e) => { const o = e.currentTarget.open; setDet(o); if (o) setOpen(false); }}>

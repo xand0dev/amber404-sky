@@ -5,6 +5,7 @@ header.status{position:relative;min-width:0;padding:var(--sp-2) var(--sp-3)}
 .st-top .word{white-space:nowrap}
 .srcbtn{min-width:var(--btn-h);padding:0 var(--sp-2);font-weight:700;white-space:nowrap}
 .srcbtn.warn{color:var(--cau-ink)}
+.srcbtn::before{content:"ⓘ" / "";margin-right:var(--sp-1)}.srcbtn.warn::before{content:"⚠" / ""}
 .srcbtn:focus-visible,.st-more summary:focus-visible{outline:3px solid var(--ink);outline-offset:2px;box-shadow:0 0 0 2px var(--base)}
 .st-more{min-width:0}
 .st-more summary{display:flex;align-items:center;gap:var(--sp-2);min-height:var(--btn-h);cursor:pointer;list-style:none}
