@@ -100,3 +100,17 @@ describe('Given шапка з MOCK і джерелом nodata (issue #87)', () =
     expect(screen.getByRole('region', { name: 'Sources' }).textContent).toMatch(/Copernicus ERA5: no data · немає ключа/);
   });
 });
+
+// Issue #170 AC3: явний індикатор офлайн у шапці, не лише в «Джерелах».
+describe('Given немає мережі; Then у шапці «офлайн · дані від HH:MM»', () => {
+  it('індикатор у header.status з часом прогнозу', () => {
+    vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false);
+    const ctx = {
+      data: { meta: { mock: false, sources: [], times: ['2026-11-28T09:00:00Z'], generatedAt: '2026-11-28T09:05:00Z' } },
+      s: { altM: 50 }, set: () => {},
+    } as unknown as Ctx;
+    const { container } = render(<ThemeProvider><AppCtx.Provider value={ctx}><StatusBar /></AppCtx.Provider></ThemeProvider>);
+    expect(container.querySelector('header.status .offbadge')?.textContent).toBe('офлайн · дані від 11:05');
+    vi.restoreAllMocks();
+  });
+});

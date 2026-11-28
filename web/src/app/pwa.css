@@ -1,0 +1,16 @@
+/* Встановлення й офлайн (issue #170). Лише токени (#88). */
+.offbadge{display:inline-flex;align-items:center;gap:var(--sp-1);white-space:nowrap;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.officon,.shareicon{width:1em;height:1em;flex:none}
+.shareicon{vertical-align:-2px;color:var(--ink)}
+/* Над картою вгорі, під підписом атрибуції: низ карти зайнятий підписом зони й легендою. */
+.installbar,.ioshint{position:absolute;left:var(--sp-2);right:var(--sp-2);top:var(--sp-4);z-index:25;padding:var(--sp-2);background:var(--panel);color:var(--ink);border:1px solid var(--rule);border-radius:var(--r);font-size:var(--fs-m)}
+.installbar{display:flex;align-items:center;gap:var(--sp-2)}
+.installbar span{flex:1 1 auto;min-width:0}
+.installbar button{flex:none;min-height:var(--btn-h);padding:0 var(--sp-3)}
+.installbar .installx{min-width:var(--btn-h);padding:0}
+.ioshint p{margin:0 0 var(--sp-2)}
+.ioshint .ioshint-t{font-weight:700}
+.ioshint button{min-height:var(--btn-h);padding:0 var(--sp-3)}
+@media (min-width:1024px){.installbar,.ioshint{left:auto;max-width:420px}}
+/* Телефон: у першому рядку шапки ще «Ніч» і UK/EN — індикатор переноситься на два рядки, а не стискає кнопки. */
+@media (max-width:600px){.offbadge{white-space:normal;line-height:1.2}}
