@@ -23,6 +23,7 @@
 - [ ] T4. Статичні файли §6.6: профілі §7.3, кордони Natural Earth **Ukraine POV**, 16 міст
 - [ ] T5. `verdict.ts`: `evaluate`, `nextWindow` за §7.4–7.5, таблиця прикладів у тестах
 - [ ] T6. CI, `deploy.yml` (Pages), `data.yml` (cron кожні 3 год)
+  - #138: повний `make data` у `deploy.yml` — лише за розкладом або коли дані на Pages старші за 3 год, MOCK чи не всі джерела `ok`; push і ручний запуск беруть `data/*.json` з Pages (`web/src/core/datasync.ts`, `.github/scripts/pages-data.mjs`). `data/static/*` — з репо.
 
 ## План від агента (plan mode)
 <!-- Агент вставляє сюди план T1…Tn з посиланнями на AC. Людина пише «затверджено, дата». -->

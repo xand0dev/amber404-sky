@@ -1,4 +1,5 @@
-# Pages (F0-AC5): збирає дані (справжні, де готові; решта — MOCK) і сайт. Мерж токеном workflow
+# Pages (F0-AC5): збирає дані (справжні, де готові; решта — MOCK) і сайт. Повний make data — лише
+# за розкладом або коли дані на Pages старі / неповні (#138); інакше дані з Pages. Мерж токеном workflow
 # не породжує push, тому automerge запускає цей workflow явно.
 name: Deploy
 on:
@@ -23,11 +24,21 @@ jobs:
         with: { node-version: 22, cache: npm, cache-dependency-path: web/package-lock.json }
       - uses: astral-sh/setup-uv@v6
       - run: make setup
+      - uses: actions/configure-pages@v5
+        id: pages
+      # #138: push і ручний запуск (automerge) не тягнуть Open-Meteo — беруть поточні дані з Pages,
+      # якщо вони не старші за 3 год і всі джерела ok (web/src/core/datasync.ts). Інакше й за розкладом — make data.
+      - id: fresh
+        if: github.event_name != 'schedule'
+        continue-on-error: true
+        run: node .github/scripts/pages-data.mjs "${{ steps.pages.outputs.base_url }}" web/public/data
+        env:
+          EVENT: ${{ github.event_name }}
       - run: make data
+        if: github.event_name == 'schedule' || steps.fresh.outputs.stale != 'false'
         env:
           CDSAPI_KEY: ${{ secrets.CDSAPI_KEY }}
       - run: cd web && npm run schemas && npm run build
-      - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with: { path: web/dist }
   deploy:
