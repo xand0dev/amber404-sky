@@ -98,7 +98,7 @@ describe('F4-AC1: панель точки на екрані', () => {
 describe('Given панель точки (issue #87)', () => {
   it('Then ліміти й джерело лімітів — у згорнутих «Деталі»; причини й вікно поза ними', () => {
     const { container } = view();
-    const det = container.querySelector('.point details') as HTMLDetailsElement;
+    const det = container.querySelector('.point details:not(.vwhat)') as HTMLDetailsElement;
     expect(det.open).toBe(false);
     expect(det.querySelector('summary')?.textContent).toBe('Деталі');
     expect(det.contains(screen.getByText(/Ліміти: вітер 10 м\/с/))).toBe(true);
@@ -107,6 +107,31 @@ describe('Given панель точки (issue #87)', () => {
   });
   it('англійською — Details', () => {
     const { container } = view({ lang: 'en' });
-    expect(container.querySelector('.point details summary')?.textContent).toBe('Details');
+    expect(container.querySelector('.point details:not(.vwhat) summary')?.textContent).toBe('Details');
+  });
+});
+
+describe('#151: вердикт людською мовою й «Що це?»', () => {
+  it('Given CAUTION Then фраза з дроном і висотою одразу під заголовком', () => {
+    view();
+    const e = screen.getByTestId('verdict-explain');
+    expect(e.textContent).toBe('Обережно: «FPV 7″» на 50 м — погода близько до лімітів дрона. Причини нижче.');
+    // Одразу після заголовка точки — видно без прокрутки панелі.
+    expect(e.previousElementSibling?.className).toBe('pointhead');
+  });
+  it('GO — «в межах лімітів», не «безпечно»; NO-DATA — «не дозвіл»', () => {
+    view({ verdict: { level: 'GO', reasons: ['Умови в межах профілю'] } });
+    expect(screen.getByTestId('verdict-explain').textContent).toMatch(/^Можна летіти: погода в межах лімітів .* Це не гарантія безпеки\.$/);
+    cleanup();
+    view({ verdict: { level: 'NO-DATA', reasons: ['Немає даних про вітер'] } });
+    expect(screen.getByTestId('verdict-explain').textContent).toBe('Немає даних для вердикту — це не дозвіл летіти.');
+  });
+  it('«Що це?» згорнуто й пояснює, з чого вердикт; англійською', () => {
+    const { container } = view({ lang: 'en', verdict: { level: 'NO-GO', reasons: ['x'] } });
+    const what = container.querySelector('details.vwhat') as HTMLDetailsElement;
+    expect(what.open).toBe(false);
+    expect(what.querySelector('summary')?.textContent).toBe('What is this?');
+    expect(screen.getByTestId('verdict-how').textContent).toMatch(/compares the forecast .* limits of the selected drone/);
+    expect(screen.getByTestId('verdict-explain').textContent).toMatch(/^Do not fly: “FPV 7″” at 50 m/);
   });
 });

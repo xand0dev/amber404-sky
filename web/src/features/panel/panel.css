@@ -78,3 +78,6 @@ details.psec>summary{min-height:var(--btn-h);display:flex;align-items:center;cur
 .whtable .whc.on{outline:2px solid var(--ink);outline-offset:-2px}
 .whtable .whc.no{background:var(--no);color:var(--on-lv)}.whtable .whc.cau{background:var(--cau);color:var(--on-lv)}
 .whtable .whc .a{display:inline-block;margin-left:2px}.whtable .whc small{font-size:var(--fs-s);color:var(--dim)}
+/* Пояснення вердикту (#151) */
+.vexp{margin-top:var(--sp-1);padding:var(--sp-1) var(--sp-2);border-left:4px solid var(--rule);background:var(--base);font-weight:600}
+.vexp.lv-b-GO{border-left-color:var(--go)}.vexp.lv-b-CAUTION{border-left-color:var(--cau)}.vexp.lv-b-NO-GO{border-left-color:var(--no)}
