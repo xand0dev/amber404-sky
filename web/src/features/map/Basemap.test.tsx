@@ -21,7 +21,7 @@ describe('Given меню «Підкладка» (AC1)', () => {
   it('Без / Рельєф / Супутник / Своя карта; типово — Без', () => {
     show(); openMenu();
     const g = screen.getByRole('radiogroup', { name: 'Підкладка' });
-    expect([...g.querySelectorAll('label')].map((l) => l.textContent)).toEqual(['Без', 'Рельєф', 'Супутник', 'Своя карта']);
+    expect([...g.querySelectorAll('label')].map((l) => l.textContent)).toEqual(['Без', 'Рельєф', 'Супутник', 'Своя карта', '🛰 Супутник 10 м', '🗺 Вулиці']);
     expect(screen.getByRole('radio', { name: 'Без' })).toHaveProperty('checked', true);
   });
   it('вибір зберігається в браузері й підхоплюється після перезавантаження', () => {

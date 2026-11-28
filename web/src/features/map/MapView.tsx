@@ -17,7 +17,7 @@ import { WindParticles } from './WindParticles';
 import { HoverTip, type HoverPos } from './HoverTip';
 import { useReducedMotion } from './useReducedMotion';
 import { Basemap } from './Basemap';
-import { drawWater, fieldAlpha, type WaterLine } from './basemaps';
+import { drawWater, fieldAlpha, IMAGE_BASES, ONLINE, type WaterLine } from './basemaps';
 import { loadWater, useBasemap } from './basemapStore';
 
 /** Поле рахуємо в сітці кожні FIELD_PX css-пікселів і згладжуємо при масштабуванні (≤ 300 мс, F3-AC2). */
@@ -34,7 +34,7 @@ export function MapView() {
   const { view } = useView();
   const [hover, setHover] = useState<HoverPos | null>(null);
   const prefs = useBasemap();
-  const alpha = fieldAlpha(prefs), clear = prefs.base === 'relief' || prefs.base === 'satellite';
+  const alpha = fieldAlpha(prefs), clear = IMAGE_BASES.has(prefs.base);
   const [water, setWater] = useState<WaterLine[]>([]);
   useEffect(() => { let alive = true; void loadWater().then((w) => { if (alive) setWater(w); }); return () => { alive = false; }; }, []);
 
@@ -68,7 +68,8 @@ export function MapView() {
     // Місця без даних (#140) — штрихування поверх поля, щоб прогалину не плутали з «поле не домалювалось».
     drawNodata(ctx, nodataCells(data, s), data.meta.grid.step, px, colors.ink, W, H);
     ctx.globalAlpha = night ? 0.6 : 1;
-    drawWater(ctx, water, px, night ? colors.ink : undefined);
+    // На онлайн-тайлах вода вже є й точніша — грубі лінії Natural Earth лише заважали б.
+    if (!ONLINE.has(prefs.base)) drawWater(ctx, water, px, night ? colors.ink : undefined);
     ctx.globalAlpha = 1;
 
     for (const f of data.borders.features) {
@@ -96,7 +97,7 @@ export function MapView() {
     const [cx, cy] = px(s.lat, s.lon);
     ctx.strokeStyle = night ? colors.ink : colors.cau; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.arc(cx, cy, 9, 0, Math.PI * 2); ctx.moveTo(cx - 16, cy); ctx.lineTo(cx + 16, cy); ctx.moveTo(cx, cy - 16); ctx.lineTo(cx, cy + 16); ctx.stroke();
-  }, [data, s, reduce, view, lang, alpha, clear, water, night, colors]);
+  }, [data, s, reduce, view, lang, alpha, clear, water, night, colors, prefs.base]);
 
   return (
     <>

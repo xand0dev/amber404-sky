@@ -7,15 +7,23 @@ import { useT } from '../../app/lang';
 import { useView } from '../../app/view/view';
 import { makeProjection } from '../../core';
 import { InBar } from '../../ui/MapFrame';
-import { attribution, BASE_IDS, BASE_NAME, imageAffine, type BaseId } from './basemaps';
-import { loadBaseImage, setBasemap, useBasemap } from './basemapStore';
+import { attribution, BASE_IDS, BASE_NAME, HI_TILES, IMAGE_BASES, imageAffine, ONLINE, type BaseId } from './basemaps';
+import { loadBaseImage, loadImage, setBasemap, useBasemap } from './basemapStore';
+import { drawTile, loadTile, TILE_SOURCES, visibleTiles } from './tiles';
+
+/** З якого масштабу «Супутник» докачує різкі шматки (~4.6 МБ): на всій Україні вистачає грубого. */
+const HI_ZOOM = 1.6;
+/** assumption: 70 % — вулиці й будинки читаються, колір вітру ще видно. */
+const ONLINE_TRANSP = 70;
 import './basemap.css';
 
 const TXT = {
-  uk: { btn: 'Підкладка', menu: 'Підкладка', op: 'Прозорість погоди', own: 'Файл і прив’язка' },
-  en: { btn: 'Underlay', menu: 'Basemap', op: 'Weather transparency', own: 'File and anchors' },
+  uk: { btn: 'Підкладка', menu: 'Підкладка', op: 'Прозорість погоди', own: 'Файл і прив’язка', online: 'Онлайн — детально до вулиць',
+    warn: 'Сервер карти бачить, який район ви дивитесь. Не вмикайте там, де це небезпечно. Після перезапуску — знову офлайн.' },
+  en: { btn: 'Underlay', menu: 'Basemap', op: 'Weather transparency', own: 'File and anchors', online: 'Online — street-level detail',
+    warn: 'The map server sees which area you view. Do not use where that is unsafe. Back to offline after restart.' },
 };
-const ICON: Record<BaseId, string> = { none: '∅', relief: '⛰', satellite: '🛰', own: '▦' };
+const ICON: Record<BaseId, string> = { none: '∅', relief: '⛰', satellite: '🛰', own: '▦', satlive: '🛰', streets: '🗺' };
 
 /** Відкрити чи закрити форму «Своя карта» (F0) її власною кнопкою — стан форми живе в Overlay. */
 function ownForm(want: boolean) {
@@ -72,15 +80,35 @@ export function Basemap() {
     const [W, H] = size, dpr = window.devicePixelRatio || 1;
     cv.width = W * dpr; cv.height = H * dpr;
     delete cv.dataset.drawn;
-    void loadBaseImage(base).then((img) => {
-      const ctx = cv.getContext('2d');
-      if (!alive || !img || !ctx || !W || !H) return;
-      const m = imageAffine(makeProjection(W, H, view).affine, img.naturalWidth, img.naturalHeight);
-      ctx.setTransform(dpr * m[0], dpr * m[3], dpr * m[1], dpr * m[4], dpr * m[2], dpr * m[5]);
-      ctx.imageSmoothingQuality = 'high';
-      ctx.drawImage(img, 0, 0);
+    const ctx = cv.getContext('2d');
+    if (!IMAGE_BASES.has(base)) return;
+    const proj = makeProjection(W, H, view);
+    // Шари малюємо по черзі, щойно вантажаться: спершу грубе статичне зображення, поверх — детальніше.
+    let low: HTMLImageElement | null = null;
+    const hi = new Map<string, HTMLImageElement>();
+    const tiles = new Map<string, HTMLImageElement>();
+    const online = (base === 'satlive' || base === 'streets') && W && H ? visibleTiles(proj, W, H, dpr, TILE_SOURCES[base]) : [];
+    const hiOn = base === 'satellite' && view.zoom >= HI_ZOOM;
+    const render = () => {
+      if (!alive || !ctx || !W || !H) return;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, W, H);
+      ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
+      if (low) {
+        const m = imageAffine(proj.affine, low.naturalWidth, low.naturalHeight);
+        ctx.setTransform(dpr * m[0], dpr * m[3], dpr * m[1], dpr * m[4], dpr * m[2], dpr * m[5]);
+        ctx.drawImage(low, 0, 0);
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      }
+      for (const t of HI_TILES) { const im = hi.get(t.url); if (im) drawTile(ctx, im, t, proj.project); }
+      for (const t of online) { const im = tiles.get(t.url); if (im) drawTile(ctx, im, t, proj.project); }
       cv.dataset.drawn = base;
-    });
+    };
+    // Під онлайн-супутником — статичний (поки тайли летять, не порожньо); під вулицями — нічого.
+    const lowId: BaseId | null = base === 'relief' ? 'relief' : base === 'satellite' || base === 'satlive' ? 'satellite' : null;
+    if (lowId) void loadBaseImage(lowId).then((im) => { low = im; render(); });
+    if (hiOn) for (const t of HI_TILES) void loadImage(t.url).then((im) => { if (im) { hi.set(t.url, im); render(); } });
+    for (const t of online) void loadTile(t.url).then((im) => { if (im) { tiles.set(t.url, im); render(); } });
     return () => { alive = false; };
   }, [base, size, view]);
 
@@ -99,9 +127,13 @@ export function Basemap() {
 
   const toggle = () => { if (!open) ownForm(false); setOpen(!open); };
   const setupOwn = () => { setOpen(false); ownForm(true); };
-  const choose = (id: BaseId) => { setBasemap({ base: id }); if (id === 'own') setupOwn(); };
+  // Детальна онлайн-підкладка під густим полем погоди — каша: піднімаємо прозорість погоди до 70 %, якщо вона нижча.
+  const choose = (id: BaseId) => {
+    setBasemap(ONLINE.has(id) && wxTransp < ONLINE_TRANSP ? { base: id, wxTransp: ONLINE_TRANSP } : { base: id });
+    if (id === 'own') setupOwn();
+  };
 
-  const image = base === 'relief' || base === 'satellite';
+  const image = IMAGE_BASES.has(base);
   return (
     <>
       <canvas ref={ref} className="basemap" aria-hidden="true" hidden={!image} />
@@ -114,13 +146,21 @@ export function Basemap() {
       {open && (
         <section ref={panel} className="basepanel" aria-label={tx.menu}>
           <div role="radiogroup" aria-label={tx.menu} className="basegroup">
-            {BASE_IDS.map((id) => (
+            {BASE_IDS.filter((id) => !ONLINE.has(id)).map((id) => (
               <label key={id}>
                 <input type="radio" name="basemap" value={id} checked={base === id} onChange={() => choose(id)} />
                 {BASE_NAME[lang][id]}
               </label>
             ))}
+            <p className="baseonline">{tx.online}</p>
+            {BASE_IDS.filter((id) => ONLINE.has(id)).map((id) => (
+              <label key={id} className="online">
+                <input type="radio" name="basemap" value={id} checked={base === id} onChange={() => choose(id)} />
+                <span aria-hidden="true">{ICON[id]} </span>{BASE_NAME[lang][id]}
+              </label>
+            ))}
           </div>
+          {ONLINE.has(base) && <p className="basewarn" role="note">⚠ {tx.warn}</p>}
           {image && (
             <label className="baseop">{tx.op}: {wxTransp}%
               <input type="range" min="0" max="100" step="5" aria-label={tx.op} value={wxTransp}

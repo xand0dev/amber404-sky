@@ -1,7 +1,7 @@
 // Issue #100: вибір підкладки — спільний для карти, меню й знімка; лише localStorage (Конституція 8).
 // Статичні файли підкладок читаються раз і живуть у пам'яті (перемикання ≤ 300 мс, F3-AC2) та в кеші service worker.
 import { useSyncExternalStore } from 'react';
-import { BASE_FILE, BASE_KEY, DEFAULT_PREFS, parsePrefs, WATER_FILE, waterLines, type BaseId, type BasePrefs, type WaterLine } from './basemaps';
+import { BASE_FILE, BASE_KEY, DEFAULT_PREFS, ONLINE, parsePrefs, WATER_FILE, waterLines, type BaseId, type BasePrefs, type WaterLine } from './basemaps';
 
 type Store = Pick<Storage, 'getItem' | 'setItem'>;
 const storage = (): Store | null => { try { return localStorage; } catch { return null; } };
@@ -14,7 +14,9 @@ const read = (): BasePrefs => (prefs ??= parsePrefs(storage()?.getItem(BASE_KEY)
 
 export function setBasemap(p: Partial<BasePrefs>): void {
   prefs = { ...read(), ...p };
-  try { storage()?.setItem(BASE_KEY, JSON.stringify(prefs)); } catch { /* приватне вікно — вибір лише до перезавантаження */ }
+  // Онлайн-вибір живе лише до перезавантаження (OPSEC): у сховище — попередня офлайн-підкладка.
+  const keep = ONLINE.has(prefs.base) ? { ...prefs, base: parsePrefs(storage()?.getItem(BASE_KEY) ?? null).base } : prefs;
+  try { storage()?.setItem(BASE_KEY, JSON.stringify(keep)); } catch { /* приватне вікно — вибір лише до перезавантаження */ }
   subs.forEach((f) => f());
 }
 
@@ -28,6 +30,11 @@ export const useBasemap = (): BasePrefs => useSyncExternalStore(subscribe, read,
 export function loadBaseImage(base: BaseId): Promise<HTMLImageElement | null> {
   const url = BASE_FILE[base];
   if (!url) return Promise.resolve(null);
+  return loadImage(url);
+}
+
+/** Статичне зображення за адресою (один раз на сесію). */
+export function loadImage(url: string): Promise<HTMLImageElement | null> {
   let p = images.get(url);
   if (!p) {
     p = new Promise((res) => {

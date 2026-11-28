@@ -20,3 +20,8 @@
 .basepanel{max-height:calc(100% - 16px);overflow:auto}
 /* Ніч (#36, #89): рельєф і супутник — червоні відтінки, без зеленого й синього (нічний зір). */
 :root[data-theme="night"] .basemap{filter:grayscale(1) sepia(1) saturate(6) hue-rotate(-38deg) brightness(.75)}
+
+/* Онлайн-підкладки: окремий підпис і попередження про OPSEC (SPEC §7.6a). */
+.baseonline{grid-column:1/-1;margin:var(--sp-1) 0 0;font-size:var(--fs-s);color:var(--dim)}
+.basegroup label.online{border-style:dashed}
+.basewarn{margin:0;padding:var(--sp-1) var(--sp-2);font-size:var(--fs-s);line-height:1.35;color:var(--ink);background:var(--btn-bg);border-left:3px solid var(--cau)}

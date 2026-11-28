@@ -63,8 +63,8 @@ test('#130: форма прив\'язки з\'являється лише піс
 test('AC1, AC2, AC4: Рельєф → підкладка під полем, повзунок, атрибуція; вибір переживає перезавантаження', async ({ page }) => {
   await page.goto('./');
   const g = await openMenu(page);
-  for (const name of ['Без', 'Рельєф', 'Супутник', 'Своя карта']) await expect(g.getByRole('radio', { name })).toBeAttached();
-  await g.getByText('Рельєф').click();
+  for (const name of ['Без', 'Рельєф', 'Супутник', 'Своя карта']) await expect(g.getByRole('radio', { name, exact: true })).toBeAttached();
+  await g.getByText('Рельєф', { exact: true }).click();
   await expect(page.locator('canvas.basemap[data-drawn="relief"]')).toBeVisible();
   await expect(page.locator('.baseattr')).toContainText('Copernicus DEM GLO-90');
   // Підкладка — під картою (раніше в DOM), той самий розмір.
@@ -75,13 +75,13 @@ test('AC1, AC2, AC4: Рельєф → підкладка під полем, по
   expect(order).toBe(true);
   const slider = page.getByRole('slider', { name: 'Прозорість погоди' });
   await slider.fill('70');
-  await g.getByText('Супутник').click();
+  await g.getByText('Супутник', { exact: true }).click();
   await expect(page.locator('.baseattr')).toContainText('Sentinel-2 cloudless by EOX — Copernicus Sentinel data 2020');
 
   await page.reload();
   await expect(page.locator('canvas.basemap[data-drawn="satellite"]')).toBeVisible();
   const g2 = await openMenu(page);
-  await expect(g2.getByRole('radio', { name: 'Супутник' })).toBeChecked();
+  await expect(g2.getByRole('radio', { name: 'Супутник', exact: true })).toBeChecked();
   await expect(page.getByRole('slider', { name: 'Прозорість погоди' })).toHaveValue('70');
 });
 
@@ -119,9 +119,9 @@ test('AC5: relief.png, satellite.jpg, water.json — у кеші service worker'
 test('AC6: перемикання підкладки ≤ 300 мс (F3-AC2)', async ({ page }) => {
   await page.goto('./');
   const g = await openMenu(page);
-  await g.getByText('Рельєф').click();
+  await g.getByText('Рельєф', { exact: true }).click();
   await expect(page.locator('canvas.basemap[data-drawn="relief"]')).toBeVisible();
-  await g.getByText('Супутник').click();
+  await g.getByText('Супутник', { exact: true }).click();
   await expect(page.locator('canvas.basemap[data-drawn="satellite"]')).toBeVisible();
   // Від кліку до готових кадрів підкладки й поля — у самій сторінці, без затримок Playwright.
   const ms = await page.evaluate(() => new Promise<number>((res) => {
@@ -133,4 +133,27 @@ test('AC6: перемикання підкладки ≤ 300 мс (F3-AC2)', asy
     wait();
   }));
   expect(ms).toBeLessThanOrEqual(300);
+});
+
+test('Онлайн «Вулиці»: тайли лише після вибору, попередження OPSEC, після перезапуску — знову офлайн', async ({ page }) => {
+  const tiles: string[] = [];
+  // У CI без зовнішньої мережі: тайл OSM підміняємо прозорим PNG 1×1.
+  const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==', 'base64');
+  await page.route('https://tile.openstreetmap.org/**', (r) => { tiles.push(r.request().url()); return r.fulfill({ body: png, contentType: 'image/png', headers: { 'access-control-allow-origin': '*' } }); });
+  await page.goto('./');
+  await expect(page.locator('header.status')).toBeVisible();
+  expect(tiles).toHaveLength(0);
+  const g = await openMenu(page);
+  await g.getByRole('radio', { name: 'Вулиці', exact: true }).check();
+  await expect(page.locator('.basewarn')).toContainText('Сервер карти бачить');
+  await expect(page.locator('canvas.basemap[data-drawn="streets"]')).toBeVisible();
+  await expect(page.locator('.baseattr')).toContainText('OpenStreetMap');
+  expect(tiles.length).toBeGreaterThan(0);
+  expect(tiles.every((u) => /^https:\/\/tile\.openstreetmap\.org\/\d+\/\d+\/\d+\.png$/.test(u))).toBe(true);
+  await expect(page.getByRole('slider', { name: 'Прозорість погоди' })).toHaveValue('70');
+  tiles.length = 0;
+  await page.reload();
+  await expect(page.locator('header.status')).toBeVisible();
+  await page.waitForTimeout(500);
+  expect(tiles).toHaveLength(0);
 });

@@ -5,8 +5,8 @@ import type { Affine } from './affine';
 
 export const MAP_BOX = { lat0: 52.6, lat1: 43.9, lon0: 21.9, lon1: 40.6 };
 export const MAP_REF_LAT = 48.5;
-/** Найбільший масштаб — ~5 км по ширині екрана (issue #64). */
-export const MIN_VIEW_KM = 5;
+/** Найбільший масштаб — ~0,8 км по ширині екрана: з онлайн-підкладкою видно вулиці (було 5 км, issue #64). */
+export const MIN_VIEW_KM = 0.8;
 const KM_PER_DEG = 111.32;
 
 /** Центр вигляду (lat, lon) і масштаб відносно «вся Україна». */
