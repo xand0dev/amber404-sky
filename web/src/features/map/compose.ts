@@ -1,5 +1,6 @@
 // F3-AC7 (§7.12): PNG з того, що на карті — підкладка, поле, стрілки замість частинок, зона, малюнки — плюс штамп.
 // Лише власні Canvas/SVG шари й локальні Blob URL, без мережі й сторонніх сервісів.
+// Issue #100: підкладка (рельєф / супутник) — найнижчим шаром, її атрибуція — у правому нижньому куті карти.
 import type { Bundle } from '../../app/data';
 import type { AppState } from '../../app/state';
 import { makeProjection, type View } from '../../core';
@@ -27,7 +28,7 @@ async function svgImage(svg: SVGSVGElement, W: number, H: number): Promise<HTMLI
   } finally { URL.revokeObjectURL(url); }
 }
 
-export async function composeSnapshot(wrap: HTMLElement, data: Bundle, s: AppState, reduce: boolean, lines: string[], view?: View): Promise<Blob> {
+export async function composeSnapshot(wrap: HTMLElement, data: Bundle, s: AppState, reduce: boolean, lines: string[], view?: View, attr = ''): Promise<Blob> {
   const map = wrap.querySelector<HTMLCanvasElement>('canvas.map');
   if (!map) throw new Error('немає карти');
   const W = map.clientWidth, H = map.clientHeight, dpr = window.devicePixelRatio || 1;
@@ -40,6 +41,8 @@ export async function composeSnapshot(wrap: HTMLElement, data: Bundle, s: AppSta
   const css = getComputedStyle(document.documentElement);
   ctx.fillStyle = css.getPropertyValue('--base').trim() || '#1c2117'; ctx.fillRect(0, 0, W, H + stampH);
 
+  const base = wrap.querySelector<HTMLCanvasElement>('canvas.basemap');
+  if (visible(base) && base.width > 0) ctx.drawImage(base, 0, 0, W, H);
   const under = wrap.querySelector<HTMLCanvasElement>('canvas.underlay');
   if (visible(under) && under.width > 0) ctx.drawImage(under, 0, 0, W, H);
   ctx.globalAlpha = Number(getComputedStyle(map).opacity) || 1;
@@ -50,6 +53,14 @@ export async function composeSnapshot(wrap: HTMLElement, data: Bundle, s: AppSta
   if (visible(zone) && zone.width > 0) ctx.drawImage(zone, 0, 0, W, H);
   const svg = wrap.querySelector<SVGSVGElement>('svg.drawlayer');
   if (svg) { const img = await svgImage(svg, W, H); if (img) ctx.drawImage(img, 0, 0, W, H); }
+
+  if (attr) { // атрибуція підкладки й рік (F3-AC7, §7.6a)
+    ctx.font = '500 10px system-ui, sans-serif'; ctx.textAlign = 'right'; ctx.textBaseline = 'bottom';
+    const w = Math.min(ctx.measureText(attr).width, W - PAD * 2);
+    ctx.fillStyle = 'rgba(17,21,14,.75)'; ctx.fillRect(W - w - PAD - 4, H - PAD - 14, w + 8, 14);
+    ctx.fillStyle = css.getPropertyValue('--dim').trim() || '#a3a58a'; ctx.fillText(attr, W - PAD, H - PAD - 1, W - PAD * 2);
+    ctx.textAlign = 'left';
+  }
 
   // Штамп під картою.
   ctx.fillStyle = 'rgba(17,21,14,.96)'; ctx.fillRect(0, H, W, stampH);

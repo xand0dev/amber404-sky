@@ -30,4 +30,12 @@ describe('Given карта; When 📷', () => {
     expect(b).toHaveProperty('disabled', false);
     expect(screen.getByRole('status').textContent).toBe('Знімок збережено');
   });
+  it('атрибуція обраної підкладки йде на знімок (issue #100 AC4)', async () => {
+    const { composeSnapshot } = await import('./compose');
+    show();
+    fireEvent.click(screen.getByRole('button', { name: 'Знімок карти' }));
+    await act(async () => { release(new Blob(['x'], { type: 'image/png' })); });
+    const args = vi.mocked(composeSnapshot).mock.calls.at(-1) ?? [];
+    expect(args[6]).toMatch(/Natural Earth/);
+  });
 });

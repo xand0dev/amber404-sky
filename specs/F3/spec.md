@@ -59,6 +59,14 @@
 - T3 (AC3) `app.css`: шапка — flex в один рядок (вердикт · причина · профіль і вікно з «…» · бейджі · «Ніч» · UK/EN), 68 px.
 - T4 скріни до/після `specs/F3/img/86-*.png`.
 
+**#100 — підкладки: рельєф, супутник, вода (§7.6a):**
+- T1 (AC1, AC2, AC4) `map/basemaps.ts`: варіанти Без / Рельєф / Супутник / Своя карта, `parsePrefs` (localStorage), `imageAffine` (рамка 22–40.5 × 44–52.5 → спільна проєкція #64), `fieldAlpha`, `attribution`, `waterLines`, `drawWater`.
+- T2 (AC1, AC5, AC6) `map/basemapStore.ts`: вибір у localStorage, зображення й water.json читаються раз (кеш SW, миттєве перемикання).
+- T3 (AC1, AC2, AC4) `map/Basemap.tsx` + `basemap.css`: canvas.basemap під canvas.map, меню в «⋯», повзунок прозорості погоди, атрибуція в куті; «Своя карта» F0 — як є.
+- T4 (AC2, AC3) `MapView.tsx`: над рельєфом/супутником — прозоре тло й поле з повзунком; ріки й озера над полем, під частинками.
+- T5 (AC4) `compose.ts`, `SnapButton.tsx`: підкладка й атрибуція на знімку 📷.
+- T6 тести: `basemaps.test.ts`, `Basemap.test.tsx`, `SnapButton.test.tsx`, `e2e/basemap.spec.ts`; скріни `img/100-*`.
+
 ## Відкриті питання
 | Питання | Хто | Коли | План Б |
 |---|---|---|---|
