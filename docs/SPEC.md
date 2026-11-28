@@ -74,7 +74,7 @@ web/public/data/static/{borders,cities,profiles}.json                 # F0
 ```
 `status`: `ok | partial | nodata`. Сітка: рядок 0 = `lat0` (північ), стовпець 0 = `lon0` (захід), індекс точки `i = r * nc + c`.
 
-### 6.2 `profile.json` (замінює forecast.json)
+### 6.2 Профіль `data/profile/` (замінює forecast.json і profile.json)
 ```json
 { "generatedAt": "...", "sources": ["openmeteo"], "levels": [10, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 600, 700, 800, 900, 1000],
   "spd": [ /* рівень */ [ /* година */ [23, 17, null, "... nr*nc"] ] ],   // м/с × 10
@@ -82,6 +82,8 @@ web/public/data/static/{borders,cities,profiles}.json                 # F0
   "gust": [[...]], "temp": [[...]], "precip": [[...]],                  // × 10, біля землі
   "rh": [[...]], "vis": [[...]] }                                         // %, метри / 100
 ```
+**На диску — за годинами (#165):** щоб перший екран не чекав на весь профіль (~4 МБ), `make data` пише теку `data/profile/`: `index.json` — `{ generatedAt, sources, grid, levels, vars: [{ id, perLevel, unit }], hours: [{ t, file: "h00.json" }] }` (48 годин) і `h00.json … h47.json` — `{ generatedAt, hour, t, spd: [рівень][точка], dir, gust: [точка], temp, precip, rh, vis }` з тими самими значеннями й одиницями. `generatedAt` години = `generatedAt` index; інша — година з іншого запуску, сайт її не бере. Схеми — `contracts/profile-index.schema.json`, `contracts/profile-hour.schema.json`; цілий профіль вище (`profile.schema.json`) — форма в пам'яті pipeline і сайту. Сайт вантажить index і поточну годину, решту — у фоні; service worker кешує всі години (§7.11). Окремого `profile.json` немає.
+
 **Як рахується профіль (F1):** для кожної точки й години беремо вітер на 10/80/120/180 м і на рівнях 1000/975/950/925/900/850 гПа; висота рівня над землею = `geopotential_height − elevation`; рівні тиску беремо лише вище 200 м. Сортуємо за висотою й лінійно інтерполюємо **u, v** (не швидкість і кут) на 16 висот: кожні 50 м до 500 м, далі кожні 100 м до 1000 м (для «крил»). Вище останнього рівня — значення останнього. `null` — немає даних.
 
 ### 6.3 `galileo.json`

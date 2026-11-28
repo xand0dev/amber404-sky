@@ -1,12 +1,14 @@
 // Service worker AMBER Sky (SPEC §7.11): застосунок і останній пакет даних у кеші, без мережі працює все,
 // крім оновлення прогнозу. Лише GET того самого походження — запитів із координатами немає (OPSEC).
 /* global self, caches, fetch, URL, setTimeout, clearTimeout -- глобали ServiceWorkerGlobalScope */
-const VERSION = 'v1';
+const VERSION = 'v2'; // v2 (#165): profile.json → profile/index.json + години
 const SHELL = `amber-shell-${VERSION}`;
 const DATA = `amber-data-${VERSION}`;
 const CORE = ['./', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png'];
-// Пакет даних — ті самі файли, що читає web/src/app/data.ts.
-const DATA_FILES = ['meta.json', 'profile.json', 'galileo.json', 'kp.json', 'climate.json',
+// Пакет даних — ті самі файли, що читає web/src/app/data.ts. Профіль (§6.2, #165) — index і 48 годин
+// (контракт: рівно 48, h00…h47): після першого відкриття в кеші всі години, офлайн — як раніше (F3-AC9).
+const HOURS = Array.from({ length: 48 }, (_, h) => `profile/h${String(h).padStart(2, '0')}.json`);
+const DATA_FILES = ['meta.json', 'profile/index.json', ...HOURS, 'galileo.json', 'kp.json', 'climate.json',
   'static/profiles.json', 'static/cities.json', 'static/borders.json', 'static/relief.json'].map((f) => `data/${f}`);
 const NET_TIMEOUT_MS = 5000;
 
