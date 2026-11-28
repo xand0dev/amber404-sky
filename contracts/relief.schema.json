@@ -1,0 +1,11 @@
+{ "$schema": "https://json-schema.org/draft/2020-12/schema", "title": "static/relief.json (SPEC §7.6a, §8 cop-dem; issue #102)",
+  "description": "Висота місцевості н. р. м. на регулярній сітці. Рядок 0 = lat0 — ПІВДЕНЬ (не як meta.grid): точка (r, c) — lat0 + r·step, lon0 + c·step, індекс r·nc + c. Довжина elev = nr·nc.",
+  "type": "object", "required": ["source", "lat0", "lon0", "step", "nr", "nc", "elev"],
+  "properties": {
+    "source": { "const": "cop-dem" },
+    "lat0": { "type": "number", "minimum": -90, "maximum": 90 },
+    "lon0": { "type": "number", "minimum": -180, "maximum": 180 },
+    "step": { "type": "number", "exclusiveMinimum": 0 },
+    "nr": { "type": "integer", "minimum": 2 },
+    "nc": { "type": "integer", "minimum": 2 },
+    "elev": { "type": "array", "minItems": 4, "items": { "type": ["integer", "null"], "minimum": 1 } } } }
