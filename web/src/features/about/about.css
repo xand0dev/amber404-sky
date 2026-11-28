@@ -1,0 +1,16 @@
+/* Issue #173: вікно «Про AMBER Sky». Лише токени (#88); нічний режим підміняє ті самі змінні червоними. */
+.about{position:fixed;inset:0;z-index:90;display:grid;place-items:center;padding:var(--sp-2)}
+.about-back{position:absolute;inset:0;background:var(--scrim)}
+.about-card{position:relative;display:flex;flex-direction:column;width:min(640px,100%);max-height:100%;background:var(--panel);color:var(--ink);border:1px solid var(--rule);border-radius:var(--r)}
+.about-head{display:flex;align-items:center;justify-content:space-between;gap:var(--sp-2);padding:var(--sp-2) var(--sp-3);border-bottom:1px solid var(--rule)}
+.about-head h2{font-size:var(--fs-xl);line-height:1.2}
+.about-body{display:grid;gap:var(--sp-3);padding:var(--sp-3);overflow-y:auto;line-height:1.45}
+.about-body h3{font-size:var(--fs-m);color:var(--dim);text-transform:uppercase;letter-spacing:.04em;margin-bottom:var(--sp-1)}
+.about-what{font-size:var(--fs-l);font-weight:600}
+.about-body ul{display:grid;gap:var(--sp-2);padding:0;list-style:none}
+.about-body a{color:var(--ink);text-decoration:underline;overflow-wrap:anywhere}
+.about-body a:focus-visible,.about-head button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+.about-eu li{display:flex;flex-wrap:wrap;align-items:baseline;gap:var(--sp-1) var(--sp-2)}
+.about-eu .about-mark{display:inline-flex;align-items:center;min-height:var(--btn-h);padding:0 var(--sp-2);border:1px solid var(--rule);border-radius:var(--r);font-weight:700;text-decoration:none;white-space:nowrap}
+.about-src{font-size:var(--fs-s)}
+.about-lic{color:var(--dim)}

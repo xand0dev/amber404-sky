@@ -19,6 +19,7 @@ import { Panel } from '../features/panel/Panel';
 import { MapFrame } from '../ui/MapFrame';
 import { Splash } from './splash/Splash';
 import { Onboarding } from './onboarding/Onboarding';
+import { About } from '../features/about/About';
 import './app.css';
 
 // Слоти фіч (SPEC §9): map/layers/timeline — F3, panel/route — F4. Каркас лише розкладає їх.
@@ -27,6 +28,7 @@ import './app.css';
 // ViewCtx (issue #64) — спільний вигляд карти (центр, масштаб) для всіх шарів; ViewControls — жести й кнопки масштабу.
 // MapFrame (issue #85) — ряд інструментів над картою й меню «⋯»; смуга шарів — під картою.
 // Splash (issue #166) — заставка, поки вантажаться дані; Onboarding — 3 картки при першому відкритті й «⋯» → «Як це працює».
+// About (issue #173, F4) — «⋯» → «Про AMBER Sky»: для кого, космічні дані ЄС, приватність, джерела.
 export function App() {
   return <LangProvider><Shell /></LangProvider>;
 }
@@ -62,7 +64,7 @@ function Main({ ctx, vctx }: { ctx: Ctx; vctx: ViewState }) {
     <ViewCtx.Provider value={vctx}>
       <div className="shell">
         <StatusBar />
-        <MapFrame><Overlay /><MapView /><ZoneLayer /><Draw /><ViewControls /><Onboarding /></MapFrame>
+        <MapFrame><Overlay /><MapView /><ZoneLayer /><Draw /><ViewControls /><Onboarding /><About /></MapFrame>
         <LayerPicker />
         <Timeline />
         <Panel />
