@@ -45,6 +45,12 @@ export function PointView({ city, lat, lon, altM, wx, verdict, windowText, prof,
         <h2>{city ? city.name : coordText(lat, lon)}</h2>
         <span className={`lvl lv-${verdict.level}`} data-testid="point-level">{coreT(`lv.${verdict.level}`, lang)}</span>
       </div>
+      {/* #151: вердикт людською мовою одразу під заголовком і «Що це?» — оператор не зрозумів GO / CAUTION / NO-GO. */}
+      <p className={`vexp lv-b-${verdict.level}`} data-testid="verdict-explain">{L(`v.${verdict.level}`, { drone: profileName(prof, lang), alt: altM })}</p>
+      <details className="pdetails vwhat">
+        <summary>{L('v.what')}</summary>
+        <p className="pnote" data-testid="verdict-how">{L('v.how')}</p>
+      </details>
       <p className="coord">{coordText(lat, lon)} · {city ? L('place.near', { km: city.km.toFixed(0) }) : L('place.coord')} · {altM} {L('unit.m')}</p>
       <dl className="vals">
         <div><dt>{L('wind')}</dt><dd>
