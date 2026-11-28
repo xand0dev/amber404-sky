@@ -72,7 +72,8 @@ export function HeightTableView({ cells, times, limit, hour, altM, total, onPick
                         className={`cell${x.over ? ' over' : ''}${x.cloud ? ' cloud' : ''}${on ? ' on' : ''}`}
                         style={{ backgroundColor: cellColor(x.ws, limit) }}
                         tabIndex={r === cr && c === cc ? 0 : -1} aria-pressed={on}
-                        aria-label={L('tbl.cell', { alt: x.altM, time: kyivHM(times[x.hour]), v: extra ? `${v}, ${extra}` : v })}
+                        // WCAG 2.5.3: ім'я починається з видимого числа (#146).
+                        aria-label={L('tbl.cell', { shown: x.ws == null ? '—' : Math.round(x.ws), alt: x.altM, time: kyivHM(times[x.hour]), v: extra ? `${v}, ${extra}` : v })}
                         onClick={() => { setFocus([r, c]); onPick(x.hour, x.altM); }} onKeyDown={(e) => move(e, r, c)}>
                         <span>{x.ws == null ? '—' : Math.round(x.ws)}</span>
                         {x.dir != null && x.ws != null && <span className="a" aria-hidden="true" style={{ transform: `rotate(${arrowDeg(x.dir)}deg)` }}>↑</span>}

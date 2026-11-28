@@ -105,3 +105,18 @@ describe('F4-AC2: таблиця на екрані', () => {
     expect(pages).toEqual([24]);
   });
 });
+
+describe('#146 WCAG 2.5.3: доступне ім\'я клітинки містить видиме число', () => {
+  it('ім\'я кожної клітинки починається з числа, яке видно', () => {
+    view();
+    for (const b of screen.getAllByTestId('hcell')) {
+      const shown = (b.textContent ?? '').replace('↑', '').trim();
+      expect(b.getAttribute('aria-label')?.startsWith(`${shown} — `)).toBe(true);
+    }
+  });
+  it('немає даних — «—» і в тексті, і на початку імені', () => {
+    const cells = heightsTable(fixture({ spd: () => null }), 50.45, 30.5, P, 0);
+    render(<HeightTableView cells={cells} times={SRC.meta.times} limit={10} hour={0} altM={50} total={48} lang="en" onPick={() => {}} onPage={() => {}} />);
+    expect(screen.getAllByTestId('hcell')[0].getAttribute('aria-label')).toMatch(/^— — 500 m, /);
+  });
+});
