@@ -2,6 +2,9 @@
 // Issue #130: одна кнопка «Підкладка» в ряду інструментів відкриває вибір; форма «Своя карта» — лише після вибору.
 import { expect, test, type Page } from '@playwright/test';
 
+// Онбординг першого відкриття (#166) лягає поверх карти — у цих тестах його вже пройдено.
+test.beforeEach(({ page }) => page.addInitScript(() => localStorage.setItem('amber404.tour', '1')));
+
 const barBtn = (page: Page) => page.getByRole('toolbar', { name: 'Інструменти карти' }).getByRole('button', { name: 'Підкладка', exact: true });
 
 async function openMenu(page: Page) {

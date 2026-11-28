@@ -1,6 +1,9 @@
 // Issue #140: місця без даних (Open-Meteo 429 на південних пакетах) — штрихування на карті й «немає даних» у легенді.
 import { expect, test, type Page } from '@playwright/test';
 
+// Онбординг першого відкриття (#166) лягає поверх карти — у цих тестах його вже пройдено.
+test.beforeEach(({ page }) => page.addInitScript(() => localStorage.setItem('amber404.tour', '1')));
+
 /** Підміняє profile.json: рядки сітки r ≥ 12 (46.5° і південніше) — null у всіх полях. */
 async function southless(page: Page) {
   await page.route('**/data/profile.json', async (route) => {
