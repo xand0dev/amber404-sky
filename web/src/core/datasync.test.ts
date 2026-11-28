@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DATA_FILES, DATA_FRESH_H, dataPlan, type PagesMeta } from './datasync';
+import { DATA_FILES, DATA_FRESH_H, PROFILE_INDEX, dataPlan, profileFiles, sameRun, type PagesMeta } from './datasync';
 
 const now = Date.parse('2026-11-28T10:30:00Z');
 const src = (id: string, status: string) => ({ id, status });
@@ -53,6 +53,15 @@ describe('#138: деплой не тягне Open-Meteo на кожен мерж
   });
 
   it('перелік файлів даних = файли, які пише make data (крім static у репо)', () => {
-    expect(DATA_FILES).toEqual(['meta', 'profile', 'galileo', 'kp', 'climate']);
+    expect(DATA_FILES).toEqual(['meta', 'galileo', 'kp', 'climate']);
+    expect(PROFILE_INDEX).toBe('profile/index');
+  });
+
+  it('#165: профіль з Pages — index і всі години з його переліку, лише з одного запуску', () => {
+    const index = { generatedAt: 'G', hours: [{ file: 'h00.json' }, { file: 'h01.json' }] };
+    expect(profileFiles(index)).toEqual(['profile/h00', 'profile/h01']);
+    expect(sameRun(index, [{ generatedAt: 'G' }, { generatedAt: 'G' }])).toBe(true);
+    expect(sameRun(index, [{ generatedAt: 'G' }, { generatedAt: 'старий' }])).toBe(false);
+    expect(sameRun(index, [{ generatedAt: 'G' }])).toBe(false);
   });
 });

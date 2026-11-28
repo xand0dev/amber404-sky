@@ -66,7 +66,8 @@ beforeEach(() => {
     [u('./'), INDEX], [u('index.html'), INDEX], [u('manifest.webmanifest'), '{}'],
     [u('assets/index-abc.js'), 'js'], [u('assets/index-def.css'), 'css'],
     [u('icons/icon-192.png'), 'png'], [u('icons/icon-512.png'), 'png'],
-    [u('data/meta.json'), '{"v":1}'], [u('data/profile.json'), '{}'], [u('data/kp.json'), '{}'],
+    [u('data/meta.json'), '{"v":1}'], [u('data/profile/index.json'), '{}'], [u('data/kp.json'), '{}'],
+    ...Array.from({ length: 48 }, (_, h): [string, string] => [u(`data/profile/h${String(h).padStart(2, '0')}.json`), `{"hour":${h}}`]),
     [u('data/static/profiles.json'), '[]'], [u('data/static/cities.json'), '[]'], [u('data/static/borders.json'), '{}'],
   ]);
   new Function('self', 'caches', 'fetch', swSrc)(self, caches.api, fetchMock);
@@ -79,7 +80,7 @@ describe('F3-AC9: після одного відкриття все потріб
     await fire('install');
     const c = cached();
     for (const p of ['./', 'manifest.webmanifest', 'assets/index-abc.js', 'assets/index-def.css', 'icons/icon-192.png', 'icons/icon-512.png',
-      'data/meta.json', 'data/profile.json', 'data/kp.json', 'data/static/profiles.json', 'data/static/cities.json', 'data/static/borders.json']) {
+      'data/meta.json', 'data/profile/index.json', 'data/profile/h00.json', 'data/profile/h47.json', 'data/kp.json', 'data/static/profiles.json', 'data/static/cities.json', 'data/static/borders.json']) {
       expect(c.has(u(p)), p).toBe(true);
     }
     // необовʼязкових файлів (galileo, climate) немає на сервері — 404 не кешуємо й install не падає
@@ -94,6 +95,16 @@ describe('F3-AC9: після одного відкриття все потріб
     expect(await nav!.text()).toBe(INDEX);
     expect(await (await fire('fetch', { request: req('assets/index-abc.js') }))!.text()).toBe('js');
     expect(await (await fire('fetch', { request: req('data/meta.json') }))!.text()).toBe('{"v":1}');
+  });
+
+  it('#165: після першого відкриття в кеші index і всі 48 годин профілю — офлайн будь-яка година', async () => {
+    await fire('install');
+    online = false;
+    for (let h = 0; h < 48; h++) {
+      const f = `data/profile/h${String(h).padStart(2, '0')}.json`;
+      expect(await (await fire('fetch', { request: req(f) }))!.text(), f).toBe(`{"hour":${h}}`);
+    }
+    expect(await (await fire('fetch', { request: req('data/profile/index.json') }))!.text()).toBe('{}');
   });
 
   it('з мережею дані беруться свіжі й оновлюють кеш (оновлення прогнозу)', async () => {

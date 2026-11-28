@@ -4,18 +4,21 @@ import { expect, test, type Page } from '@playwright/test';
 // Онбординг першого відкриття (#166) лягає поверх карти — у цих тестах його вже пройдено.
 test.beforeEach(({ page }) => page.addInitScript(() => localStorage.setItem('amber404.tour', '1')));
 
-/** Підміняє profile.json: рядки сітки r ≥ 12 (46.5° і південніше) — null у всіх полях. */
+/** Підміняє години профілю (profile/hNN.json, #165): рядки сітки r ≥ 12 (46.5° і південніше) — null у всіх полях. */
 async function southless(page: Page) {
-  await page.route('**/data/profile.json', async (route) => {
+  await page.route('**/data/profile/h*.json', async (route) => {
     const res = await route.fetch();
     const p = await res.json();
     const nc = 38;
     const cut = (row: (number | null)[]) => row.map((v, i) => (Math.floor(i / nc) >= 12 ? null : v));
-    for (const k of ['spd', 'dir']) p[k] = p[k].map((l: (number | null)[][]) => l.map(cut));
-    for (const k of ['gust', 'temp', 'precip', 'rh', 'vis']) p[k] = p[k].map(cut);
+    for (const k of ['spd', 'dir']) p[k] = p[k].map(cut);
+    for (const k of ['gust', 'temp', 'precip', 'rh', 'vis']) p[k] = cut(p[k]);
     await route.fulfill({ response: res, json: p });
   });
 }
+
+// Решта годин профілю довантажується у фоні (#165): запити в польоті на кінці тесту — не помилка.
+test.afterEach(async ({ page }) => { await page.unrouteAll({ behavior: 'ignoreErrors' }); });
 
 async function open(page: Page, night = false) {
   await page.addInitScript((n) => localStorage.setItem('amber404.night', n ? '1' : '0'), night);

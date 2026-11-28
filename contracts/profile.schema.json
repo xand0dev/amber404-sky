@@ -1,4 +1,4 @@
-{ "$schema": "https://json-schema.org/draft/2020-12/schema", "title": "profile.json (SPEC §6.2)", "type": "object",
+{ "$schema": "https://json-schema.org/draft/2020-12/schema", "title": "Цілий профіль у пам'яті (SPEC §6.2): так його віддають модулі джерел і збирає сайт; на диску — profile/index.json + profile/hNN.json (#165)", "type": "object",
   "required": ["generatedAt", "sources", "levels", "spd", "dir", "gust", "temp", "precip", "rh", "vis"],
   "$defs": {
     "row": { "type": "array", "minItems": 684, "maxItems": 684, "items": {"type":["number","null"]} },
