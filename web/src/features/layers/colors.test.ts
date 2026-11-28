@@ -29,3 +29,30 @@ describe('Given сусідні значення; When фарбуємо; Then к�
     expect(layerRGBA('go', 'NO-DATA')).toEqual(NODATA_RGBA);
   });
 });
+
+// Issue #89 (нічний режим #36): уночі поле лише червоне (G і B ≤ R/2), а гірше значення — яскравіше.
+describe('Given нічний режим; When фарбуємо поле; Then лише червоний канал і порядок «гірше — яскравіше»', () => {
+  const red = ([r, g, b]: number[]) => g <= r / 2 && b <= r / 2;
+  it('рампи: усі кольори червоні, яскравість зростає з «поганістю»', () => {
+    for (const layer of ['wind', 'gust', 'cloud', 'temp', 'vis'] as const) {
+      const sc = SCALES[layer];
+      if (sc.kind !== 'ramp') continue;
+      const vs = [0, 0.25, 0.5, 0.75, 1].map((t) => sc.min + (sc.max - sc.min) * t);
+      const rs = vs.map((v) => layerRGBA(layer, v, true));
+      for (const c of rs) expect(red(c), `${layer} ${c}`).toBe(true);
+      const bright = rs.map((c) => c[0]);
+      const ordered = sc.lowBad ? [...bright].reverse() : bright;
+      for (let i = 1; i < ordered.length; i++) expect(ordered[i]).toBeGreaterThan(ordered[i - 1]);
+    }
+  });
+  it('класи «Можна летіти»: МОЖНА < ОБЕРЕЖНО < НЕ МОЖНА за яскравістю; немає даних — червоне й тьмяне', () => {
+    const [go, cau, no, nd] = (['GO', 'CAUTION', 'NO-GO', 'NO-DATA'] as const).map((v) => layerRGBA('go', v, true));
+    for (const c of [go, cau, no, nd]) expect(red(c)).toBe(true);
+    expect(go[0]).toBeLessThan(cau[0]);
+    expect(cau[0]).toBeLessThan(no[0]);
+    expect(red(layerRGBA('icing', 1, true)) && red(layerRGBA('wind', null, true))).toBe(true);
+  });
+  it('удень — як раніше', () => {
+    expect(layerRGBA('wind', 5, false)).toEqual(layerRGBA('wind', 5));
+  });
+});

@@ -28,11 +28,11 @@ const ctx = {
 } as unknown as Ctx;
 
 const seen = { v: FULL_VIEW as View };
-function Harness({ onMap }: { onMap: () => void }) {
+function Harness({ onMap, c = ctx }: { onMap: () => void; c?: Ctx }) {
   const [view, setView] = useState<View>(FULL_VIEW);
   useEffect(() => { seen.v = view; }, [view]);
   return (
-    <AppCtx.Provider value={ctx}>
+    <AppCtx.Provider value={c}>
       <ViewCtx.Provider value={{ view, setView }}>
         <main className="mapwrap"><canvas className="map" onClick={onMap} /><ViewControls /></main>
       </ViewCtx.Provider>
@@ -110,5 +110,21 @@ describe('Given карта з масштабом (issue #64)', () => {
     expect(seen.v.zoom).toBeGreaterThan(10);
     fireEvent.click(screen.getByRole('button', { name: 'Україна' }));
     expect(seen.v).toEqual(FULL_VIEW);
+  });
+});
+
+// Issue #89: вітер понад ліміт — зони немає; «До зони» не наближає до суцільного кольору без кордонів і міст.
+describe('Given зони немає (вітер понад ліміт, #89)', () => {
+  const f = (x: number) => Array.from({ length: 2 }, () => Array<number>(N).fill(x));
+  const windy = { ...ctx, data: { ...ctx.data, profile: { ...ctx.data.profile, spd: [f(300), f(300)] } } } as unknown as Ctx;
+  it('When «До зони»; Then точка в центрі й видно щонайменше ±20 км навколо', () => {
+    render(<Harness onMap={vi.fn()} c={windy} />);
+    fireEvent.click(screen.getByRole('button', { name: 'До зони' }));
+    const p = makeProjection(W, H, seen.v);
+    const [x, y] = p.project(windy.s.lat, windy.s.lon);
+    expect(Math.abs(x - W / 2)).toBeLessThan(1);
+    expect(Math.abs(y - H / 2)).toBeLessThan(1);
+    const [latTop] = p.unproject(W / 2, 0), [latBot] = p.unproject(W / 2, H);
+    expect((latTop - latBot) * 111).toBeGreaterThanOrEqual(40);
   });
 });

@@ -42,8 +42,17 @@ export function Basemap() {
     return () => { delete wrap.dataset.base; };
   }, [base]);
 
-  // Офлайн (AC5): обидва зображення читаються одразу — потрапляють у кеш service worker, а перемикання миттєве.
-  useEffect(() => { void loadBaseImage('relief'); void loadBaseImage('satellite'); }, []);
+  // Офлайн (AC5): обидва зображення читаються, коли браузер вільний, — потрапляють у кеш service worker, а перемикання
+  // миттєве. Не на старті (#89): 470 КБ не конкурують із даними прогнозу за мережу першого екрана. Обрану — одразу (нижче).
+  useEffect(() => {
+    const pre = () => { void loadBaseImage('relief'); void loadBaseImage('satellite'); };
+    if (typeof requestIdleCallback === 'function') {
+      const id = requestIdleCallback(pre, { timeout: 5000 });
+      return () => cancelIdleCallback(id);
+    }
+    const t = setTimeout(pre, 3000);
+    return () => clearTimeout(t);
+  }, []);
 
   useEffect(() => {
     const cv = ref.current;

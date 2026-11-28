@@ -4,11 +4,13 @@ import { useEffect, useRef, useState } from 'react';
 import { useApp } from '../../app/state';
 import { useView } from '../../app/view/view';
 import { useT } from '../../app/lang';
+import { useTheme } from '../../app/theme';
 import { cityName } from './translit';
 import { makeProjection } from '../../core';
 import { Legend } from '../layers/Legend';
 import { drawWindArrows } from './arrows';
 import { fieldPixels, nodeStep } from './field';
+import { placeLabels } from './labels';
 import { SnapButton } from './SnapButton';
 import { WindParticles } from './WindParticles';
 import { HoverTip, type HoverPos } from './HoverTip';
@@ -24,6 +26,8 @@ type MapCanvas = HTMLCanvasElement & { unproject?: (x: number, y: number) => [nu
 export function MapView() {
   const { data, s, set } = useApp();
   const { lang } = useT();
+  // Кольори карти — з палітри теми: уночі (#36, #89) лише червоні, щоб не збивати нічний зір.
+  const { night, colors } = useTheme();
   const ref = useRef<MapCanvas>(null);
   const reduce = useReducedMotion();
   const { view } = useView();
@@ -46,7 +50,7 @@ export function MapView() {
     cv.unproject = unproject;
 
     // Над рельєфом і супутником тло прозоре — підкладку видно (canvas.basemap під картою).
-    if (!clear) { ctx.fillStyle = '#1c2117'; ctx.fillRect(0, 0, W, H); }
+    if (!clear) { ctx.fillStyle = colors.base; ctx.fillRect(0, 0, W, H); }
     // Плавне поле: значення в кожній точці з core (білінійно), далі згладжене масштабування.
     const fw = Math.max(1, Math.ceil(W / FIELD_PX)), fh = Math.max(1, Math.ceil(H / FIELD_PX));
     const off = document.createElement('canvas');
@@ -54,33 +58,42 @@ export function MapView() {
     const octx = off.getContext('2d');
     if (octx) {
       const fu = (x: number, y: number) => unproject(x * FIELD_PX, y * FIELD_PX);
-      octx.putImageData(new ImageData(fieldPixels(data, s, fw, fh, fu, nodeStep(fu)), fw, fh), 0, 0);
+      octx.putImageData(new ImageData(fieldPixels(data, s, fw, fh, fu, nodeStep(fu), night), fw, fh), 0, 0);
       ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
       ctx.globalAlpha = alpha;
       ctx.drawImage(off, 0, 0, fw * FIELD_PX, fh * FIELD_PX);
       ctx.globalAlpha = 1;
     }
-    drawWater(ctx, water, px);
+    ctx.globalAlpha = night ? 0.6 : 1;
+    drawWater(ctx, water, px, night ? colors.ink : undefined);
+    ctx.globalAlpha = 1;
 
     for (const f of data.borders.features) {
-      ctx.strokeStyle = f.iso === 'UKR' ? '#e6e2cc' : 'rgba(230,226,204,.35)';
+      ctx.strokeStyle = colors.ink; ctx.globalAlpha = f.iso === 'UKR' ? 1 : 0.35;
       ctx.lineWidth = f.iso === 'UKR' ? 1.6 : 0.8;
       for (const ring of f.rings) { ctx.beginPath(); ring.forEach(([lo, la], i) => { const [x, y] = px(la, lo); if (i) ctx.lineTo(x, y); else ctx.moveTo(x, y); }); ctx.stroke(); }
     }
+    ctx.globalAlpha = 1;
     // prefers-reduced-motion (§7.10): замість частинок — статичні стрілки вітру обраної висоти.
-    if (reduce) drawWindArrows(ctx, data, s, px);
-    // Підписи міст з темною обводкою, щоб читались на будь-якому кольорі поля.
+    if (reduce) drawWindArrows(ctx, data, s, px, night ? colors.ink : undefined);
+    // Підписи міст з темною обводкою, щоб читались на будь-якому кольорі поля; без накладань (#89, labels.ts).
     ctx.font = '600 12px system-ui'; ctx.lineJoin = 'round';
-    for (const c of data.cities) {
-      const [x, y] = px(c.lat, c.lon);
-      ctx.fillStyle = '#e6e2cc'; ctx.fillRect(x - 2, y - 2, 4, 4);
-      ctx.strokeStyle = 'rgba(17,21,14,.85)'; ctx.lineWidth = 3; ctx.strokeText(cityName(c, lang), x + 5, y - 4);
-      ctx.fillText(cityName(c, lang), x + 5, y - 4);
-    }
+    const names = data.cities.map((c) => cityName(c, lang));
+    const pts = data.cities.map((c) => px(c.lat, c.lon));
+    const [mx, my] = px(s.lat, s.lon); // маркер обраної точки (хрестик 32 px) — підписи його не закривають
+    const spots = placeLabels(pts.map(([x, y], i) => ({ x, y, w: ctx.measureText(names[i]).width, h: 14 })), W, H, [{ x: mx - 18, y: my - 18, w: 36, h: 36 }]);
+    ctx.fillStyle = colors.ink;
+    for (const [x, y] of pts) ctx.fillRect(x - 2, y - 2, 4, 4);
+    ctx.strokeStyle = colors.base; ctx.lineWidth = 3;
+    spots.forEach((sp, i) => {
+      if (!sp) return;
+      ctx.strokeText(names[i], sp.tx, sp.by);
+      ctx.fillText(names[i], sp.tx, sp.by);
+    });
     const [cx, cy] = px(s.lat, s.lon);
-    ctx.strokeStyle = '#e2a72e'; ctx.lineWidth = 2;
+    ctx.strokeStyle = night ? colors.ink : colors.cau; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.arc(cx, cy, 9, 0, Math.PI * 2); ctx.moveTo(cx - 16, cy); ctx.lineTo(cx + 16, cy); ctx.moveTo(cx, cy - 16); ctx.lineTo(cx, cy + 16); ctx.stroke();
-  }, [data, s, reduce, view, lang, alpha, clear, water]);
+  }, [data, s, reduce, view, lang, alpha, clear, water, night, colors]);
 
   return (
     <>

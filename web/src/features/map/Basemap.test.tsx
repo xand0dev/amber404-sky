@@ -146,3 +146,22 @@ describe('Given ріки й озера (AC3, AC5)', () => {
     expect(urls).toEqual(['./data/static/water.json']);
   });
 });
+
+describe('Given перший екран на телефоні (#89, Lighthouse)', () => {
+  it('типово «Без»: зображення не вантажаться на старті, а лише коли браузер вільний (офлайн-кеш AC5 лишається)', () => {
+    vi.useFakeTimers();
+    try {
+      vi.stubGlobal('requestIdleCallback', undefined);
+      show();
+      expect(imgs).toEqual([]);
+      vi.advanceTimersByTime(5000);
+      expect(new Set(imgs)).toEqual(new Set(['./data/static/relief.png', './data/static/satellite.jpg']));
+    } finally { vi.useRealTimers(); }
+  });
+  it('обрана підкладка вантажиться одразу', () => {
+    localStorage.setItem(BASE_KEY, JSON.stringify({ base: 'relief', wxTransp: 40 }));
+    resetBasemap();
+    show();
+    expect(imgs).toEqual(['./data/static/relief.png']);
+  });
+});

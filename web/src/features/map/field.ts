@@ -32,9 +32,10 @@ export function nodeStep(unproject: Projection['unproject']): number {
 
 /**
  * RGBA-пікселі поля W×H; поза сіткою — прозоро, без даних — колір «немає даних».
+ * Уночі (#89) — червоні кольори (`layerRGBA(…, night)`).
  * Значення з core рахуємо у вузлах кожні `step` px, між вузлами колір інтерполюється білінійно (F3-AC2: ≤ 300 мс).
  */
-export function fieldPixels(data: Bundle, s: AppState, W: number, H: number, unproject: Projection['unproject'], step = 1): Uint8ClampedArray<ArrayBuffer> {
+export function fieldPixels(data: Bundle, s: AppState, W: number, H: number, unproject: Projection['unproject'], step = 1, night = false): Uint8ClampedArray<ArrayBuffer> {
   const out = new Uint8ClampedArray(W * H * 4);
   const prof = data.profiles.find((p) => p.id === s.droneId) ?? data.profiles[0];
   const g = data.meta.grid;
@@ -43,7 +44,7 @@ export function fieldPixels(data: Bundle, s: AppState, W: number, H: number, unp
   for (let j = 0; j < nh; j++) for (let i = 0; i < nw; i++) {
     const [lat, lon] = unproject(i * step + 0.5, j * step + 0.5);
     if (!cellOf(g, lat, lon)) continue;
-    node.set(layerRGBA(s.layer, sampleLayer(data, s, prof, lat, lon)), (j * nw + i) * 4);
+    node.set(layerRGBA(s.layer, sampleLayer(data, s, prof, lat, lon), night), (j * nw + i) * 4);
   }
   // Проєкція відокремлювана: широта залежить лише від y, довгота — лише від x. Рахуємо раз на рядок / стовпець.
   const latS = g.lat0 - (g.nr - 1) * g.step, lonE = g.lon0 + (g.nc - 1) * g.step;
@@ -68,7 +69,7 @@ export function fieldPixels(data: Bundle, s: AppState, W: number, H: number, unp
       acc(k + nw * 4, (1 - fx) * fy, c); acc(k + nw * 4 + 4, fx * fy, c);
       const o = (y * W + x) * 4;
       if (c[4] === 0) { // усі сусідні вузли поза сіткою — рахуємо піксель напряму
-        out.set(layerRGBA(s.layer, sampleLayer(data, s, prof, lat, lon)), o);
+        out.set(layerRGBA(s.layer, sampleLayer(data, s, prof, lat, lon), night), o);
         continue;
       }
       out[o] = c[0] / c[4]; out[o + 1] = c[1] / c[4]; out[o + 2] = c[2] / c[4]; out[o + 3] = c[3] / c[4];
