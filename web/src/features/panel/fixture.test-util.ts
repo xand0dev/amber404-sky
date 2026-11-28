@@ -3,9 +3,9 @@ import type { Meta, Profile } from '../../contracts';
 
 export const LEVELS = [10, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 600, 700, 800, 900, 1000];
 
-export interface FixOpts { hours?: number; spd?: (lvl: number, h: number) => number | null; dir?: number; tempC?: number; rh?: number }
+export interface FixOpts { hours?: number; spd?: (lvl: number, h: number) => number | null; dir?: number; dirAt?: (lvl: number) => number; tempC?: number; rh?: number }
 
-export function fixture({ hours = 48, spd = (l) => 2 + l, dir = 330, tempC = 10, rh = 90 }: FixOpts = {}) {
+export function fixture({ hours = 48, spd = (l) => 2 + l, dir = 330, dirAt, tempC = 10, rh = 90 }: FixOpts = {}) {
   const nr = 3, nc = 3, N = nr * nc;
   const times = Array.from({ length: hours }, (_, h) => new Date(Date.UTC(2026, 10, 28, 7 + h)).toISOString().replace('.000', ''));
   const f2 = (v: number) => Array.from({ length: hours }, () => Array<number | null>(N).fill(v));
@@ -13,7 +13,7 @@ export function fixture({ hours = 48, spd = (l) => 2 + l, dir = 330, tempC = 10,
   const profile: Profile = {
     generatedAt: times[0], sources: ['mock'], levels: LEVELS,
     spd: LEVELS.map((_, l) => Array.from({ length: hours }, (_, h) => { const v = spd(l, h); return Array<number | null>(N).fill(v == null ? null : v * 10); })),
-    dir: LEVELS.map(() => Array.from({ length: hours }, () => Array<number | null>(N).fill(dir))),
+    dir: LEVELS.map((_, l) => Array.from({ length: hours }, () => Array<number | null>(N).fill(dirAt ? dirAt(l) : dir))),
     gust: f2(60), temp: f2(tempC * 10), precip: f2(0), rh: f2(rh), vis: f2(200),
   };
   return { meta, profile, kp: null, galileo: null };

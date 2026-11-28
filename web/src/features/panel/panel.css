@@ -57,3 +57,10 @@ details.psec>summary{min-height:var(--btn-h);display:flex;align-items:center;cur
 /* Рельєф (§7.6a, #101) */
 .terrain{margin-top:var(--sp-1);font-size:var(--fs-m)}.terrain span{color:var(--dim)}
 .terrain .mtn{margin-top:var(--sp-1);padding:var(--sp-1) var(--sp-2);border-left:4px solid var(--cau);background:var(--base);font-size:var(--fs-m)}
+/* Профіль вітру (§7.5a, T3) */
+.wpsvg{display:block;width:100%;max-width:360px;height:auto;margin:var(--sp-2) 0;background:var(--base)}
+.wpsvg .wpband{fill:var(--go);fill-opacity:.18}.wpsvg .wphatch{stroke:var(--ink);stroke-opacity:.35;stroke-width:2}
+.wpsvg .wpgrid{stroke:var(--rule);stroke-dasharray:2 3}.wpsvg .wplbl{font-size:var(--fs-s);fill:var(--dim)}
+.wpsvg .wplimit{stroke:var(--no);stroke-width:1.5}.wpsvg .wplimtxt{fill:var(--no-ink)}
+.wpsvg .wpline{fill:none;stroke:var(--cau);stroke-width:2}.wpsvg .wparrow{font-size:var(--fs-m);font-weight:700;fill:var(--ink)}
+.wpsvg .wpalt{stroke:var(--ink);stroke-width:3}.wpsvg .wpshear{font-size:var(--fs-s);font-weight:700;fill:var(--cau-ink)}

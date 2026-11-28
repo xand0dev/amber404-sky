@@ -15,6 +15,7 @@ import { OwnDrone } from './OwnDrone';
 import type { SavedWx } from './savedStore';
 import { pt } from './strings';
 import { TerrainView, useRelief } from './Terrain';
+import { WindProfile } from './WindProfile';
 import { cellRange, terrainAt } from './relief';
 import './panel.css';
 
@@ -107,6 +108,7 @@ export function Panel() {
       <TerrainView terrain={terrain} range={reliefRange} lang={lang} />
       <Saved current={snapshot} />
       <Zone prof={prof} hourLabel={time ? dayHM(time, lang) : '—'} />
+      <WindProfile prof={prof} hourLabel={time ? dayHM(time, lang) : '—'} />
       <HeightTable prof={prof} />
       <Route />
       <OwnDrone base={prof} />
