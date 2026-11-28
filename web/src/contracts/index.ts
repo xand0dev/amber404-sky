@@ -90,6 +90,7 @@ export interface DroneProfile {
 
 export interface City {
   name: string;
+  nameEn?: string; // назва англійською (issue #125); немає — транслітерація name (F3, cityName)
   lat: number;
   lon: number;
 }
