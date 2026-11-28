@@ -84,7 +84,8 @@ describe('Given підпис зони (issue #87)', () => {
     expect(det.textContent).toMatch(/assumption/);
     const rest = container.querySelector('.zonecap .zonetxt')!.textContent!.replace(det.textContent!, '');
     expect(rest).not.toMatch(/assumption|хв/);
-    expect(rest).toMatch(/Деталі/);
+    // #145: «Деталі» — окремо від тексту, що обрізається.
+    expect(container.querySelector('.zonecap .zonemore')!.textContent).toMatch(/Деталі ▾/);
     fireEvent.click(container.querySelector('.zonecap button')!);
     expect(det.hidden).toBe(false);
   });
@@ -97,7 +98,7 @@ describe('Issue #119: EN', () => {
       const { container } = render(<LangProvider><AppCtx.Provider value={ctx}><main className="mapwrap"><ZoneLayer /></main></AppCtx.Provider></LangProvider>);
       expect(screen.getByRole('button', { name: 'Zone' })).toBeTruthy();
       const cap = container.querySelector('.zonecap')!.textContent!;
-      expect(cap).toMatch(/^Round-trip zone up to .* km · wind .* · Details ▾ · .* min \(datasheet 10 min × cold .* × payload .*\) − 20% reserve · 22 m\/s/);
+      expect(cap).toMatch(/^Round-trip zone up to .* km · wind .* · .* min \(datasheet 10 min × cold .* × payload .*\) − 20% reserve · 22 m\/s.*Details ▾$/);
       expect(cap).not.toMatch(/[Ѐ-ӿ]/);
     } finally { localStorage.removeItem(LANG_KEY); }
   });
