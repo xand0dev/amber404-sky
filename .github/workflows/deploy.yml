@@ -28,6 +28,7 @@ jobs:
         id: pages
       # #138: push і ручний запуск (automerge) не тягнуть Open-Meteo — беруть поточні дані з Pages,
       # якщо вони не старші за 3 год і всі джерела ok (web/src/core/datasync.ts). Інакше й за розкладом — make data.
+      # Профіль (#165) — тека data/profile/ (index.json + h00…h47.json), береться вся, з одного запуску.
       - id: fresh
         if: github.event_name != 'schedule'
         continue-on-error: true
