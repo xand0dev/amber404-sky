@@ -43,8 +43,9 @@ describe('Given тайли Web Mercator', () => {
 
 describe('Given OPSEC (SPEC §7.6a)', () => {
   it('онлайн-підкладка зі сховища не відновлюється — після перезапуску знову офлайн', () => {
-    expect(parsePrefs(JSON.stringify({ base: 'streets', wxTransp: 40 })).base).toBe('none');
-    expect(parsePrefs(JSON.stringify({ base: 'satlive', wxTransp: 40 })).base).toBe('none');
+    // Офлайн-типове — Рельєф (#167).
+    expect(parsePrefs(JSON.stringify({ base: 'streets', wxTransp: 40 })).base).toBe('relief');
+    expect(parsePrefs(JSON.stringify({ base: 'satlive', wxTransp: 40 })).base).toBe('relief');
     expect(parsePrefs(JSON.stringify({ base: 'satellite', wxTransp: 40 })).base).toBe('satellite');
   });
 });
