@@ -62,9 +62,9 @@ describe('F4-AC1: панель точки на екрані', () => {
   it('Then вердикт з причинами і вікно', () => {
     view();
     expect(screen.getByTestId('point-level').textContent).toBe('ОБЕРЕЖНО');
-    expect(screen.getAllByRole('listitem').map((x) => x.textContent)).toEqual([
-      'Висота 50 м близько до хмар (≈ 312 м)', 'Пориви 11.0 м/с — понад 80% ліміту',
-    ]);
+    // #171: перша причина — рядок «чому» у герої; причини зі значенням vs ліміт — чипами.
+    expect(screen.getByTestId('hero-why').textContent).toBe('Висота 50 м близько до хмар (≈ 312 м)');
+    expect(screen.getByTestId('chips').querySelectorAll('li')).toHaveLength(9);
     expect(screen.getByText('Вікно').parentElement?.textContent).toContain('сб 10:00 – 14:59 · 5 год');
   });
   it('Given точка поза містами Then заголовок — координати', () => {
@@ -102,7 +102,7 @@ describe('Given панель точки (issue #87)', () => {
     expect(det.open).toBe(false);
     expect(det.querySelector('summary')?.textContent).toBe('Деталі');
     expect(det.contains(screen.getByText(/Ліміти: вітер 10 м\/с/))).toBe(true);
-    expect(det.contains(container.querySelector('.reasons'))).toBe(false);
+    expect(det.contains(container.querySelector('.chips'))).toBe(false);
     expect(det.contains(container.querySelector('.win'))).toBe(false);
   });
   it('англійською — Details', () => {
@@ -116,8 +116,8 @@ describe('#151: вердикт людською мовою й «Що це?»', (
     view();
     const e = screen.getByTestId('verdict-explain');
     expect(e.textContent).toBe('Обережно: «FPV 7″» на 50 м — погода близько до лімітів дрона. Причини нижче.');
-    // Одразу після заголовка точки — видно без прокрутки панелі.
-    expect(e.previousElementSibling?.className).toBe('pointhead');
+    // Одразу після заголовка точки (з #171 — вердикт-герой) — видно без прокрутки панелі.
+    expect(e.previousElementSibling?.className).toBe('hero lv-CAUTION');
   });
   it('GO — «в межах лімітів», не «безпечно»; NO-DATA — «не дозвіл»', () => {
     view({ verdict: { level: 'GO', reasons: ['Умови в межах профілю'] } });

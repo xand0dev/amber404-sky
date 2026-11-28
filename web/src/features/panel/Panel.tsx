@@ -1,10 +1,12 @@
 // F4 (Оля): панель точки (F4-AC1) — місто або координати, вітер на висоті, пориви, хмари, вердикт з причинами, вікно;
+// #171: вгорі — вердикт-герой, під ним чипи причин і графік вітру на 12 год;
 // далі зона польоту (§7.5b), таблиця «висоти × години» (F4-AC2), збережене й звіт (F4-AC4), маршрут (F4-AC3), свій дрон (F4-AC6).
+import { useMemo, type ReactNode } from 'react';
 import { useApp } from '../../app/state';
 import { useVerdicts } from '../../app/useVerdict';
 import { useT, windowLabel } from '../../app/lang';
 import { humanWindow, useNow } from '../../app/when';
-import { profileName, t as coreT, type Lang, type Verdict, type Weather } from '../../core';
+import { profileName, t as coreT, weatherAt, type Lang, type Verdict, type Weather } from '../../core';
 import type { DroneProfile } from '../../contracts';
 import { Route } from '../route/Route';
 import { arrowDeg, coordText, dayHM, nearestCity, placeText } from './place';
@@ -19,6 +21,9 @@ import { WindProfile } from './WindProfile';
 import { Climate } from './Climate';
 import { WeatherHours } from './WeatherHours';
 import { cellRange, terrainAt } from './relief';
+import { ChipsView } from './Chips';
+import { WindSparkView } from './WindSpark';
+import { sparkModel } from './spark';
 import './panel.css';
 
 const n = (x: number | null, d = 1) => (x == null ? '—' : x.toFixed(d));
@@ -34,16 +39,21 @@ export function SourceText({ src, lang }: { src: string; lang: Lang }) {
 export interface PointViewProps {
   city: { name: string; km: number } | null; lat: number; lon: number; altM: number;
   wx: Weather; verdict: Verdict; windowText: string; prof: DroneProfile; lang: Lang;
+  /** Графік вітру на 12 год (#171 AC3) — під чипами. */
+  spark?: ReactNode;
 }
 
-export function PointView({ city, lat, lon, altM, wx, verdict, windowText, prof, lang }: PointViewProps) {
+export function PointView({ city, lat, lon, altM, wx, verdict, windowText, prof, lang, spark }: PointViewProps) {
   const L = (k: Parameters<typeof pt>[0], p?: Record<string, string | number>) => pt(k, lang, p);
-  const ms = L('unit.ms');
+  const ms = <small>{L('unit.ms')}</small>;
+  const why = verdict.reasons[0] ?? '';
   return (
     <div className="point">
-      <div className="pointhead">
+      {/* #171 AC1: вердикт-герой — колір рівня, велике слово, місце й один рядок «чому» (перша причина з useVerdicts). */}
+      <div className={`hero lv-${verdict.level}`}>
+        <span className="word" data-testid="point-level">{coreT(`lv.${verdict.level}`, lang)}</span>
         <h2>{city ? city.name : coordText(lat, lon)}</h2>
-        <span className={`lvl lv-${verdict.level}`} data-testid="point-level">{coreT(`lv.${verdict.level}`, lang)}</span>
+        <p className="hwhy" data-testid="hero-why" title={why}>{why}</p>
       </div>
       {/* #151: вердикт людською мовою одразу під заголовком і «Що це?» — оператор не зрозумів GO / CAUTION / NO-GO. */}
       <p className={`vexp lv-b-${verdict.level}`} data-testid="verdict-explain">{L(`v.${verdict.level}`, { drone: profileName(prof, lang), alt: altM })}</p>
@@ -52,20 +62,22 @@ export function PointView({ city, lat, lon, altM, wx, verdict, windowText, prof,
         <p className="pnote" data-testid="verdict-how">{L('v.how')}</p>
       </details>
       <p className="coord">{coordText(lat, lon)} · {city ? L('place.near', { km: city.km.toFixed(0) }) : L('place.coord')} · {altM} {L('unit.m')}</p>
+      {/* #171 AC2–3: причини чипами (найгірша перша) і вітер на 12 год. */}
+      <ChipsView wx={wx} prof={prof} altM={altM} lang={lang} />
+      {spark}
       <dl className="vals">
         <div><dt>{L('wind')}</dt><dd>
           {wx.ws != null && wx.dir != null && (
             <span className="arrow" data-testid="wind-arrow" aria-hidden="true" style={{ transform: `rotate(${arrowDeg(wx.dir)}deg)` }}>↑</span>
           )}
-          {n(wx.ws)} {ms}{wx.dir != null ? ` · ${L('wind.from', { dir: wx.dir.toFixed(0) })}` : ''}
+          {n(wx.ws)} {ms}{wx.dir != null && <small> · {L('wind.from', { dir: wx.dir.toFixed(0) })}</small>}
         </dd></div>
         <div><dt>{L('gust')}</dt><dd>{n(wx.g)} {ms}</dd></div>
-        <div><dt>{L('cloud')}</dt><dd>{n(wx.cb, 0)} {L('unit.m')}</dd></div>
-        <div><dt>{L('temp')}</dt><dd>{n(wx.t)} °C</dd></div>
+        <div><dt>{L('cloud')}</dt><dd>{n(wx.cb, 0)} <small>{L('unit.m')}</small></dd></div>
+        <div><dt>{L('temp')}</dt><dd>{n(wx.t)} <small>°C</small></dd></div>
         <div><dt>{L('kp')}</dt><dd>{n(wx.kp)}</dd></div>
-        <div><dt>{L('galileo')}</dt><dd>{wx.galVisible ?? '—'} · PDOP {n(wx.galPdop)}</dd></div>
+        <div><dt>{L('galileo')}</dt><dd>{wx.galVisible ?? '—'} <small>· PDOP {n(wx.galPdop)}</small></dd></div>
       </dl>
-      <ul className="reasons">{verdict.reasons.map((r) => <li key={r}>{r}</li>)}</ul>
       <p className="win"><span>{L('window')}</span> {windowText}</p>
       {/* Issue #87 AC2: ліміти й джерело лімітів (assumption) — у «Деталі». */}
       <details className="pdetails">
@@ -81,7 +93,7 @@ export function PointView({ city, lat, lon, altM, wx, verdict, windowText, prof,
 
 export function Panel() {
   const { data, s, set } = useApp();
-  const { wx, now, window, prof } = useVerdicts();
+  const { wx, now, window, prof, series } = useVerdicts();
   const { lang } = useT();
   const nowMs = useNow();
   const relief = useRelief();
@@ -92,6 +104,12 @@ export function Panel() {
   const time = data.meta.times[s.hour] ?? '';
   const terrain = terrainAt(relief, s.lat, s.lon);
   const reliefRange = cellRange(relief, data.meta.grid, s.lat, s.lon);
+  // #171 AC3: вітер на обраній висоті по годинах і рівні вердикту — для графіка на 12 год.
+  const spark = useMemo(() => {
+    const src = { meta: data.meta, profile: data.profile, kp: data.kp, galileo: data.galileo };
+    const ws = data.meta.times.map((_, h) => weatherAt(src, s.lat, s.lon, s.altM, h).ws);
+    return sparkModel(ws, series.map((v) => v.level), prof.windMs, s.hour);
+  }, [data, s.lat, s.lon, s.altM, s.hour, series, prof.windMs]);
   // Знімок для «Зберегти погоду» / «Копіювати звіт» (F4-AC4): лише в браузері.
   const snapshot = (): SavedWx => ({
     id: `${s.lat.toFixed(3)},${s.lon.toFixed(3)},${s.altM},${time},${prof.id}`, savedAt: new Date().toISOString(),
@@ -102,6 +120,7 @@ export function Panel() {
   });
   return (
     <section className="panel" aria-label="Точка">
+      {/* Дрон і висота — першими: на телефоні вибір дрона має бути на першому екрані (#143); герой — одразу під ними. */}
       <div className="row">
         <label>{pt('drone', lang)}
           <select value={s.droneId} onChange={(e) => { const p = data.profiles.find((x) => x.id === e.target.value); set({ droneId: e.target.value, altM: p?.defaultAltM ?? s.altM }); }}>
@@ -112,7 +131,8 @@ export function Panel() {
           <input type="range" min={10} max={1000} step={10} value={s.altM} onChange={(e) => set({ altM: Number(e.target.value) })} />
         </label>
       </div>
-      <PointView city={city} lat={s.lat} lon={s.lon} altM={s.altM} wx={wx} verdict={now} windowText={humanWindow(window, last, nowMs, lang)} prof={prof} lang={lang} />
+      <PointView city={city} lat={s.lat} lon={s.lon} altM={s.altM} wx={wx} verdict={now} windowText={humanWindow(window, last, nowMs, lang)} prof={prof} lang={lang}
+        spark={<WindSparkView model={spark} times={data.meta.times} hour={s.hour} limit={prof.windMs} altM={s.altM} lang={lang} />} />
       <TerrainView terrain={terrain} range={reliefRange} lang={lang} />
       <Saved current={snapshot} />
       <Zone prof={prof} hourLabel={time ? dayHM(time, lang) : '—'} />
