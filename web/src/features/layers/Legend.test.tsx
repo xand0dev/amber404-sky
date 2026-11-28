@@ -67,3 +67,19 @@ describe('Issue #119: EN', () => {
     } finally { localStorage.removeItem(LANG_KEY); }
   });
 });
+
+// Issue #140: якщо частина сітки без даних — у легенді пункт «▨ немає даних».
+describe('Given частина сітки без даних (#140)', () => {
+  const southless = () => {
+    const d = bundle(); const nc = d.meta.grid.nc;
+    const cut = (row: (number | null)[]) => row.map((v, i) => (Math.floor(i / nc) >= 12 ? null : v));
+    return { ...d, profile: { ...d.profile, spd: d.profile.spd.map((l) => l.map(cut)), dir: d.profile.dir.map((l) => l.map(cut)) } };
+  };
+  it('вітер: пункт «немає даних» є; з повними даними — немає', () => {
+    render(<AppCtx.Provider value={{ data: southless(), s: state(), set: () => {} } as unknown as Ctx}><Legend /></AppCtx.Provider>);
+    expect(screen.getByText('немає даних', { selector: '.lg-nodata' })).toBeTruthy();
+    cleanup();
+    show('wind');
+    expect(document.querySelector('.lg-nodata')).toBeNull();
+  });
+});

@@ -4,7 +4,12 @@ import { useT } from '../../app/lang';
 import { useTheme } from '../../app/theme';
 import type { Key } from '../../core';
 import { SCALES, css, layerRGBA, type Scale } from './colors';
+import { useMemo } from 'react';
+import { nodataCells } from '../map/nodata';
 import './legend.css';
+
+// Issue #140: частина сітки без даних — пункт у легенді (штрихування на карті — map/nodata.ts).
+const NODATA = { uk: 'немає даних', en: 'no data' } as const;
 
 const num = (x: number) => String(x).replace('-', '−');
 // Одиниці й класи шкали (colors.ts, українською) → ключі i18n (issue #119).
@@ -13,8 +18,9 @@ type Item = Extract<Scale, { kind: 'classes' }>['items'][number];
 const itemKey = (i: Item): Key => (typeof i.value === 'string' ? `lv.${i.value}` as Key : i.value ? 'icing.yes' : 'icing.no');
 
 export function Legend() {
-  const { s } = useApp();
-  const { t } = useT();
+  const { data, s } = useApp();
+  const { t, lang } = useT();
+  const gap = useMemo(() => nodataCells(data, s).length > 0, [data, s]);
   const { night } = useTheme(); // уночі — ті самі червоні кольори, що й поле (#89)
   const sc = SCALES[s.layer];
   const name = t(`layer.${s.layer}`);
@@ -35,6 +41,7 @@ export function Legend() {
           {sc.items.map((i) => <li key={String(i.value)}><i style={{ background: css(layerRGBA(s.layer, i.value, night)) }} aria-hidden="true" />{t(itemKey(i))}</li>)}
         </ul>
       )}
+      {gap && <span className="lg-nodata"><i aria-hidden="true" />{NODATA[lang]}</span>}
     </figure>
   );
 }
