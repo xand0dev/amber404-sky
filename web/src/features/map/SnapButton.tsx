@@ -1,5 +1,5 @@
 // F3-AC7: кнопка 📷 — знімок карти зі штампом; телефон → «Поділитися», ноутбук → завантаження.
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useApp } from '../../app/state';
 import { useT } from '../../app/lang';
 import { useVerdicts } from '../../app/useVerdict';
@@ -16,6 +16,21 @@ const TXT = {
   en: { label: 'Map snapshot', shared: 'Shared', downloaded: 'Snapshot saved', cancelled: '', fail: 'Snapshot failed' },
 };
 
+/** Issue #161: ряд над картою вміщує 9 кнопок по 44 px лише від 420 px; вужче 📷 переходить у «⋯», щоб «Де я» було в ряду. */
+const NARROW = '(max-width: 419px)';
+function useNarrow(): boolean {
+  const mq = () => (typeof window.matchMedia === 'function' ? window.matchMedia(NARROW) : null);
+  const [narrow, setNarrow] = useState(() => !!mq()?.matches);
+  useEffect(() => {
+    const m = mq();
+    if (!m) return;
+    const on = () => setNarrow(m.matches);
+    m.addEventListener('change', on);
+    return () => m.removeEventListener('change', on);
+  }, []);
+  return narrow;
+}
+
 export function SnapButton({ reduce }: { reduce: boolean }) {
   const { data, s } = useApp();
   const { lang } = useT();
@@ -24,6 +39,7 @@ export function SnapButton({ reduce }: { reduce: boolean }) {
   const frame = useMapWrap();
   const { base } = useBasemap();
   const ref = useRef<HTMLButtonElement>(null);
+  const narrow = useNarrow();
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState('');
   const tx = TXT[lang];
@@ -42,9 +58,9 @@ export function SnapButton({ reduce }: { reduce: boolean }) {
 
   return (
     <>
-      <InBar>
+      <InBar slot={narrow ? 'more' : 'bar'}>
         <button ref={ref} type="button" className="snapbtn" aria-label={tx.label} title={tx.label} disabled={busy} onClick={() => void snap()}>
-          <span aria-hidden="true">📷</span>
+          <span aria-hidden="true">📷</span>{narrow && <span aria-hidden="true"> {tx.label}</span>}
         </button>
       </InBar>
       <p role="status" className="snapmsg" hidden={!msg}>{msg}</p>

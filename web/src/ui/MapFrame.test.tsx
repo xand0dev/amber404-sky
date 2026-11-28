@@ -45,6 +45,19 @@ describe('Given карта в рамці (AC2)', () => {
     expect(screen.getByRole('toolbar').contains(zone)).toBe(false);
   });
 
+  it('Issue #161: When меню відкрите й торкнулись іншої кнопки ряду; Then меню закривається, а «⋯» знову відкриває', async () => {
+    mount();
+    await act(async () => {});
+    const more = screen.getByRole('button', { name: 'Ще інструменти' });
+    fireEvent.click(more);
+    fireEvent.pointerDown(screen.getByRole('button', { name: 'Зона' }));
+    expect(more.getAttribute('aria-expanded')).toBe('true'); // торкання в самому меню не закриває
+    fireEvent.pointerDown(screen.getByRole('button', { name: 'Малювання' }));
+    expect(more.getAttribute('aria-expanded')).toBe('false');
+    fireEvent.pointerDown(more); fireEvent.click(more);
+    expect(more.getAttribute('aria-expanded')).toBe('true');
+  });
+
   it('Then шари карти бачать свій mapwrap через контекст (жести, знімок)', async () => {
     mount();
     await act(async () => {});

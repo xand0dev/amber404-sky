@@ -42,6 +42,17 @@ export function MapFrame({ children }: { children: ReactNode }) {
     more.addEventListener('click', close);
     return () => more.removeEventListener('click', close);
   }, [more]);
+  // Issue #161: торкання поза меню (інша кнопка ряду, карта) теж закриває його — на телефоні в меню й 📷, тож воно
+  // вище й інакше накривало б панелі, відкриті з ряду. «⋯» перемикає меню сама.
+  useEffect(() => {
+    if (!open) return;
+    const away = (e: PointerEvent) => {
+      const t = e.target as Element;
+      if (!more?.contains(t) && !t.closest?.('.morebtn')) setOpen(false);
+    };
+    document.addEventListener('pointerdown', away);
+    return () => document.removeEventListener('pointerdown', away);
+  }, [open, more]);
 
   return (
     <SlotsCtx.Provider value={{ bar, more, wrap }}>
