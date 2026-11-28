@@ -22,7 +22,7 @@ export function SavedView({ list, lang, msg, fallback, onSave, onCopy, onDelete,
       {fallback && <textarea className="report" readOnly value={fallback} aria-label={L('copy')} onFocus={(e) => e.currentTarget.select()} />}
       {list.length > 0 && (
         <>
-          <h3 style={{ marginTop: 10 }}>{L('saved', { n: list.length })}</h3>
+          <h3 className="saved-h">{L('saved', { n: list.length })}</h3>
           <ul className="saved" data-testid="saved-list">
             {list.map((e) => (
               <li key={e.id} className={`lv-${e.level}`}>
@@ -37,7 +37,7 @@ export function SavedView({ list, lang, msg, fallback, onSave, onCopy, onDelete,
               </li>
             ))}
           </ul>
-          <div className="pbtns" style={{ marginTop: 6 }}><button type="button" onClick={onClear}>{L('clear')}</button></div>
+          <div className="pbtns saved-act"><button type="button" onClick={onClear}>{L('clear')}</button></div>
         </>
       )}
     </section>
