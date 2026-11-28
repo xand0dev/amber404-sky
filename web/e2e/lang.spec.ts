@@ -34,7 +34,10 @@ test('EN: карта, зона, малювання, підкладка, шари
   await expect(page.locator('.drawpanel')).toBeVisible();
   expect(cyrLines(await mapText(page))).toEqual([]);
   await page.locator('.drawbtn').click();
-  await page.locator('.ovbtn').click();
+  await page.locator('.basebtn').click();
+  await expect(page.locator('.basepanel')).toBeVisible();
+  expect(cyrLines(await mapText(page))).toEqual([]);
+  await page.locator('input[name=basemap][value=own]').click(); // закриває вибір і відкриває форму
   await expect(page.locator('.ovpanel')).toBeVisible();
   expect(cyrLines(await mapText(page))).toEqual([]);
 });

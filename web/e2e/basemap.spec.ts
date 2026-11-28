@@ -1,12 +1,64 @@
 // Підкладки (issue #100, SPEC §7.6a): меню, збереження вибору, повзунок, атрибуція, офлайн без запитів з координатами, ≤ 300 мс.
+// Issue #130: одна кнопка «Підкладка» в ряду інструментів відкриває вибір; форма «Своя карта» — лише після вибору.
 import { expect, test, type Page } from '@playwright/test';
+
+const barBtn = (page: Page) => page.getByRole('toolbar', { name: 'Інструменти карти' }).getByRole('button', { name: 'Підкладка', exact: true });
 
 async function openMenu(page: Page) {
   await expect(page.locator('header.status')).toBeVisible();
-  await page.getByRole('button', { name: 'Ще інструменти' }).click();
-  await page.getByRole('button', { name: 'Підкладка карти' }).click();
+  await barBtn(page).click();
   return page.getByRole('radiogroup', { name: 'Підкладка' });
 }
+
+test('#130: Підкладка → Рельєф → на карті relief.png і атрибуція Copernicus DEM', async ({ page }) => {
+  await page.goto('./');
+  const g = await openMenu(page);
+  await g.getByText('Рельєф', { exact: true }).click();
+  await page.getByRole('button', { name: 'OK' }).click();
+  await expect(g).toBeHidden();
+  await expect(page.locator('canvas.basemap[data-drawn="relief"]')).toBeVisible();
+  await expect(page.locator('.baseattr')).toContainText('Copernicus DEM');
+});
+
+test('#130: у ряду одна «Підкладка», у «⋯» пункту «Підкладка карти» немає', async ({ page }) => {
+  await page.goto('./');
+  await expect(page.locator('header.status')).toBeVisible();
+  await expect(page.getByRole('button', { name: /Підкладка/ })).toHaveCount(1);
+  await page.getByRole('button', { name: 'Ще інструменти' }).click();
+  await expect(page.getByRole('button', { name: 'Підкладка карти' })).toHaveCount(0);
+});
+
+test('#130: OK, Esc і клік поза вікном закривають вибір; вікно не перекриває карту', async ({ page }) => {
+  await page.goto('./');
+  let g = await openMenu(page);
+  const win = await page.locator('section.basepanel').boundingBox();
+  const map = await page.locator('canvas.map').boundingBox();
+  expect(win!.width * win!.height).toBeLessThan(0.5 * map!.width * map!.height);
+  // Поле лівіше за вікно лишається вільним.
+  expect(win!.x).toBeGreaterThan(map!.x + 80);
+  await page.getByRole('button', { name: 'OK' }).click();
+  await expect(g).toBeHidden();
+  g = await openMenu(page);
+  await page.keyboard.press('Escape');
+  await expect(g).toBeHidden();
+  g = await openMenu(page);
+  await page.mouse.click(map!.x + 20, map!.y + map!.height / 2);
+  await expect(g).toBeHidden();
+});
+
+test('#130: форма прив\'язки з\'являється лише після вибору «Своя карта»', async ({ page }) => {
+  await page.goto('./');
+  const g = await openMenu(page);
+  await expect(page.locator('.ovpanel')).toHaveCount(0);
+  await g.getByText('Своя карта', { exact: true }).click();
+  await expect(g).toBeHidden();
+  await expect(page.locator('.ovpanel')).toBeVisible();
+  // Повторне відкриття вибору прибирає форму.
+  await barBtn(page).click();
+  await expect(page.locator('.ovpanel')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Файл і прив’язка' }).click();
+  await expect(page.locator('.ovpanel')).toBeVisible();
+});
 
 test('AC1, AC2, AC4: Рельєф → підкладка під полем, повзунок, атрибуція; вибір переживає перезавантаження', async ({ page }) => {
   await page.goto('./');
@@ -38,7 +90,8 @@ test('AC5: лише статичні файли того самого поход
   page.on('request', (r) => urls.push(r.url()));
   await page.goto('./');
   const g = await openMenu(page);
-  for (const name of ['Рельєф', 'Супутник', 'Своя карта', 'Без']) await g.getByText(name, { exact: true }).click();
+  for (const name of ['Рельєф', 'Супутник', 'Без', 'Своя карта']) await g.getByText(name, { exact: true }).click();
+  await barBtn(page).click(); // прибирає форму «Своя карта»
   await page.getByRole('button', { name: 'OK' }).click();
   await page.locator('canvas.map').click({ position: { x: 120, y: 120 } });
   await page.waitForLoadState('networkidle');
