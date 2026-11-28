@@ -1,6 +1,8 @@
 // F4-AC1: назва найближчого міста (< 35 км) або координати. Чистий TS без DOM.
 import type { City } from '../../contracts';
 import { kyivHM, t as coreT, type Key, type Lang } from '../../core';
+// Назви міст англійською — транслітерація КМУ № 55 від F3 (#116); TODO: перенести cityName у core (F0), щоб фічі не імпортували одна одну.
+import { cityName } from '../map/translit';
 
 export const CITY_RADIUS_KM = 35;
 
@@ -12,11 +14,11 @@ export function distKm(lat1: number, lon1: number, lat2: number, lon2: number): 
 }
 
 /** Найближче місто строго ближче за 35 км, інакше null. */
-export function nearestCity(cities: City[], lat: number, lon: number): { name: string; km: number } | null {
+export function nearestCity(cities: City[], lat: number, lon: number, lang: Lang = 'uk'): { name: string; km: number } | null {
   let best: { name: string; km: number } | null = null;
   for (const c of cities) {
     const km = distKm(lat, lon, c.lat, c.lon);
-    if (km < CITY_RADIUS_KM && (!best || km < best.km)) best = { name: c.name, km };
+    if (km < CITY_RADIUS_KM && (!best || km < best.km)) best = { name: cityName(c, lang), km };
   }
   return best;
 }
@@ -24,8 +26,8 @@ export function nearestCity(cities: City[], lat: number, lon: number): { name: s
 export const coordText = (lat: number, lon: number) => `${lat.toFixed(3)}, ${lon.toFixed(3)}`;
 
 /** Підпис точки для звіту: «Київ (50.450, 30.520)» або лише координати. */
-export function placeText(cities: City[], lat: number, lon: number): string {
-  const c = nearestCity(cities, lat, lon);
+export function placeText(cities: City[], lat: number, lon: number, lang: Lang = 'uk'): string {
+  const c = nearestCity(cities, lat, lon, lang);
   return c ? `${c.name} (${coordText(lat, lon)})` : coordText(lat, lon);
 }
 
