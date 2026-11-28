@@ -188,12 +188,12 @@ def test_fetch_full_grid_valid_profile():
 
 
 def test_fetch_failed_batch_is_null_in_profile_never_neighbour():
-    # 2-й запит завжди 429 (1 + 5 повторів = 6 відповідей поспіль), отже 2-й пакет (точки 114…227) — null
-    seen = {"n": 0}
+    # 2-й пакет (точки 114…227) завжди 429 — і в основному проході, і у фінальній спробі, отже null
+    second = f.grid_points()[114]
 
     def handler(req: httpx.Request) -> httpx.Response:
-        seen["n"] += 1
-        if 2 <= seen["n"] <= 7:
+        first = (float(req.url.params["latitude"].split(",")[0]), float(req.url.params["longitude"].split(",")[0]))
+        if first == second:
             return httpx.Response(429)
         n = len(req.url.params["latitude"].split(","))
         return httpx.Response(200, json=[RAW[k % 6] for k in range(n)])

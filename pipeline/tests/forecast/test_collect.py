@@ -99,10 +99,10 @@ def test_request_asks_section_6_2_variables_in_ms_for_48_hours():
     assert p["latitude"].count(",") == 2
 
 
-# ---------- F1-AC1: 429 → наростаюча пауза, до 5 повторів ----------
+# ---------- F1-AC1: 429 → пауза ≥ 60 с або Retry-After, до 5 повторів (#139) ----------
 
 
-def test_429_retried_with_growing_pause_then_succeeds():
+def test_429_waits_at_least_a_minute_then_succeeds():
     calls = []
 
     def handler(req: httpx.Request) -> httpx.Response:
@@ -114,8 +114,37 @@ def test_429_retried_with_growing_pause_then_succeeds():
     sleeps = Sleeps()
     got = f.get_batch(_client(handler), FIX[0]["points"], sleep=sleeps)
     assert len(calls) == 3
-    assert sleeps == [2.0, 4.0]
+    assert sleeps == [60.0, 60.0]  # хвилинний ліміт Open-Meteo: 2…32 с вікно не звільняють
     assert got == FIX[0]["response"]
+
+
+def test_429_honours_retry_after():
+    calls = []
+
+    def handler(req: httpx.Request) -> httpx.Response:
+        calls.append(1)
+        if len(calls) == 1:
+            return httpx.Response(429, headers={"Retry-After": "30"})
+        return httpx.Response(200, json=_fixture_for(req))
+
+    sleeps = Sleeps()
+    assert f.get_batch(_client(handler), FIX[0]["points"], sleep=sleeps) == FIX[0]["response"]
+    assert sleeps == [30.0]
+
+
+def test_429_retry_after_is_capped_and_garbage_ignored():
+    for header, want in (("100000", f.MAX_RETRY_AFTER_S), ("soon", f.MIN_429_S)):
+        calls = []
+
+        def handler(req: httpx.Request, header=header, calls=calls) -> httpx.Response:
+            calls.append(1)
+            if len(calls) == 1:
+                return httpx.Response(429, headers={"Retry-After": header})
+            return httpx.Response(200, json=_fixture_for(req))
+
+        sleeps = Sleeps()
+        f.get_batch(_client(handler), FIX[0]["points"], sleep=sleeps)
+        assert sleeps == [want]
 
 
 def test_429_gives_up_after_5_retries():
@@ -129,7 +158,74 @@ def test_429_gives_up_after_5_retries():
     with pytest.raises(f.BatchError, match="429"):
         f.get_batch(_client(handler), FIX[0]["points"], sleep=sleeps)
     assert len(calls) == 6  # 1 спроба + 5 повторів
-    assert sleeps == [2.0, 4.0, 8.0, 16.0, 32.0]
+    assert sleeps == [60.0] * 5
+
+
+def test_5xx_keeps_short_growing_pause():
+    calls = []
+
+    def handler(req: httpx.Request) -> httpx.Response:
+        calls.append(1)
+        if len(calls) <= 2:
+            return httpx.Response(503)
+        return httpx.Response(200, json=_fixture_for(req))
+
+    sleeps = Sleeps()
+    f.get_batch(_client(handler), FIX[0]["points"], sleep=sleeps)
+    assert sleeps == [2.0, 4.0]
+
+
+def test_wait_budget_stops_retries_instead_of_hanging_deploy():
+    calls = []
+
+    def handler(req: httpx.Request) -> httpx.Response:
+        calls.append(1)
+        return httpx.Response(429)
+
+    sleeps = Sleeps()
+    budget = f.Budget(150.0)
+    with pytest.raises(f.BatchError, match="бюджет"):
+        f.get_batch(_client(handler), FIX[0]["points"], sleep=sleeps, budget=budget)
+    assert sleeps == [60.0, 60.0]  # третя пауза (60) не влазить у залишок 30 с
+    assert len(calls) == 3
+
+
+# ---------- #139 B2: пауза між пакетами й фінальна спроба пакетів, що не пройшли ----------
+
+
+def test_failed_batch_gets_one_more_try_at_the_end_whole_or_nothing():
+    seen = {1: 0, 2: 0}
+
+    def handler(req: httpx.Request) -> httpx.Response:
+        b = _batch_no(req)
+        seen[b] += 1
+        if b == 2 and seen[2] <= 6:  # увесь основний прохід пакета 2 — 429
+            return httpx.Response(429)
+        return httpx.Response(200, json=_fixture_for(req))
+
+    sleeps = Sleeps()
+    out = f.collect(PTS, _client(handler), sleep=sleeps, size=3)
+    assert out.status == "ok" and out.note == ""
+    assert out.points[3:] == FIX[1]["response"]  # власні дані пакета 2, не сусіда
+    assert sleeps == [f.PAUSE_S] + [60.0] * 5 + [f.TAIL_PAUSE_S]
+
+
+def test_final_try_fails_too_batch_stays_none():
+    def handler(req: httpx.Request) -> httpx.Response:
+        if _batch_no(req) == 2:
+            return httpx.Response(429)
+        return httpx.Response(200, json=_fixture_for(req))
+
+    out = f.collect(PTS, _client(handler), sleep=Sleeps(), size=3)
+    assert out.status == "partial"
+    assert out.points[:3] == FIX[0]["response"] and out.points[3:] == [None, None, None]
+    assert "пакет 2" in out.note
+
+
+def test_total_wait_of_a_run_never_exceeds_budget():
+    sleeps = Sleeps()
+    f.collect(f.grid_points(), _client(lambda req: httpx.Response(429)), sleep=sleeps)
+    assert sum(sleeps) <= f.SLEEP_BUDGET_S
 
 
 # ---------- F1-AC1: кожна відповідь перевіряється ----------
