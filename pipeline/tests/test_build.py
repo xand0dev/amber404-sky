@@ -6,6 +6,9 @@ import socket
 import pytest
 
 from sky.build import build
+from sky.mocks import build_mock
+
+PROFILE = build_mock()["profile"]  # модуль профілю віддає цілий профіль §6.2
 
 
 @pytest.fixture
@@ -48,7 +51,7 @@ def test_old_whole_forecast_keeps_its_time(tmp_path, monkeypatch, net_calls):
     _fake(
         monkeypatch,
         "sky._t_old",
-        {"_status": "partial", "_note": "показано прогноз від 10:00", "_fetchedAt": "2026-01-01T10:00:00Z"},
+        {**PROFILE, "_status": "partial", "_note": "показано прогноз від 10:00", "_fetchedAt": "2026-01-01T10:00:00Z"},
     )
     _fake(monkeypatch, "sky._t_new", {})
     monkeypatch.setattr("sky.build.REAL", {"profile": ("sky._t_old", "openmeteo"), "kp": ("sky._t_new", "noaa-kp")})
@@ -57,12 +60,13 @@ def test_old_whole_forecast_keeps_its_time(tmp_path, monkeypatch, net_calls):
     assert st["openmeteo"]["fetchedAt"] == "2026-01-01T10:00:00Z"
     assert st["openmeteo"]["status"] == "partial"
     assert meta["generatedAt"] == "2026-01-01T10:00:00Z"
-    assert "_fetchedAt" not in json.loads((tmp_path / "profile.json").read_text())
+    assert "_fetchedAt" not in json.loads((tmp_path / "profile" / "index.json").read_text())
+    assert "_fetchedAt" not in json.loads((tmp_path / "profile" / "h00.json").read_text())
 
 
 def test_nodata_source_does_not_age_forecast(tmp_path, monkeypatch, net_calls):
     """Джерело nodata (MOCK) не впливає на вік: беремо час справжніх джерел."""
-    _fake(monkeypatch, "sky._t_new", {})
+    _fake(monkeypatch, "sky._t_new", PROFILE)
     monkeypatch.setattr(
         "sky.build.REAL", {"profile": ("sky._t_new", "openmeteo"), "kp": ("sky._nema_takoho", "noaa-kp")}
     )

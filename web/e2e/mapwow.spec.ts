@@ -2,6 +2,9 @@
 import { expect, test } from '@playwright/test';
 import { readFileSync } from 'node:fs';
 
+// Заставка першого відкриття (#166) перекриває кнопки — як у решті e2e, вважаємо тур уже показаним.
+test.beforeEach(({ page }) => page.addInitScript(() => localStorage.setItem('amber404.tour', '1')));
+
 test.describe('1280×800', () => {
   test.use({ viewport: { width: 1280, height: 800 } });
 

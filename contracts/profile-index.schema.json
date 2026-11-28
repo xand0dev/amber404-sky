@@ -1,0 +1,15 @@
+{ "$schema": "https://json-schema.org/draft/2020-12/schema", "title": "profile/index.json (SPEC §6.2, #165)", "type": "object",
+  "required": ["generatedAt", "sources", "grid", "levels", "vars", "hours"],
+  "properties": {
+    "generatedAt": { "type": "string", "format": "date-time" },
+    "sources": { "type": "array", "items": { "type": "string" } },
+    "grid": { "type": "object", "required": ["lat0", "lon0", "step", "nr", "nc"],
+      "properties": { "lat0": {"type":"number"}, "lon0": {"type":"number"}, "step": {"type":"number"},
+                      "nr": {"const": 18}, "nc": {"const": 38} } },
+    "levels": { "const": [10, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 600, 700, 800, 900, 1000] },
+    "vars": { "type": "array", "minItems": 7, "maxItems": 7, "items": { "type": "object", "required": ["id", "perLevel", "unit"],
+      "properties": { "id": { "enum": ["spd", "dir", "gust", "temp", "precip", "rh", "vis"] },
+                      "perLevel": { "type": "boolean" }, "unit": { "type": "string" } } } },
+    "hours": { "type": "array", "minItems": 48, "maxItems": 48, "items": { "type": "object", "required": ["t", "file"],
+      "properties": { "t": { "type": "string", "format": "date-time" },
+                      "file": { "type": "string", "pattern": "^h[0-4][0-9]\\.json$" } } } } } }

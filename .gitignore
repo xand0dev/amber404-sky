@@ -11,3 +11,4 @@ coverage/
 web/public/data/*.json
 test-results/
 playwright-report/
+web/public/data/profile/
