@@ -20,6 +20,7 @@
 |---|---|---|---|
 | Супутникова мозаїка `static/satellite.jpg` (SPEC §7.6a, §8 `s2cloudless`): один WMS GetMap `layers=s2cloudless-2020`, EPSG:4326, bbox 22,44,40.5,52.5, 1480×680 | https://tiles.maps.eox.at/wms — Sentinel-2 cloudless by EOX — Copernicus Sentinel data 2020 | CC BY-NC-SA 4.0 (некомерційно), атрибуція «Sentinel-2 cloudless by EOX — Copernicus Sentinel data 2020» | 2026-11-27: `python -m sky.basemap.build` → 1480×680, 244 КБ |
 | Ріки й озера `static/water.json` (SPEC §7.6a, §8 `ne-water`): `ne_10m_rivers_lake_centerlines` + `ne_10m_lakes`, обрізано по рамці, Дуглас-Пекер 0,01° | Natural Earth 1:10m physical, https://naciscdn.org/naturalearth/10m/physical/ | public domain | 2026-11-27: 27 рік + 8 озер, 32 КБ. NE ще показує Каховське водосховище (спущене з 06.2023) — дані як є |
+| Рельєф `static/relief.{json,png}` (SPEC §7.6a, §8 `cop-dem`): сітка 0,15° (58×124), ≤ 100 точок за запит, відмивка 1480×680 зі світлом з пн.-зх. | https://api.open-meteo.com/v1/elevation — Copernicus DEM GLO-90 | Copernicus DEM: © DLR e.V. 2010–2014 та © Airbus Defence and Space GmbH 2014–2018, надано за програмою Copernicus ЄС; Open-Meteo CC BY 4.0, некомерційно | 2026-11-28: `python -m sky.relief.build` → 6328 точок суші, макс. 2254 м (Фегераш), Київ 91 м, Говерла 1150 м (крок 0,15° не влучає у вершину); 28 КБ + 228 КБ |
 
 ## F3
 
