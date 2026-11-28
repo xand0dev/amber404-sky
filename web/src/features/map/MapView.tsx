@@ -11,6 +11,7 @@ import { Legend } from '../layers/Legend';
 import { drawWindArrows } from './arrows';
 import { fieldPixels, nodeStep } from './field';
 import { placeLabels } from './labels';
+import { drawNodata, nodataCells } from './nodata';
 import { SnapButton } from './SnapButton';
 import { WindParticles } from './WindParticles';
 import { HoverTip, type HoverPos } from './HoverTip';
@@ -64,6 +65,8 @@ export function MapView() {
       ctx.drawImage(off, 0, 0, fw * FIELD_PX, fh * FIELD_PX);
       ctx.globalAlpha = 1;
     }
+    // Місця без даних (#140) — штрихування поверх поля, щоб прогалину не плутали з «поле не домалювалось».
+    drawNodata(ctx, nodataCells(data, s), data.meta.grid.step, px, colors.ink, W, H);
     ctx.globalAlpha = night ? 0.6 : 1;
     drawWater(ctx, water, px, night ? colors.ink : undefined);
     ctx.globalAlpha = 1;

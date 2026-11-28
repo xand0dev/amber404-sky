@@ -7,3 +7,6 @@
 .legend .lg-classes{flex:1 1 auto;list-style:none;padding:0;display:flex;gap:var(--sp-2);min-width:0;overflow:hidden}
 .legend .lg-classes li{display:flex;align-items:center;gap:var(--sp-1)}
 .legend .lg-classes i{display:inline-block;width:10px;height:10px;border:1px solid var(--rule)}
+/* Issue #140: частина сітки без даних — пункт «▨ немає даних» з тим самим штрихуванням, що на карті. */
+.legend .lg-nodata{flex:0 0 auto;display:flex;align-items:center;gap:var(--sp-1);color:var(--dim)}
+.legend .lg-nodata i{display:inline-block;width:12px;height:10px;border:1px solid var(--rule);background:repeating-linear-gradient(45deg,var(--ink) 0 1px,transparent 1px 4px)}
