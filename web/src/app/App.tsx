@@ -8,9 +8,8 @@ import { LangProvider, useT } from './lang';
 import { Overlay } from './overlay/Overlay';
 import { ZoneLayer } from './zone/ZoneLayer';
 import { Draw } from './draw/Draw';
-import { ViewCtx, type ViewState } from './view/view';
+import { ViewCtx, useViewState, type ViewState } from './view/view';
 import { ViewControls } from './view/ViewControls';
-import { FULL_VIEW, type View } from '../core';
 import { MapView } from '../features/map/MapView';
 import { LayerPicker } from '../features/layers/LayerPicker';
 import { Timeline } from '../features/timeline/Timeline';
@@ -35,8 +34,7 @@ function Shell() {
   const [data, setData] = useState<Bundle | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [s, setS] = useState<AppState>({ lat: 50.45, lon: 30.52, altM: 50, hour: 0, droneId: 'fpv7', layer: 'wind' });
-  const [view, setView] = useState<View>(FULL_VIEW);
-  const vctx = useMemo(() => ({ view, setView }), [view]);
+  const vctx = useViewState();
   useEffect(() => { loadBundle().then(setData).catch((e: Error) => setErr(e.message)); }, []);
   // Офлайн (SPEC §7.11): у dev SW не реєструємо, щоб кеш не ховав зміни коду.
   useEffect(() => { if (import.meta.env.PROD) void registerSW(); }, []);

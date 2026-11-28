@@ -1,5 +1,7 @@
 // Масштаб карти (issue #64): pinch, колесо, перетягування, кнопки + / −, «До зони», «Україна».
 // Жести слухаємо на mapwrap; клік після перетягування гасимо, тап без руху, як і раніше, обирає точку (MapView, F3).
+// Issue #174: кнопки — плавний перехід (setView), колесо / щипок / перетягування — миттєво (jump) і скасовують перехід;
+// подвійний тап — ×2 у точку.
 import { useEffect, useRef } from 'react';
 import { FULL_VIEW, fitView, gestureStep, zoomAt } from '../../core';
 import { useZone } from '../zone/ZoneLayer';
@@ -13,6 +15,9 @@ const TAP_PX = 6;
 /** Поля навколо контуру зони — 15% з кожного боку (issue #64). */
 const ZONE_PAD = 0.15;
 const BTN_FACTOR = 2;
+/** Подвійний тап: друге торкання за DBL_MS мс і не далі DBL_PX px від першого. assumption — звичні значення мобільних карт. */
+const DBL_MS = 300;
+const DBL_PX = 30;
 /** «До зони» показує щонайменше ±MIN_KM навколо точки: коли зони немає (вітер понад ліміт) чи вона крихітна, карта
  *  не наближається до суцільного кольору без кордонів і міст (issue #89). assumption — видно місто й сусідні дороги. */
 const MIN_KM = 20;
@@ -21,7 +26,7 @@ type XY = [number, number];
 
 export function ViewControls() {
   const ref = useRef<HTMLDivElement>(null);
-  const { setView } = useView();
+  const { setView, jump = setView } = useView();
   const z = useZone();
   const { t } = useT();
   // Кнопки — у ряду над картою (issue #85), тож жести слухаємо на mapwrap з рамки; без рамки — на батьківському елементі.
@@ -33,13 +38,13 @@ export function ViewControls() {
     const size = (): [number, number] => [wrap.clientWidth, wrap.clientHeight];
     const local = (e: MouseEvent): XY => { const r = wrap.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
     const pts = new Map<number, XY>();
-    let start: XY | null = null, dragged = false;
+    let start: XY | null = null, dragged = false, lastTap: { p: XY; t: number } | null = null;
 
     const down = (e: PointerEvent) => {
       if (!(e.target instanceof HTMLCanvasElement)) return; // кнопки й панелі над картою — не жест
       const p = local(e);
       pts.set(e.pointerId, p);
-      if (pts.size === 1) { start = p; dragged = false; } else dragged = true;
+      if (pts.size === 1) { start = p; dragged = false; jump((v) => v); } else dragged = true; // новий жест зупиняє перехід
     };
     const move = (e: PointerEvent) => {
       const old = pts.get(e.pointerId);
@@ -51,9 +56,20 @@ export function ViewControls() {
       pts.set(e.pointerId, p);
       const next = [...pts.values()].slice(0, 2);
       const [W, H] = size();
-      setView((v) => gestureStep(v, W, H, prev, next));
+      jump((v) => gestureStep(v, W, H, prev, next));
     };
-    const up = (e: PointerEvent) => { pts.delete(e.pointerId); if (!pts.size) start = null; };
+    const up = (e: PointerEvent) => {
+      if (!pts.delete(e.pointerId) || pts.size) return;
+      start = null;
+      if (dragged) { lastTap = null; return; }
+      const p = local(e), t = performance.now();
+      if (lastTap && t - lastTap.t <= DBL_MS && Math.hypot(p[0] - lastTap.p[0], p[1] - lastTap.p[1]) <= DBL_PX) {
+        lastTap = null;
+        dragged = true; // другий тап не обирає точку
+        const [W, H] = size();
+        setView((v) => zoomAt(v, W, H, BTN_FACTOR, p[0], p[1]));
+      } else lastTap = { p, t };
+    };
     // Клік після перетягування чи pinch не має обирати точку.
     const click = (e: MouseEvent) => { if (dragged) { e.stopPropagation(); e.preventDefault(); dragged = false; } };
     const wheel = (e: WheelEvent) => {
@@ -61,7 +77,7 @@ export function ViewControls() {
       e.preventDefault();
       const dy = e.deltaY * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? 400 : 1);
       const [W, H] = size(), [x, y] = local(e);
-      setView((v) => zoomAt(v, W, H, Math.exp(-dy * 0.002), x, y));
+      jump((v) => zoomAt(v, W, H, Math.exp(-dy * 0.002), x, y));
     };
 
     wrap.addEventListener('pointerdown', down);
@@ -78,7 +94,7 @@ export function ViewControls() {
       wrap.removeEventListener('click', click, true);
       wrap.removeEventListener('wheel', wheel);
     };
-  }, [setView, frame]);
+  }, [setView, jump, frame]);
 
   const size = (): [number, number] => {
     const wrap = frame ?? ref.current?.parentElement;

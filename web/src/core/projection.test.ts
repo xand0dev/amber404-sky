@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { FULL_VIEW, MAP_BOX, MIN_VIEW_KM, clampView, fitView, gestureStep, makeProjection, panBy, viewWidthKm, zoomAt } from './projection';
+import { FULL_VIEW, MAP_BOX, MIN_VIEW_KM, clampView, easeOut, fitView, gestureStep, lerpView, makeProjection, panBy, viewWidthKm, zoomAt } from './projection';
 
 describe('Given спільна проєкція карти (lat/lon ↔ екран, cos широти)', () => {
   const p = makeProjection(800, 400);
@@ -118,5 +118,30 @@ describe('Given жест на карті (pinch / перетягування) �
     const v1 = gestureStep(v0, W, H, [[100, 100]], [[130, 90]]);
     expect(v1.zoom).toBe(2);
     expect(v1).toEqual(panBy(v0, W, H, 30, -10));
+  });
+});
+
+// Issue #174: плавний перехід вигляду — ease-out, центр лінійно, масштаб — у log.
+describe('Given перехід між двома виглядами (issue #174)', () => {
+  const a = { lat: 48, lon: 30, zoom: 1 }, b = { lat: 50, lon: 34, zoom: 16 };
+
+  it('Then ease-out: 0 → 0, 1 → 1, у середині вже далі за половину', () => {
+    expect(easeOut(0)).toBe(0);
+    expect(easeOut(1)).toBe(1);
+    expect(easeOut(0.5)).toBeGreaterThan(0.5);
+    expect(easeOut(-1)).toBe(0);
+    expect(easeOut(2)).toBe(1);
+  });
+
+  it('Then на початку — вихідний вигляд, у кінці — цільовий', () => {
+    expect(lerpView(a, b, 0)).toEqual(a);
+    expect(lerpView(a, b, 1)).toEqual(b);
+  });
+
+  it('Then у середині центр — посередині, масштаб — геометричне середнє (log-інтерполяція)', () => {
+    const m = lerpView(a, b, 0.5);
+    expect(m.lat).toBeCloseTo(49, 9);
+    expect(m.lon).toBeCloseTo(32, 9);
+    expect(m.zoom).toBeCloseTo(4, 9);
   });
 });

@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react';
 import { AppCtx, type Ctx } from '../state';
 import { clearZoneCache, zoneFor } from '../zone/model';
 import { FULL_VIEW, makeProjection, type View } from '../../core';
-import { ViewCtx } from './view';
+import { ViewCtx, useViewState } from './view';
+import { ANIM_MS } from './anim';
 import { ViewControls } from './ViewControls';
 
 const W = 400, H = 300;
@@ -126,5 +127,74 @@ describe('Given зони немає (вітер понад ліміт, #89)', ()
     expect(Math.abs(y - H / 2)).toBeLessThan(1);
     const [latTop] = p.unproject(W / 2, 0), [latBot] = p.unproject(W / 2, H);
     expect((latTop - latBot) * 111).toBeGreaterThanOrEqual(40);
+  });
+});
+
+// Issue #174: подвійний тап, плавні кнопки, миттєві жести.
+describe('Given карта на телефоні (issue #174)', () => {
+  it('When подвійний тап; Then наближення ×2, а точка під пальцем лишається на місці', () => {
+    const { map } = view();
+    const before = makeProjection(W, H, seen.v).unproject(100, 80);
+    for (let i = 0; i < 2; i++) { ptr('pointerdown', map, 1, 100, 80); ptr('pointerup', window, 1, 100, 80); fireEvent.click(map); }
+    expect(seen.v.zoom).toBeCloseTo(2, 6);
+    const after = makeProjection(W, H, seen.v).unproject(100, 80);
+    expect(after[0]).toBeCloseTo(before[0], 6);
+    expect(after[1]).toBeCloseTo(before[1], 6);
+  });
+
+  it('When два тапи в різних місцях; Then це не подвійний тап', () => {
+    const { map } = view();
+    ptr('pointerdown', map, 1, 100, 80); ptr('pointerup', window, 1, 100, 80);
+    ptr('pointerdown', map, 1, 300, 200); ptr('pointerup', window, 1, 300, 200);
+    expect(seen.v.zoom).toBe(1);
+  });
+});
+
+function LiveHarness() {
+  const vs = useViewState();
+  useEffect(() => { seen.v = vs.view; }, [vs.view]);
+  return (
+    <AppCtx.Provider value={ctx}>
+      <ViewCtx.Provider value={vs}>
+        <main className="mapwrap"><canvas className="map" /><ViewControls /></main>
+      </ViewCtx.Provider>
+    </AppCtx.Provider>
+  );
+}
+
+describe('Given плавні переходи вигляду (issue #174)', () => {
+  beforeEach(() => { vi.useFakeTimers({ toFake: ['requestAnimationFrame', 'cancelAnimationFrame', 'performance'] }); });
+  afterEach(() => { vi.useRealTimers(); });
+
+  it(`When «+»; Then не стрибок: масштаб росте кадрами й за ${ANIM_MS} мс доходить до ×2`, () => {
+    render(<LiveHarness />);
+    fireEvent.click(screen.getByRole('button', { name: 'Наблизити' }));
+    expect(seen.v.zoom).toBe(1);
+    act(() => { vi.advanceTimersByTime(ANIM_MS / 2); });
+    expect(seen.v.zoom).toBeGreaterThan(1);
+    expect(seen.v.zoom).toBeLessThan(2);
+    act(() => { vi.advanceTimersByTime(ANIM_MS); });
+    expect(seen.v.zoom).toBeCloseTo(2, 9);
+  });
+
+  it('When колесо; Then масштаб змінюється миттєво', () => {
+    const r = render(<LiveHarness />);
+    fireEvent.wheel(r.container.querySelector('canvas.map')!, { deltaY: -200, clientX: 200, clientY: 150 });
+    expect(seen.v.zoom).toBeGreaterThan(1);
+  });
+
+  it('When щипок посеред переходу; Then перехід скасовано, далі рахується від поточного кадру', () => {
+    const r = render(<LiveHarness />);
+    const map = r.container.querySelector('canvas.map')!;
+    fireEvent.click(screen.getByRole('button', { name: 'Україна' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Наблизити' }));
+    act(() => { vi.advanceTimersByTime(ANIM_MS / 3); });
+    const mid = seen.v.zoom;
+    ptr('pointerdown', map, 1, 150, 150);
+    ptr('pointerdown', map, 2, 250, 150);
+    ptr('pointermove', window, 2, 350, 150);
+    expect(seen.v.zoom).toBeCloseTo(mid * 2, 6);
+    act(() => { vi.advanceTimersByTime(ANIM_MS * 2); });
+    expect(seen.v.zoom).toBeCloseTo(mid * 2, 6);
   });
 });
