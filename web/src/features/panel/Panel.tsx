@@ -70,7 +70,7 @@ export function Panel() {
   const { wx, now, window, prof } = useVerdicts();
   const { lang } = useT();
   const relief = useRelief();
-  const city = nearestCity(data.cities, s.lat, s.lon);
+  const city = nearestCity(data.cities, s.lat, s.lon, lang);
   const last = data.meta.times[data.meta.times.length - 1];
   const win = windowLabel(window, last, lang);
   const time = data.meta.times[s.hour] ?? '';
@@ -79,7 +79,7 @@ export function Panel() {
   // Знімок для «Зберегти погоду» / «Копіювати звіт» (F4-AC4): лише в браузері.
   const snapshot = (): SavedWx => ({
     id: `${s.lat.toFixed(3)},${s.lon.toFixed(3)},${s.altM},${time},${prof.id}`, savedAt: new Date().toISOString(),
-    place: placeText(data.cities, s.lat, s.lon), lat: s.lat, lon: s.lon, altM: s.altM, time, drone: profileName(prof, lang),
+    place: placeText(data.cities, s.lat, s.lon, lang), lat: s.lat, lon: s.lon, altM: s.altM, time, drone: profileName(prof, lang),
     ws: wx.ws, dir: wx.dir, g: wx.g, cb: wx.cb, t: wx.t, level: now.level, reasons: now.reasons, window: win,
     source: data.meta.sources.map((x) => x.name).join(', ') || data.profile.sources.join(', '),
     generatedAt: data.meta.generatedAt, mock: data.meta.mock, terrain, reliefRange,
