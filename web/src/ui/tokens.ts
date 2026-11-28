@@ -14,6 +14,8 @@ export const DAY_VARS: Record<string, string> = {
   '--btn-bg': '#1c2117', '--on-primary': '#11150e', '--btn-h': '44px',
   // Напівпрозоре тло підписів поверх карти (легенда, підпис зони, підказка)
   '--scrim': 'rgba(17,21,14,.9)',
+  // Нічні години на смузі 48 год (issue #172): кольори вердиктів, затемнені вдвічі; текст на них — --ink
+  '--go-nt': '#466028', '--cau-nt': '#715417', '--no-nt': '#702a18', '--no-data-nt': '#23281d',
   // Шрифти: 4 розміри + окремий для слова вердикту
   '--font': '"DIN Alternate","Barlow",system-ui,sans-serif',
   '--font-display': '"DIN Condensed","Barlow Condensed",sans-serif',
