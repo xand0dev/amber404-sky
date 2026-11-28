@@ -29,8 +29,8 @@ export function LangProvider({ children }: { children: ReactNode }) {
 
 const LANG_CSS = [
   '.langsw{position:absolute;top:56px;right:8px;display:flex}',
-  '.langsw button{min-height:44px;min-width:44px;padding:0 6px;background:#11150e;color:var(--ink);border:1px solid var(--rule);font-weight:700}',
-  '.langsw button[aria-pressed=true]{background:var(--ink);color:#11150e}',
+  '.langsw button{min-width:var(--btn-h);padding:0 var(--sp-1);font-weight:700}',
+  '.langsw button[aria-pressed=true]{background:var(--ink);color:var(--on-primary)}',
   '.langsw button:focus-visible{outline:3px solid var(--ink);outline-offset:2px;box-shadow:0 0 0 2px var(--base)}',
   '.status{min-height:112px}',
 ].join('\n');

@@ -1,41 +1,34 @@
-:root{--base:#1c2117;--panel:#262c1f;--rule:#46503a;--ink:#e6e2cc;--dim:#a3a58a;--go:#8cbf4f;--cau:#e2a72e;--no:#e0532f;color-scheme:dark}
-*{box-sizing:border-box;margin:0}html,body,#root{height:100%}
-body{background:var(--base);color:var(--ink);font:500 16px/1.4 "DIN Alternate","Barlow",system-ui,sans-serif}
-button,select,input{font:inherit;color:inherit}
-button:focus-visible,select:focus-visible,input:focus-visible,canvas:focus-visible{outline:2px solid var(--cau);outline-offset:2px}
-.boot{padding:24px}.boot.err{color:var(--no)}
+/* Каркас (F0). Змінні (кольори, шрифти, відступи) — ui/tokens.ts, база елементів і кнопок — ui/base.css (issue #88). */
+.boot{padding:var(--sp-4)}.boot.err{color:var(--no-ink)}
 .shell{display:grid;grid-template-rows:auto auto minmax(260px,1fr) auto auto auto;min-height:100%}
-.status{padding:10px 14px;color:#11150e}.status .word{font:700 34px/1 "DIN Condensed","Barlow Condensed",sans-serif;letter-spacing:.02em}
-.status .why{font-weight:600}.status .sub{font-size:14px}
-.lv-GO{background:var(--go)}.lv-CAUTION{background:var(--cau)}.lv-NO-GO{background:var(--no)}.lv-NO-DATA{background:var(--rule);color:var(--ink)}
-.badges{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}.badge{font-size:12px;font-weight:700;padding:2px 6px;background:#11150e;color:var(--ink)}
-.badge.mock{background:#fff;color:#11150e}.badge.warn{background:#11150e;color:var(--cau)}
+.status{padding:var(--sp-2) var(--sp-3);color:var(--on-lv)}
+.status .why{font-weight:600}.status .sub{font-size:var(--fs-m)}
+.lv-GO{background:var(--go)}.lv-CAUTION{background:var(--cau)}.lv-NO-GO{background:var(--no)}.lv-NO-DATA{background:var(--no-data);color:var(--ink)}
+.badges{display:flex;gap:var(--sp-1);flex-wrap:wrap;margin-top:var(--sp-1)}
+.badge{font-size:var(--fs-s);font-weight:700;padding:2px var(--sp-1);border-radius:var(--r);background:var(--on-lv);color:var(--ink)}
+.badge.mock{background:var(--ink);color:var(--on-primary)}.badge.warn{background:var(--on-lv);color:var(--cau-ink)}
 /* Issue #85 AC1: карта ≥ 55% першого екрана на телефоні (58% — запас на рядок адреси; svh — без нього). */
 .mapwrap{position:relative;min-height:max(260px,58vh);min-height:max(260px,58svh);overflow:hidden}.map{position:absolute;inset:0;width:100%;height:100%;touch-action:none;cursor:crosshair}
 /* Issue #85 AC5: смуга шарів під картою, а не поверх неї. */
-.layers{display:flex;gap:4px;overflow-x:auto;padding:4px;background:var(--panel);border-top:1px solid var(--rule)}
-.layers button{flex:0 0 auto;min-height:44px;padding:0 10px;background:var(--base);border:1px solid var(--rule);white-space:nowrap}
-.layers button.on{background:var(--ink);color:#11150e}
+.layers{display:flex;gap:var(--sp-1);overflow-x:auto;padding:var(--sp-1);background:var(--panel);border-top:1px solid var(--rule)}
+.layers button{flex:0 0 auto;padding:0 var(--sp-2);white-space:nowrap}
+.layers button.on{background:var(--ink);color:var(--on-primary);border-color:var(--ink)}
 .hours{display:flex;overflow-x:auto;border-top:1px solid var(--rule);min-height:46px}
-.hours button{flex:0 0 32px;min-height:44px;border:0;border-right:1px solid var(--base);font-size:12px;color:#11150e;font-weight:700}
-.hours button.on{outline:3px solid var(--ink);outline-offset:-3px}
-.panel{padding:10px 14px 16px;background:var(--panel)}
-.panel .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.panel label{display:grid;gap:4px;font-size:14px;color:var(--dim)}
-.panel select{min-height:44px;background:var(--base);border:1px solid var(--rule);padding:0 8px}.panel input[type=range]{min-height:44px;accent-color:var(--cau)}
-.vals{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px}.vals div{background:var(--base);padding:6px}
-.vals dt{font-size:12px;color:var(--dim)}.vals dd{font-weight:600}
-.reasons{margin-top:8px;padding-left:18px}.coord{margin-top:6px;font-size:12px;color:var(--dim)}
+.panel{padding:var(--sp-2) var(--sp-3) var(--sp-3);background:var(--panel)}
+.panel .row{display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-2)}.panel label{display:grid;gap:var(--sp-1);font-size:var(--fs-m);color:var(--dim)}
+.vals{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--sp-1);margin-top:var(--sp-2)}.vals div{background:var(--base);padding:var(--sp-1) var(--sp-2);border-radius:var(--r)}
+.vals dt{font-size:var(--fs-s);color:var(--dim)}.vals dd{font-weight:600}
+.reasons{margin-top:var(--sp-2);padding-left:var(--sp-3)}.coord{margin-top:var(--sp-1);font-size:var(--fs-s);color:var(--dim)}
 @media (max-width:420px){.panel .row{grid-template-columns:1fr}.vals{grid-template-columns:repeat(2,1fr)}}
 .underlay{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
 .mapwrap.has-underlay .map{opacity:var(--wx-op,1)}
-.ovpanel{position:absolute;top:8px;left:8px;right:8px;z-index:2;max-height:min(70vh,560px);overflow:auto;display:grid;gap:8px;padding:10px;background:var(--panel);border:1px solid var(--rule);font-size:14px}
-.ovpanel label{display:grid;gap:4px;color:var(--dim)}.ovpanel input[type=range]{min-height:44px;accent-color:var(--cau)}
-.ovpanel input[type=number]{min-height:44px;min-width:0;width:100%;background:var(--base);border:1px solid var(--rule);padding:0 6px}
-.ovrow{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;border:1px solid var(--rule);padding:6px}.ovrow.on{border-color:var(--cau)}
-.ovrow legend button,.ovact button{min-height:44px;padding:0 12px;background:var(--base);border:1px solid var(--rule)}
-.ovact{display:flex;gap:8px}.ovnote{font-size:12px;color:var(--dim)}.overr{color:var(--no)}
+.ovpanel{position:absolute;top:8px;left:8px;right:8px;z-index:2;max-height:min(70vh,560px);overflow:auto;display:grid;gap:var(--sp-2);padding:var(--sp-2);background:var(--panel);border:1px solid var(--rule);font-size:var(--fs-m)}
+.ovpanel label{display:grid;gap:var(--sp-1);color:var(--dim)}
+.ovpanel input[type=number]{min-width:0;width:100%}
+.ovrow{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--sp-1);border:1px solid var(--rule);padding:var(--sp-1)}.ovrow.on{border-color:var(--cau)}
+.ovact{display:flex;gap:var(--sp-2)}.ovnote{font-size:var(--fs-s);color:var(--dim)}.overr{color:var(--no-ink)}
 .ovprev{position:relative}.ovprev img{display:block;width:100%;cursor:crosshair}
-.ovmark{position:absolute;transform:translate(-50%,-50%);min-width:20px;height:20px;border-radius:50%;background:var(--cau);color:#11150e;font-size:12px;font-weight:700;text-align:center;line-height:20px;pointer-events:none}
+.ovmark{position:absolute;transform:translate(-50%,-50%);min-width:20px;height:20px;border-radius:var(--r-round);background:var(--cau);color:var(--on-lv);font-size:var(--fs-s);font-weight:700;text-align:center;line-height:20px;pointer-events:none}
 @media (max-width:420px){.ovrow{grid-template-columns:repeat(2,1fr)}}
 /* Issue #86: десктоп ≥ 1024 px — дві колонки. Ліворуч ряд інструментів, карта на всю висоту, шари й смуга 48 год;
    праворуч панель точки 360–420 px із власною прокруткою. Сторінка сама не прокручується.
@@ -46,13 +39,9 @@ button:focus-visible,select:focus-visible,input:focus-visible,canvas:focus-visib
   .shell>.status{grid-area:hd}.shell>.mapbarwrap{grid-area:bar}.shell>.layers{grid-area:lay}.shell>.tl{grid-area:tl}
   .shell>.mapwrap{grid-area:map;min-height:0}
   .shell>.panel{grid-area:side;min-height:0;overflow-y:auto;overscroll-behavior:contain;border-left:1px solid var(--rule)}
-  /* Шапка — один рядок ≤ 72 px: вердикт · причина й профіль · бейджі · «Ніч» · UK/EN. */
-  .shell>header.status{display:flex;align-items:center;gap:14px;min-height:0;height:68px;padding:8px 12px;overflow:hidden}
-  .shell>.status .word{flex:0 0 auto;font-size:30px;white-space:nowrap}
-  .shell>.status .why,.shell>.status .sub{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .shell>.status .why{flex:0 1 auto;max-width:40%}.shell>.status .sub{flex:1 1 0}
-  .shell>.status .badges{flex:0 1 auto;flex-wrap:nowrap;min-width:0;overflow:hidden;margin-top:0}
-  .shell>.status .badge{white-space:nowrap}
+  /* Шапка — один рядок ≤ 72 px: вердикт · MOCK · «Джерела» · «чому» · «Ніч» · UK/EN (розкладка рядка — statusbar.css, #87). */
+  .shell>header.status{display:flex;align-items:center;gap:var(--sp-3);min-height:0;height:68px;padding:var(--sp-2) var(--sp-3);overflow:hidden}
+  .shell>.status .word{flex:0 0 auto;font-size:calc(var(--fs-display) * .88);white-space:nowrap}
   .shell>.status .nightbtn,.shell>.status .langsw{position:static;flex:0 0 auto}
   .shell>.status .nightbtn{order:2}.shell>.status .langsw{order:3}
 }

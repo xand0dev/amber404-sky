@@ -27,6 +27,7 @@
 | Що | Джерело | Ліцензія | Перевірено |
 |---|---|---|---|
 | Назви міст англійською на карті (#116): транслітерація українського алфавіту | Постанова КМУ № 55 від 27.01.2010 «Про впорядкування транслітерації українського алфавіту латиницею» (zakon.rada.gov.ua/laws/show/55-2010-п) | офіційний документ, не об'єкт авторського права | 2026-11-28, 16 міст з cities.json → Kyiv, Kharkiv, Zaporizhzhia… (unit-тест translit.test.ts) |
+| Вузький шрифт слова вердикту (#88): Roboto Condensed 700, підмножини cyrillic і latin, woff2 у `web/src/ui/fonts/` | Google Fonts — https://fonts.google.com/specimen/Roboto+Condensed (файли з fonts.gstatic.com, v31) | SIL Open Font License 1.1 | 2026-11-28; Barlow Condensed відкинуто — на Google Fonts без кирилиці |
 
 ## F4
 

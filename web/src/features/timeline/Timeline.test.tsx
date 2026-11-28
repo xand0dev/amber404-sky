@@ -2,7 +2,6 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { useState } from 'react';
 import { TimelineView } from './Timeline';
-import { LEVEL_COLOR } from '../layers/colors';
 import type { Level } from '../../core';
 import { LANG_KEY, LangProvider } from '../../app/lang';
 
@@ -20,14 +19,13 @@ const selected = () => hourButtons().filter((b) => b.getAttribute('aria-pressed'
 afterEach(() => { cleanup(); vi.useRealTimers(); });
 
 describe('F3-AC4: смуга 48 год', () => {
-  it('колір кожної години = вердикт у точці', () => {
+  it('колір кожної години = вердикт у точці (клас рівня → токен --go/--cau/--no, #88)', () => {
     render(<Harness />);
     const bs = hourButtons();
     expect(bs).toHaveLength(48);
     bs.forEach((b, h) => {
-      const ref = document.createElement('i');
-      ref.style.background = LEVEL_COLOR[levels[h]];
-      expect(b.style.background).toBe(ref.style.background);
+      expect(b.classList.contains(`lv-${levels[h]}`)).toBe(true);
+      expect(b.style.background).toBe('');
       expect(b.getAttribute('aria-label')).toContain(levels[h]);
     });
   });
