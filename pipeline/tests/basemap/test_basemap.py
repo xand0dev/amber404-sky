@@ -183,3 +183,21 @@ def test_committed_water_json_size_and_frame():
     for f in gj["features"]:
         pts = _coords(f["geometry"])
         assert pts and all(_inside(p) for p in pts)
+
+
+def test_hi_boxes_cover_frame_without_gaps():
+    from sky.basemap.build import BBOX, HI_GRID, hi_boxes
+
+    boxes = dict(hi_boxes())
+    assert len(boxes) == HI_GRID * HI_GRID
+    nw, se = boxes["satellite-hi-00.jpg"], boxes[f"satellite-hi-{HI_GRID - 1}{HI_GRID - 1}.jpg"]
+    assert (nw[0], nw[3]) == (BBOX[0], BBOX[3])
+    assert abs(se[2] - BBOX[2]) < 1e-9 and abs(se[1] - BBOX[1]) < 1e-9
+    assert abs(boxes["satellite-hi-00.jpg"][2] - boxes["satellite-hi-01.jpg"][0]) < 1e-9
+
+
+def test_wms_url_takes_box_and_size():
+    from sky.basemap.build import wms_url
+
+    u = wms_url((22, 48.25, 31.25, 52.5), 3200, 1470)
+    assert "width=3200" in u and "height=1470" in u and "bbox=22%2C48.25%2C31.25%2C52.5" in u

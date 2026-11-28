@@ -7,6 +7,10 @@
 | Що | Джерело | Ліцензія | Перевірено |
 |---|---|---|---|
 
+| Онлайн-підкладка «Вулиці» (SPEC §7.6a v16), лише за вибором людини | https://tile.openstreetmap.org/{z}/{x}/{y}.png — OpenStreetMap Standard | ODbL, атрибуція «© OpenStreetMap contributors»; правила тайлів: https://operations.osmfoundation.org/policies/tiles/ (помірне використання) | 2026-11-28: CORS `*`, z5–19 |
+| Онлайн-підкладка «Супутник 10 м» (SPEC §7.6a v16) | https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2020_3857/default/g/{z}/{y}/{x}.jpg — Sentinel-2 cloudless by EOX | CC BY-NC-SA 4.0 (некомерційно), атрибуція як у `s2cloudless` | 2026-11-28: CORS для github.io, z5–15 |
+| Різкий супутник `static/satellite-hi-{00,01,10,11}.jpg` (#162): 4 WMS GetMap по 3200×1470 на чверті рамки | https://tiles.maps.eox.at/wms `layers=s2cloudless-2020` | як `s2cloudless` | 2026-11-28: 4 файли, 0,9–1,3 МБ |
+
 ## F1
 
 | Що | Джерело | Ліцензія | Перевірено |

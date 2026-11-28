@@ -38,7 +38,23 @@ Pt = tuple[float, float]
 # --- супутник ---
 
 
-def wms_url() -> str:
+# Різкий супутник (#162): EOX WMS віддає ≤ 4096 px за запит, тож рамку ділимо на HI_GRID×HI_GRID шматків.
+# Шматки не склеюємо — браузер малює кожен у своїй частині рамки (basemaps.ts, HI_TILES). ~290 м/піксель.
+HI_GRID, HI_W, HI_H = 2, 3200, 1470
+
+
+def hi_boxes() -> list[tuple[str, tuple[float, float, float, float]]]:
+    """[(ім'я, bbox)] шматків: рядок 0 — північ, стовпець 0 — захід."""
+    lon0, lat0, lon1, lat1 = BBOX
+    dl, dt = (lon1 - lon0) / HI_GRID, (lat1 - lat0) / HI_GRID
+    return [
+        (f"satellite-hi-{r}{c}.jpg", (lon0 + c * dl, lat1 - (r + 1) * dt, lon0 + (c + 1) * dl, lat1 - r * dt))
+        for r in range(HI_GRID)
+        for c in range(HI_GRID)
+    ]
+
+
+def wms_url(bbox: tuple[float, float, float, float] = BBOX, width: int = WIDTH, height: int = HEIGHT) -> str:
     q = {
         "service": "WMS",
         "request": "GetMap",
@@ -46,9 +62,9 @@ def wms_url() -> str:
         "layers": LAYER,
         "styles": "",
         "srs": "EPSG:4326",
-        "bbox": ",".join(f"{v:g}" for v in BBOX),
-        "width": WIDTH,
-        "height": HEIGHT,
+        "bbox": ",".join(f"{v:g}" for v in bbox),
+        "width": width,
+        "height": height,
         "format": "image/jpeg",
     }
     return f"{WMS}?{urlencode(q)}"
@@ -89,8 +105,8 @@ def _get(client: httpx.Client, url: str, pause_s: float) -> bytes:
     raise err
 
 
-def fetch_satellite(client: httpx.Client, pause_s: float = PAUSE_S) -> bytes:
-    data = _get(client, wms_url(), pause_s)
+def fetch_satellite(client: httpx.Client, pause_s: float = PAUSE_S, url: str | None = None) -> bytes:
+    data = _get(client, url or wms_url(), pause_s)
     try:
         jpeg_size(data)
     except ValueError as e:
@@ -294,6 +310,10 @@ def main() -> None:
         sat.write_bytes(fetch_satellite(client))
         w, h = jpeg_size(sat.read_bytes())
         print(f"{sat}: {w}×{h}, {sat.stat().st_size // 1024} KB")
+        for name, box in hi_boxes():
+            f = OUT / name
+            f.write_bytes(fetch_satellite(client, url=wms_url(box, HI_W, HI_H)))
+            print(f"{f}: {jpeg_size(f.read_bytes())}, {f.stat().st_size // 1024} KB")
         with tempfile.TemporaryDirectory() as d:
             tmp = Path(d)
             data = build_water(_ne(client, RIVERS, tmp), _ne(client, LAKES, tmp))

@@ -1,11 +1,12 @@
 // Issue #100 (§7.6a): підкладки — вибір і збереження, проєкція зображення, атрибуція, ріки й озера.
 import { describe, expect, it } from 'vitest';
 import { applyAffine, makeProjection } from '../../core';
-import { attribution, BASE_BOX, BASE_IDS, DEFAULT_PREFS, fieldAlpha, imageAffine, parsePrefs, waterLines } from './basemaps';
+import { ONLINE, attribution, BASE_BOX, BASE_IDS, DEFAULT_PREFS, fieldAlpha, imageAffine, parsePrefs, waterLines } from './basemaps';
 
 describe('Given меню «Підкладка» (AC1)', () => {
-  it('чотири варіанти: Без / Рельєф / Супутник / Своя карта', () => {
-    expect(BASE_IDS).toEqual(['none', 'relief', 'satellite', 'own']);
+  it('чотири офлайн-варіанти + дві онлайн-підкладки (вулиці, супутник 10 м)', () => {
+    expect(BASE_IDS).toEqual(['none', 'relief', 'satellite', 'own', 'satlive', 'streets']);
+    expect([...ONLINE]).toEqual(['satlive', 'streets']);
   });
   it('збережений вибір читається з браузера', () => {
     expect(parsePrefs(JSON.stringify({ base: 'satellite', wxTransp: 30 }))).toEqual({ base: 'satellite', wxTransp: 30 });
