@@ -1,8 +1,8 @@
-.route{margin-top:14px;border-top:1px solid var(--rule);padding-top:10px}
-.route h3{margin:0 0 8px;font-size:15px}
-.routebtns{display:flex;gap:8px;flex-wrap:wrap}
-.routebtns button{min-height:44px;padding:0 12px;background:var(--base);color:var(--ink);border:1px solid var(--rule)}
-.route .cut{width:100%;height:auto;display:block;margin:8px 0;background:var(--base)}
-.route .cutlbl{font-size:9px;fill:var(--dim)}
-.route .battery{border-left:4px solid;padding:6px 8px;background:var(--base);margin:8px 0}
-.route .hint{color:var(--dim);font-size:14px}
+/* Маршрут (F4). Токени — ui/tokens.ts (issue #88); кнопки — база ui/base.css. */
+.route{margin-top:var(--sp-3);border-top:1px solid var(--rule);padding-top:var(--sp-2)}
+.route h3{margin:0 0 var(--sp-2);font-size:var(--fs-l)}
+.routebtns{display:flex;gap:var(--sp-2);flex-wrap:wrap}
+.route .cut{width:100%;height:auto;display:block;margin:var(--sp-2) 0;background:var(--base)}
+.route .cutlbl{font-size:var(--fs-s);fill:var(--dim)}
+.route .battery{border-left:4px solid;padding:var(--sp-1) var(--sp-2);background:var(--base);margin:var(--sp-2) 0}
+.route .hint{color:var(--dim);font-size:var(--fs-m)}
