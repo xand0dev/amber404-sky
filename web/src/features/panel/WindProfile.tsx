@@ -6,7 +6,7 @@ import type { Lang } from '../../core';
 import type { DroneProfile } from '../../contracts';
 import { arrowDeg } from './place';
 import { pt, type PKey } from './strings';
-import { windProfile, type WindProfileData } from './windProfile';
+import { windProfile, type WindProfileData } from './windProfileData';
 
 const W = 300, H = 240, L = 40, R = 12, T = 10, B = 22;
 

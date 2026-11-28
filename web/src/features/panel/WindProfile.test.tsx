@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { cleanup, render, screen } from '@testing-library/react';
 import type { DroneProfile } from '../../contracts';
 import { WindProfileView } from './WindProfile';
-import { profileAlts, windProfile } from './windProfile';
+import { profileAlts, windProfile } from './windProfileData';
 import { fixture, LEVELS } from './fixture.test-util';
 
 afterEach(cleanup);
