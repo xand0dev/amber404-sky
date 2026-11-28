@@ -1,4 +1,5 @@
 // F3 (Іван): карта — плавне поле шару, кордони, міста, частинки вітру (reduced motion → стрілки), вибір точки, легенда.
+// Issue #161: «Де я» — позиція з GPS лише в пам'яті сторінки (Locate).
 // Issue #100: підкладка (рельєф / супутник) під полем, поле — з повзунком прозорості; ріки й озера — над полем, під частинками.
 import { useEffect, useRef, useState } from 'react';
 import { useApp } from '../../app/state';
@@ -13,6 +14,7 @@ import { fieldPixels, nodeStep } from './field';
 import { placeLabels } from './labels';
 import { drawNodata, nodataCells } from './nodata';
 import { SnapButton } from './SnapButton';
+import { Locate } from './Locate';
 import { WindParticles } from './WindParticles';
 import { HoverTip, type HoverPos } from './HoverTip';
 import { useReducedMotion } from './useReducedMotion';
@@ -119,6 +121,7 @@ export function MapView() {
         onPointerLeave={() => setHover(null)} />
       {!reduce && <WindParticles />}
       <Legend />
+      <Locate />
       <SnapButton reduce={reduce} />
       {hover && <HoverTip at={hover} />}
     </>

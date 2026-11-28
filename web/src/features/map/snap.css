@@ -2,3 +2,5 @@
 .snapbtn{min-width:var(--btn-h);padding:0;font-size:var(--fs-xl);line-height:1}
 .snapbtn:disabled{opacity:.6;cursor:progress}
 .snapmsg{position:absolute;top:8px;left:8px;z-index:1;padding:var(--sp-1) var(--sp-2);font-size:var(--fs-m);background:var(--scrim);border:1px solid var(--rule);pointer-events:none}
+/* Issue #161: у меню «⋯» (екран < 420 px) — іконка й підпис ліворуч, як решта пунктів меню. */
+.mapmore .snapbtn{padding:0 var(--sp-3);font-size:var(--fs-m);text-align:left}

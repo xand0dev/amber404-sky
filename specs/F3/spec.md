@@ -101,6 +101,12 @@
 - T1 (AC1) `app/zone/ZoneLayer.tsx` + `zone.css`: «Деталі ▾» — окремий елемент праворуч від обрізаного тексту; e2e `zonecap.spec.ts` (412 px, вітер понад ліміт, uk/en).
 - T2 (AC2) `app/StatusBar.tsx` + `statusbar.css`: значок ⓘ / ⚠ — CSS `::before` з порожнім альтернативним текстом, тож видимий текст міститься в імені. Lighthouse локально: кнопка «Джерела» більше не в `label-content-name-mismatch`; клітинки таблиці висоти F4 — #146.
 
+**#161 — кнопка «Де я» (§7.11 OPSEC):**
+- T1 (AC2, AC5) `core/locate.ts`: `GEO_OPTS` (висока точність, 10 с), `fixOf`, `inMapArea` (рамка кліку по карті), `cityView` (±10 км, assumption), `accuracyPx`.
+- T2 (AC1–5, AC7) `map/Locate.tsx` + `locate.css`: кнопка ⌖ першою в ряду; 1-ше натискання — позиція → обрана точка й вигляд міста, синя точка й коло точності (уночі червоні); 2-ге — `watchPosition` (рухається лише точка); 3-тє — вимкнено. Помилки — `role=status`.
+- T3 (AC1) `map/SnapButton.tsx`: на екрані < 420 px 📷 — у «⋯» (9 кнопок по 44 px не вміщуються); `ui/MapFrame.tsx`: торкання поза «⋯» закриває меню.
+- T4 (AC6, AC8) `Locate.test.tsx`: мок `navigator.geolocation` — успіх, відмова, таймаут, без API, поза рамкою, стеження вмик/вимик; жодного fetch / XHR / sendBeacon / localStorage / console. e2e `locate.spec.ts` (Playwright `geolocation`), `mobile.spec.ts` AC2.
+
 ## Відкриті питання
 | Питання | Хто | Коли | План Б |
 |---|---|---|---|

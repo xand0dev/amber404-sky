@@ -41,6 +41,7 @@ for (const [w, h] of [[375, 812], [400, 800]]) {
       expect(drone!.y + drone!.height).toBeLessThanOrEqual(h);
     });
 
+    // #161: «Де я» — у ряду; 📷 на екрані < 420 px переходить у «⋯» (9 кнопок по 44 px не вміщуються).
     test('AC2: один ряд інструментів ≤ 48 px над картою, кнопки ≥ 44 px, решта в «⋯»', async ({ page }) => {
       await open(page);
       const bar = page.getByRole('toolbar', { name: 'Інструменти карти' });
@@ -48,7 +49,7 @@ for (const [w, h] of [[375, 812], [400, 800]]) {
       const m = await box(page, 'canvas.map');
       expect(b!.height).toBeLessThanOrEqual(48);
       expect(b!.y + b!.height).toBeLessThanOrEqual(m.y + 0.5);
-      for (const name of ['Малювання', 'Підкладка', 'Знімок карти', 'Наблизити', 'Віддалити', 'До зони', 'Україна', 'Ще інструменти']) {
+      for (const name of ['Де я', 'Малювання', 'Підкладка', 'Наблизити', 'Віддалити', 'До зони', 'Україна', 'Ще інструменти']) {
         const btn = bar.getByRole('button', { name, exact: true });
         await expect(btn, name).toBeVisible();
         const bb = (await btn.boundingBox())!;
@@ -61,6 +62,7 @@ for (const [w, h] of [[375, 812], [400, 800]]) {
       await expect(page.getByRole('button', { name: 'Зона', exact: true })).toBeHidden();
       await bar.getByRole('button', { name: 'Ще інструменти' }).click();
       await expect(page.getByRole('button', { name: 'Зона', exact: true })).toBeVisible();
+      await expect(page.getByRole('button', { name: 'Знімок карти', exact: true })).toBeVisible();
     });
 
     test('AC3: легенда — смужка ≤ 32 px унизу карти', async ({ page }) => {
