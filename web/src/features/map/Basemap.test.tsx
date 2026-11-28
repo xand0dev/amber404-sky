@@ -21,7 +21,9 @@ describe('Given меню «Підкладка» (AC1)', () => {
   it('Без / Рельєф / Супутник / Своя карта; типово — Рельєф (issue #167)', () => {
     show(); openMenu();
     const g = screen.getByRole('radiogroup', { name: 'Підкладка' });
-    expect([...g.querySelectorAll('label')].map((l) => l.textContent)).toEqual(['Без', 'Рельєф', 'Супутник', 'Своя карта', '🛰 Супутник 10 м', '🗺 Вулиці']);
+    expect([...g.querySelectorAll('label')].map((l) => l.textContent)).toEqual(['Без', 'Рельєф', 'Супутник', 'Своя карта', 'Супутник 10 м', 'Вулиці']);
+    // Issue #192: онлайн-пункти мають іконку — inline-SVG, не емодзі.
+    expect([...g.querySelectorAll('label.online svg[aria-hidden="true"]')]).toHaveLength(2);
     expect(screen.getByRole('radio', { name: 'Рельєф' })).toHaveProperty('checked', true);
   });
   it('вибір зберігається в браузері й підхоплюється після перезавантаження', () => {

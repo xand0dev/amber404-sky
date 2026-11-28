@@ -115,7 +115,7 @@ describe('#151: вердикт людською мовою й «Що це?»', (
   it('Given CAUTION Then фраза з дроном і висотою одразу під заголовком', () => {
     view();
     const e = screen.getByTestId('verdict-explain');
-    expect(e.textContent).toBe('Обережно: «FPV 7″» на 50 м — погода близько до лімітів дрона. Причини нижче.');
+    expect(e.textContent).toBe('Обережно: «FPV 7″» на 50 м. Погода близько до лімітів дрона. Причини нижче.');
     // Одразу після заголовка точки — видно без прокрутки панелі.
     expect(e.previousElementSibling?.className).toBe('pointhead');
   });
@@ -124,7 +124,7 @@ describe('#151: вердикт людською мовою й «Що це?»', (
     expect(screen.getByTestId('verdict-explain').textContent).toMatch(/^Можна летіти: погода в межах лімітів .* Це не гарантія безпеки\.$/);
     cleanup();
     view({ verdict: { level: 'NO-DATA', reasons: ['Немає даних про вітер'] } });
-    expect(screen.getByTestId('verdict-explain').textContent).toBe('Немає даних для вердикту — це не дозвіл летіти.');
+    expect(screen.getByTestId('verdict-explain').textContent).toBe('Немає даних для вердикту. Це не дозвіл летіти.');
   });
   it('«Що це?» згорнуто й пояснює, з чого вердикт; англійською', () => {
     const { container } = view({ lang: 'en', verdict: { level: 'NO-GO', reasons: ['x'] } });

@@ -55,7 +55,7 @@ export function WindProfileView({ data, prof, altM, hourLabel, lang }: WindProfi
         <text className="wplbl" x={L - 4} y={T + 26} textAnchor="end">{m}</text>
       </svg>
       <p className="pnote" data-testid="wp-summary">
-        {data.shear.length ? t('pr.shears', { list: data.shear.map((s) => `${s.altM} ${m} — ${s.deg}°`).join(', ') }) : t('pr.noShear')}
+        {data.shear.length ? t('pr.shears', { list: data.shear.map((s) => `${s.altM} ${m}: ${s.deg}°`).join(', ') }) : t('pr.noShear')}
         {data.cb != null && ` · ${t('pr.cloud', { cb: Math.round(data.cb) })}`}
       </p>
       <p className="pnote">{t('pr.legend')}</p>

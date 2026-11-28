@@ -73,7 +73,7 @@ describe('T3 §7.5a: графік на екрані', () => {
   it('підпис «зсув N°» і текстовий підсумок', () => {
     view();
     expect(screen.getByTestId('wp-shear').textContent).toBe('зсув 60°');
-    expect(screen.getByTestId('wp-summary').textContent).toMatch(/^Зсув вітру: 250 м — 60° · хмари від \d+ м$/);
+    expect(screen.getByTestId('wp-summary').textContent).toMatch(/^Зсув вітру: 250 м: 60° · хмари від \d+ м$/);
     expect(screen.getByRole('img', { name: /Профіль вітру в точці, година сб 10:00: від 2.0 до 12.0 м\/с, ліміт дрона 10 м\/с/ })).toBeTruthy();
   });
   it('без зсуву — «немає»', () => {

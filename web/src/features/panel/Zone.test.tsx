@@ -89,7 +89,7 @@ describe('§7.5b: картка зони', () => {
   });
   it('Then час польоту з розкладкою (холод, вантаж) і резерв 20%', () => {
     view();
-    expect(screen.getByTestId('zone-time').textContent).toMatch(/паспорт 30 хв × холод 1.00 × вантаж 1.00 = 30.0 хв · з резервом 20% — 24.0 хв/);
+    expect(screen.getByTestId('zone-time').textContent).toMatch(/паспорт 30 хв × холод 1.00 × вантаж 1.00 = 30.0 хв · з резервом 20%: 24.0 хв/);
   });
   it('Given обрив на ліміті Then червоні точки і підпис', () => {
     view(zoneFor(P, 50, 30, 20, () => [0, -13], 'roundtrip'));
@@ -136,7 +136,7 @@ describe('uk/en: розкладка часу польоту (§7.3a)', () => {
     view(z, { lang: 'en', hourLabel: dayHM('2026-11-28T08:00:00Z', 'en') });
     expect(screen.getByRole('heading').textContent).toBe('Flight zone · 120 m');
     expect(screen.getAllByTestId('zone-ring')[0].textContent).toMatch(/ km$/);
-    expect(screen.getByTestId('zone-time').textContent).toBe('T = datasheet 30 min × cold 1.00 × payload 1.00 = 30.0 min · with 20% reserve — 24.0 min');
+    expect(screen.getByTestId('zone-time').textContent).toBe('T = datasheet 30 min × cold 1.00 × payload 1.00 = 30.0 min · with 20% reserve: 24.0 min');
     expect(screen.getByRole('region', { name: 'Flight zone' }).textContent).not.toMatch(/[А-Яа-яІіЇїЄє]/);
   });
 });
@@ -157,7 +157,7 @@ describe('Given картка зони (issue #87)', () => {
     expect(det.open).toBe(false);
     expect(det.querySelector('summary')?.textContent).toBe('Деталі');
     expect(det.contains(screen.getByTestId('zone-time'))).toBe(true);
-    expect(det.contains(screen.getByText(/Коефіцієнти — assumption/))).toBe(true);
+    expect(det.contains(screen.getByText(/Коефіцієнти: assumption/))).toBe(true);
     expect(det.contains(screen.getByText(/Найдалі/))).toBe(false);
   });
 });

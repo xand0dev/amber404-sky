@@ -4,6 +4,7 @@ import { useApp } from '../../app/state';
 import { useT } from '../../app/lang';
 import { useVerdicts } from '../../app/useVerdict';
 import { useView } from '../../app/view/view';
+import { Icon } from '../../ui/Icon';
 import { InBar, useMapWrap } from '../../ui/MapFrame';
 import { composeSnapshot } from './compose';
 import { attribution } from './basemaps';
@@ -60,7 +61,7 @@ export function SnapButton({ reduce }: { reduce: boolean }) {
     <>
       <InBar slot={narrow ? 'more' : 'bar'}>
         <button ref={ref} type="button" className="snapbtn" aria-label={tx.label} title={tx.label} disabled={busy} onClick={() => void snap()}>
-          <span aria-hidden="true">📷</span>{narrow && <span aria-hidden="true"> {tx.label}</span>}
+          <Icon name="camera" size={20} />{narrow && <span aria-hidden="true"> {tx.label}</span>}
         </button>
       </InBar>
       <p role="status" className="snapmsg" hidden={!msg}>{msg}</p>

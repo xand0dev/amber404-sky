@@ -2,6 +2,9 @@
 import { expect, test } from '@playwright/test';
 import { readFileSync } from 'node:fs';
 
+// Онбординг (#166) накриває карту при першому відкритті — як в інших e2e, вважаємо його пройденим.
+test.beforeEach(({ page }) => page.addInitScript(() => localStorage.setItem('amber404.tour', '1')));
+
 test.describe('1280×800', () => {
   test.use({ viewport: { width: 1280, height: 800 } });
 

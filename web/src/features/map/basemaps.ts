@@ -59,7 +59,7 @@ export const BASE_NAME: Record<Lang, Record<BaseId, string>> = {
 // Тексти атрибуції — з ліцензій у docs/SOURCES.md (F2: cop-dem, s2cloudless, ne-water).
 const ATTR: Record<Lang, Record<BaseId, string> & { water: string }> = {
   uk: {
-    none: '', own: 'Своя карта — лише у вашому браузері',
+    none: '', own: 'Своя карта: лише у вашому браузері',
     relief: 'Рельєф: Copernicus DEM GLO-90 © DLR e.V., © Airbus DS, програма Copernicus ЄС; Open-Meteo',
     satellite: 'Sentinel-2 cloudless by EOX — Copernicus Sentinel data 2020',
     satlive: 'Sentinel-2 cloudless 2020 by EOX — Copernicus Sentinel data 2020 · онлайн',
@@ -67,7 +67,7 @@ const ATTR: Record<Lang, Record<BaseId, string> & { water: string }> = {
     water: 'Ріки й озера: Natural Earth',
   },
   en: {
-    none: '', own: 'Own map — only in your browser',
+    none: '', own: 'Own map: only in your browser',
     relief: 'Relief: Copernicus DEM GLO-90 © DLR e.V., © Airbus DS, EU Copernicus programme; Open-Meteo',
     satellite: 'Sentinel-2 cloudless by EOX — Copernicus Sentinel data 2020',
     satlive: 'Sentinel-2 cloudless 2020 by EOX — Copernicus Sentinel data 2020 · online',
