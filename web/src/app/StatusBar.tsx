@@ -43,16 +43,17 @@ export function StatusBar() {
   const nowMs = useNow();
   const online = useOnline();
   const [open, setOpen] = useState(false);
+  const [det, setDet] = useState(false);
   const age = shortAge(data.meta.generatedAt, nowMs, lang);
   const bad = data.meta.sources.some((x) => x.status !== 'ok');
   const warn = age.stale || bad || !online;
   const last = data.meta.times[data.meta.times.length - 1];
   useEffect(() => {
-    if (!open) return;
-    const esc = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
+    if (!open && !det) return;
+    const esc = (e: KeyboardEvent) => { if (e.key === 'Escape') { setOpen(false); setDet(false); } };
     document.addEventListener('keydown', esc);
     return () => document.removeEventListener('keydown', esc);
-  }, [open]);
+  }, [open, det]);
   return (
     <header className={`status lv-${now.level}`} aria-live="polite">
       <NightToggle />
@@ -61,14 +62,16 @@ export function StatusBar() {
         <div className="word">{t(`lv.${now.level}`)}</div>
         {data.meta.mock && <span className="badge mock">MOCK</span>}
         <button type="button" className={warn ? 'srcbtn warn' : 'srcbtn'} aria-expanded={open} aria-controls="st-src"
-          aria-label={`${L.sources} · ${age.text}`} onClick={() => setOpen(!open)}>
+          aria-label={`${L.sources} · ${age.text}`} onClick={() => { setOpen(!open); setDet(false); }}>
           <span aria-hidden="true">{warn ? '⚠' : 'ⓘ'}</span> {age.text}
         </button>
       </div>
-      <details className="st-more">
-        <summary><span className="why">{now.reasons[0]}</span><span className="st-det">{L.details}</span></summary>
-        <div className="sub">{profileName(prof, lang)} · {s.altM} {t('unit.m')} · {humanWindow(window, last, nowMs, lang)}</div>
-        {now.reasons.length > 1 && <ul className="st-reasons">{now.reasons.slice(1).map((r) => <li key={r}>{r}</li>)}</ul>}
+      <details className="st-more" open={det} onToggle={(e) => { const o = e.currentTarget.open; setDet(o); if (o) setOpen(false); }}>
+        <summary><span className="why">{now.reasons[0]}</span><span className="st-det"><span className="st-det-t">{L.details}</span></span></summary>
+        <div className="st-body">
+          <div className="sub">{profileName(prof, lang)} · {s.altM} {t('unit.m')} · {humanWindow(window, last, nowMs, lang)}</div>
+          {now.reasons.length > 1 && <ul className="st-reasons">{now.reasons.slice(1).map((r) => <li key={r}>{r}</li>)}</ul>}
+        </div>
       </details>
       {open && (
         <div id="st-src" className="srcpop" role="region" aria-label={L.sources}>

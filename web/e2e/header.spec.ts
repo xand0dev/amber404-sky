@@ -19,6 +19,18 @@ for (const [w, h] of [[375, 812], [400, 800]]) {
       expect(why.height).toBeLessThanOrEqual(24);
     });
 
+    test('AC1: рядок «чому» не обрізаний — «Ніч» і UK/EN не забирають його місце', async ({ page }) => {
+      await open(page);
+      const word = (await page.locator('header.status .word').boundingBox())!;
+      for (const sel of ['header.status .nightbtn', 'header.status .langsw']) {
+        const b = (await page.locator(sel).boundingBox())!;
+        expect(Math.abs(b.y + b.height / 2 - (word.y + word.height / 2)), sel).toBeLessThanOrEqual(12);
+        expect(b.x + b.width, sel).toBeLessThanOrEqual(w);
+      }
+      const clipped = await page.locator('header.status .why').evaluate((e) => e.scrollWidth > e.clientWidth + 1);
+      expect(clipped).toBe(false);
+    });
+
     test('AC2: формула зони й assumption не видно на першому екрані без «Деталі»', async ({ page }) => {
       await open(page);
       for (const re of [/assumption/, /паспорт/, /nodata/]) {
@@ -40,3 +52,31 @@ for (const [w, h] of [[375, 812], [400, 800]]) {
     });
   });
 }
+
+test.describe('1280×800', () => {
+  test.use({ viewport: { width: 1280, height: 800 } });
+
+  test('AC1: на десктопі рядок «чому» не обрізаний', async ({ page }) => {
+    await open(page);
+    const clipped = await page.locator('header.status .why').evaluate((e) => e.scrollWidth > e.clientWidth + 1);
+    expect(clipped).toBe(false);
+  });
+
+  test('AC2: «Деталі» відкриваються під шапкою і видно повністю', async ({ page }) => {
+    await open(page);
+    const hb = (await page.locator('header.status').boundingBox())!;
+    const sum = page.locator('header.status .st-more summary');
+    const before = (await sum.boundingBox())!;
+    await sum.click();
+    const after = (await sum.boundingBox())!;
+    expect(after.y).toBeCloseTo(before.y, 0);
+    expect(after.y).toBeGreaterThanOrEqual(hb.y);
+    const sub = page.locator('header.status .st-more .sub');
+    await expect(sub).toBeVisible();
+    const sb = (await sub.boundingBox())!;
+    // Над картою, а не обрізано шапкою: елемент у точці — сам підпис.
+    const hit = await page.evaluate(([x, y]) => !!document.elementFromPoint(x, y)?.closest('.st-more'), [sb.x + 4, sb.y + sb.height / 2]);
+    expect(hit).toBe(true);
+    expect((await page.locator('header.status').boundingBox())!.height).toBe(hb.height);
+  });
+});

@@ -65,8 +65,8 @@ for (const [w, h] of [[1024, 768], [1280, 800], [1440, 900], [1920, 1080]]) {
       const hd = await box(page, 'header.status');
       expect(hd.height).toBeLessThanOrEqual(72);
       expect(hd.width).toBeCloseTo(w, 0);
-      // Вердикт, кнопка «Ніч» і UK/EN в одному рядку.
-      for (const sel of ['header.status .word', 'header.status .nightbtn', 'header.status .langsw', 'header.status .badges']) {
+      // Вердикт, MOCK, «Джерела» (бейджі зібрано в неї, #87), «Ніч» і UK/EN в одному рядку.
+      for (const sel of ['header.status .word', 'header.status .badge.mock', 'header.status .srcbtn', 'header.status .nightbtn', 'header.status .langsw']) {
         const b = await box(page, sel);
         expect(b.y, sel).toBeGreaterThanOrEqual(hd.y);
         expect(b.y + b.height, sel).toBeLessThanOrEqual(hd.y + hd.height + 0.5);
