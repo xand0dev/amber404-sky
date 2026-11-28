@@ -6,9 +6,12 @@ import { createPortal } from 'react-dom';
 import { useT } from '../lang';
 import { InBar } from '../../ui/MapFrame';
 import { TOUR_STEPS, markTourSeen, placeCard, tourSeen, type Rect } from '../../core/tour';
+import { isDemoUrl } from '../../core/demo';
 import './onboarding.css';
 
 const store = () => (typeof localStorage === 'undefined' ? null : localStorage);
+// Issue #169: ?demo=1 — одразу демо-тур, онбординг першого відкриття його не перекриває (прапорець не ставимо).
+const demo = () => typeof location !== 'undefined' && isDemoUrl(location.search);
 const ON = 'tour-on';
 
 /** Перший видимий елемент зі списку селекторів кроку; якщо видимих немає — перший знайдений. */
@@ -19,7 +22,7 @@ function target(sels: readonly string[]): Element | null {
 
 export function Onboarding() {
   const { t } = useT();
-  const [step, setStep] = useState<number | null>(() => { const s = store(); return s && tourSeen(s) ? null : 0; });
+  const [step, setStep] = useState<number | null>(() => { const s = store(); return (s && tourSeen(s)) || demo() ? null : 0; });
   const back = useRef<HTMLElement | null>(null);
   const open = (n: number) => { back.current = document.activeElement as HTMLElement | null; setStep(n); };
   const close = useCallback(() => {

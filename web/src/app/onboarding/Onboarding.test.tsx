@@ -81,6 +81,13 @@ describe('Given онбординг уже пройдено', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Як це працює' }));
     expect(dialog()!.textContent).toContain('1 з 3');
   });
+  it('Given ?demo=1 Then онбординг не перекриває демо-тур (#169)', () => {
+    localStorage.removeItem(TOUR_KEY);
+    window.history.replaceState(null, '', '/?demo=1');
+    view();
+    expect(dialog()).toBeNull();
+    window.history.replaceState(null, '', '/');
+  });
   it('англійською — через useT', () => {
     localStorage.setItem(LANG_KEY, 'en');
     view();
