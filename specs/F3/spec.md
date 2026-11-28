@@ -77,6 +77,15 @@
 - T7 вбудований Roboto Condensed 700 (OFL, кирилиця + латиниця, 24 КБ) — слово вердикту однакове на Android / Windows / Linux.
 - T8 (AC4) `specs/F3/design.md`, `img/88-palette.png`; скріни до/після `img/88-*`.
 
+**#89 — Lighthouse і прогін демо на телефоні, топ-5 правок:**
+- T1 (AC1) Lighthouse mobile на живому сайті: Performance 52, Accessibility 100. Основне гальмо — `profile.json` (1.3 МБ gzip) → issue #136 (`contract`, F1).
+- T2 (AC2) 320 px без горизонтальної прокрутки: `.mapbarwrap{min-width:0}`, «⋯» прилипає праворуч (`ui/mapframe.css`); e2e `phone89.spec.ts`.
+- T3 (AC1, AC2) рельєф і супутник вантажаться, коли браузер вільний, а не на старті; обрана — одразу (`map/Basemap.tsx`).
+- T4 (AC3) ніч: поле, легенда, кордони, ріки, підписи, маркер і стрілки — лише червоні (`layers/colors.ts` `nightRamp`, `map/MapView.tsx`, `basemaps.ts`, `arrows.ts`, `basemap.css`); e2e — пікселі canvas.
+- T5 (AC2) «До зони» без зони — щонайменше ±20 км навколо точки (`app/view/ViewControls.tsx`, assumption).
+- T6 (AC2) підписи міст без накладань і не під маркером (`map/labels.ts`).
+- T7 скріни до/після `img/89-*` (емуляція Pixel 7 / iPhone SE, день / ніч / en), звіт `img/89-lighthouse-before.png`.
+
 ## Відкриті питання
 | Питання | Хто | Коли | План Б |
 |---|---|---|---|

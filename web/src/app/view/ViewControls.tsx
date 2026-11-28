@@ -13,6 +13,9 @@ const TAP_PX = 6;
 /** Поля навколо контуру зони — 15% з кожного боку (issue #64). */
 const ZONE_PAD = 0.15;
 const BTN_FACTOR = 2;
+/** «До зони» показує щонайменше ±MIN_KM навколо точки: коли зони немає (вітер понад ліміт) чи вона крихітна, карта
+ *  не наближається до суцільного кольору без кордонів і міст (issue #89). assumption — видно місто й сусідні дороги. */
+const MIN_KM = 20;
 
 type XY = [number, number];
 
@@ -85,7 +88,9 @@ export function ViewControls() {
   const toZone = () => {
     if (!z) return;
     const [W, H] = size();
-    setView(fitView([[z.lat, z.lon], ...z.points.map((q): XY => [q.lat, q.lon])], W, H, ZONE_PAD));
+    const dLat = MIN_KM / 111, dLon = MIN_KM / (111 * Math.cos((z.lat * Math.PI) / 180));
+    const box: XY[] = [[z.lat - dLat, z.lon - dLon], [z.lat + dLat, z.lon + dLon]];
+    setView(fitView([[z.lat, z.lon], ...box, ...z.points.map((q): XY => [q.lat, q.lon])], W, H, ZONE_PAD));
   };
 
   return (

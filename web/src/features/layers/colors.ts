@@ -43,18 +43,32 @@ export function ramp(t: number): RGBA {
   return [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f, a[2] + (b[2] - a[2]) * f, 199];
 }
 
-export function layerRGBA(layer: LayerId, v: number | string | null): RGBA {
-  if (v == null) return NODATA_RGBA;
+// Нічний режим (#36, #89): лише червоний канал. «Поганість» 0…1 → яскравість червоного: добре — темне, погано — яскраве.
+const NIGHT_NODATA: RGBA = [60, 8, 5, 128];
+/** Уночі «поганість» класів: МОЖНА < ОБЕРЕЖНО < НЕ МОЖНА; обмерзання так — погано. */
+const NIGHT_CLASS: Record<string, number> = { GO: 0.1, CAUTION: 0.55, 'NO-GO': 1, '1': 0.9, '0': 0.05 };
+/** Червоний колір за «поганістю» t (G і B ≤ R/2 — нічний зір). */
+export function nightRamp(t: number, a = 199): RGBA {
+  const r = 70 + 185 * Math.max(0, Math.min(1, t));
+  return [r, r * 0.12, r * 0.08, a];
+}
+
+export function layerRGBA(layer: LayerId, v: number | string | null, night = false): RGBA {
+  if (v == null) return night ? NIGHT_NODATA : NODATA_RGBA;
   const sc = SCALES[layer];
-  if (sc.kind === 'classes') return sc.items.find((i) => i.value === v)?.rgba ?? NODATA_RGBA;
-  if (typeof v !== 'number') return NODATA_RGBA;
+  if (sc.kind === 'classes') {
+    const it = sc.items.find((i) => i.value === v);
+    if (!it || (night && v === 'NO-DATA')) return night ? NIGHT_NODATA : NODATA_RGBA;
+    return night ? nightRamp(NIGHT_CLASS[String(v)] ?? 0.5, it.rgba[3]) : it.rgba;
+  }
+  if (typeof v !== 'number') return night ? NIGHT_NODATA : NODATA_RGBA;
   const t = (v - sc.min) / (sc.max - sc.min);
-  return ramp(sc.lowBad ? 1 - t : t);
+  return night ? nightRamp(sc.lowBad ? 1 - t : t) : ramp(sc.lowBad ? 1 - t : t);
 }
 
 export const css = ([r, g, b, a]: RGBA) => `rgba(${Math.round(r)},${Math.round(g)},${Math.round(b)},${(a / 255).toFixed(2)})`;
 
 /** Сумісність зі старим API: колір як CSS-рядок. */
-export function layerColor(layer: LayerId, v: number | string | null): string {
-  return css(layerRGBA(layer, v));
+export function layerColor(layer: LayerId, v: number | string | null, night = false): string {
+  return css(layerRGBA(layer, v, night));
 }

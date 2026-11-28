@@ -1,11 +1,14 @@
 /* Issue #85: тонкий ряд інструментів над картою (44 px кнопки + 2 px поля = 48 px), «⋯» — праворуч.
    Порядок фіксований через order, бо кнопки приходять порталами з різних компонентів. Токени — #88. */
-.mapbarwrap{position:relative;z-index:4}
+/* min-width:0 — інакше ширина восьми кнопок (374 px) розпирає сторінку на 320 px (#89); ряд прокручується всередині. */
+.mapbarwrap{position:relative;z-index:4;min-width:0}
 .mapbar{display:flex;align-items:center;gap:2px;height:48px;padding:2px var(--sp-1);overflow-x:auto;overflow-y:hidden;background:var(--panel);border-bottom:1px solid var(--rule)}
 .mapbar>*{flex:0 0 auto}
 .mapbar button{min-width:var(--btn-h);padding:0 var(--sp-2);line-height:1}
 .mapbar .drawbtn{order:1}.mapbar .ovbtn{order:2}.mapbar .snapbtn{order:3}.mapbar .viewctl{order:4}
 .mapbar .morebtn{order:9;margin-left:auto;padding:0;font-size:var(--fs-xl)}
+/* «⋯» лишається біля правого краю, навіть коли ряд прокручено (#89). */
+.mapbar .morebtn{position:sticky;right:0;z-index:1}
 .mapbar button[aria-expanded=true]{background:var(--ink);color:var(--on-primary)}
 /* Іконка завжди, підпис — лише коли є місце; на вузькому екрані підпис лишається доступним ім'ям кнопки. */
 .tb-ico{font-size:var(--fs-xl)}.tb-txt{margin-left:var(--sp-1)}

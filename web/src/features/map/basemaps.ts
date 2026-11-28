@@ -86,11 +86,11 @@ export function waterLines(geo: unknown): WaterLine[] {
   return out;
 }
 
-/** Ріки й озера тонкою лінією (поверх підкладки й поля, під частинками вітру). */
-export function drawWater(ctx: CanvasRenderingContext2D, lines: WaterLine[], project: Projection['project']): void {
+/** Ріки й озера тонкою лінією (поверх підкладки й поля, під частинками вітру). Уночі — колір теми (#89). */
+export function drawWater(ctx: CanvasRenderingContext2D, lines: WaterLine[], project: Projection['project'], color = 'rgba(120,190,235,.85)'): void {
   if (!lines.length) return;
   ctx.save();
-  ctx.strokeStyle = 'rgba(120,190,235,.85)'; ctx.lineWidth = 1; ctx.lineJoin = 'round';
+  ctx.strokeStyle = color; ctx.lineWidth = 1; ctx.lineJoin = 'round';
   ctx.beginPath();
   for (const l of lines) l.forEach(([lo, la], i) => { const [x, y] = project(la, lo); if (i) ctx.lineTo(x, y); else ctx.moveTo(x, y); });
   ctx.stroke();

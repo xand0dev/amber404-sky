@@ -1,6 +1,7 @@
 // F3: легенда шару зі шкалою SPEC §7.6 — колір і текст (§7.10).
 import { useApp } from '../../app/state';
 import { useT } from '../../app/lang';
+import { useTheme } from '../../app/theme';
 import type { Key } from '../../core';
 import { SCALES, css, layerRGBA, type Scale } from './colors';
 import './legend.css';
@@ -14,6 +15,7 @@ const itemKey = (i: Item): Key => (typeof i.value === 'string' ? `lv.${i.value}`
 export function Legend() {
   const { s } = useApp();
   const { t } = useT();
+  const { night } = useTheme(); // уночі — ті самі червоні кольори, що й поле (#89)
   const sc = SCALES[s.layer];
   const name = t(`layer.${s.layer}`);
   const title = s.layer === 'wind' ? `${name} · ${s.altM} ${t('unit.m')}` : name;
@@ -24,13 +26,13 @@ export function Legend() {
         // Смужка в один рядок (issue #85): мінімум · градієнт · максимум з одиницею; середину ховає CSS, щоб не тіснити смужку.
         <div className="lg-ramp">
           <span className="lg-lo">{num(sc.min)}</span>
-          <div className="lg-bar" aria-hidden="true" style={{ background: `linear-gradient(90deg, ${[0, 0.25, 0.5, 0.75, 1].map((t) => css(layerRGBA(s.layer, sc.min + (sc.max - sc.min) * t))).join(',')})` }} />
+          <div className="lg-bar" aria-hidden="true" style={{ background: `linear-gradient(90deg, ${[0, 0.25, 0.5, 0.75, 1].map((t) => css(layerRGBA(s.layer, sc.min + (sc.max - sc.min) * t, night))).join(',')})` }} />
           <span className="lg-mid">{num((sc.min + sc.max) / 2)}</span>
           <span className="lg-hi">{`${num(sc.max)} ${UNIT[sc.unit] ? t(UNIT[sc.unit]) : sc.unit}`}</span>
         </div>
       ) : (
         <ul className="lg-classes">
-          {sc.items.map((i) => <li key={String(i.value)}><i style={{ background: css(i.rgba) }} aria-hidden="true" />{t(itemKey(i))}</li>)}
+          {sc.items.map((i) => <li key={String(i.value)}><i style={{ background: css(layerRGBA(s.layer, i.value, night)) }} aria-hidden="true" />{t(itemKey(i))}</li>)}
         </ul>
       )}
     </figure>
