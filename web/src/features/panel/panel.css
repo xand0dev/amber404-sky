@@ -69,3 +69,12 @@ details.psec>summary{min-height:var(--btn-h);display:flex;align-items:center;cur
 .clsvg{display:block;width:100%;max-width:360px;height:auto;margin:var(--sp-2) 0;background:var(--base)}
 .clsvg .clbar{fill:var(--go);fill-opacity:.55}.clsvg .clbar.on{fill:var(--cau);fill-opacity:1}
 .clsvg .cllbl{font-size:var(--fs-s);fill:var(--dim)}.clsvg .cllbl.on{fill:var(--ink);font-weight:700}
+/* Погода по годинах (F3-AC3) */
+.whtable{border-collapse:separate;border-spacing:2px;font-size:var(--fs-s)}
+.whtable th{font-weight:600;color:var(--dim);padding:0 var(--sp-1);white-space:nowrap;text-align:left}
+.whtable tbody th{position:sticky;left:0;background:var(--panel)}
+.whtable thead th.on{color:var(--ink)}
+.whtable .whc{min-width:40px;height:32px;text-align:center;background:var(--base);font-weight:600;white-space:nowrap}
+.whtable .whc.on{outline:2px solid var(--ink);outline-offset:-2px}
+.whtable .whc.no{background:var(--no);color:var(--on-lv)}.whtable .whc.cau{background:var(--cau);color:var(--on-lv)}
+.whtable .whc .a{display:inline-block;margin-left:2px}.whtable .whc small{font-size:var(--fs-s);color:var(--dim)}

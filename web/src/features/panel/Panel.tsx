@@ -17,6 +17,7 @@ import { pt } from './strings';
 import { TerrainView, useRelief } from './Terrain';
 import { WindProfile } from './WindProfile';
 import { Climate } from './Climate';
+import { WeatherHours } from './WeatherHours';
 import { cellRange, terrainAt } from './relief';
 import './panel.css';
 
@@ -112,6 +113,7 @@ export function Panel() {
       <WindProfile prof={prof} hourLabel={time ? dayHM(time, lang) : '—'} />
       <Climate prof={prof} timeIso={time} />
       <HeightTable prof={prof} />
+      <WeatherHours prof={prof} />
       <Route />
       <OwnDrone base={prof} />
     </section>
