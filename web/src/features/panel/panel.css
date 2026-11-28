@@ -64,3 +64,8 @@ details.psec>summary{min-height:var(--btn-h);display:flex;align-items:center;cur
 .wpsvg .wplimit{stroke:var(--no);stroke-width:1.5}.wpsvg .wplimtxt{fill:var(--no-ink)}
 .wpsvg .wpline{fill:none;stroke:var(--cau);stroke-width:2}.wpsvg .wparrow{font-size:var(--fs-m);font-weight:700;fill:var(--ink)}
 .wpsvg .wpalt{stroke:var(--ink);stroke-width:3}.wpsvg .wpshear{font-size:var(--fs-s);font-weight:700;fill:var(--cau-ink)}
+/* Клімат ERA5 (§7.8) */
+.climate .clmain{font-weight:700;margin-top:var(--sp-1)}
+.clsvg{display:block;width:100%;max-width:360px;height:auto;margin:var(--sp-2) 0;background:var(--base)}
+.clsvg .clbar{fill:var(--go);fill-opacity:.55}.clsvg .clbar.on{fill:var(--cau);fill-opacity:1}
+.clsvg .cllbl{font-size:var(--fs-s);fill:var(--dim)}.clsvg .cllbl.on{fill:var(--ink);font-weight:700}
