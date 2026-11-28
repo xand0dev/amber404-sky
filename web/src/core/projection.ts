@@ -88,3 +88,16 @@ export function gestureStep(v: View, W: number, H: number, prev: XY[], next: XY[
   const z = d0 > 0 && d1 > 0 ? zoomAt(v, W, H, d1 / d0, mx0, my0) : v;
   return panBy(z, W, H, mx1 - mx0, my1 - my0);
 }
+
+/** Ease-out (кубічна): швидкий старт, м'яка зупинка; t поза [0, 1] обрізається (issue #174). */
+export function easeOut(t: number): number {
+  const u = clamp(t, 0, 1);
+  return 1 - (1 - u) ** 3;
+}
+
+/** Проміжний вигляд між a і b на частці k ∈ [0, 1]: центр — лінійно, масштаб — у log (рівний темп наближення). */
+export function lerpView(a: View, b: View, k: number): View {
+  if (k <= 0) return a;
+  if (k >= 1) return b;
+  return { lat: a.lat + (b.lat - a.lat) * k, lon: a.lon + (b.lon - a.lon) * k, zoom: a.zoom * (b.zoom / a.zoom) ** k };
+}
