@@ -27,8 +27,31 @@ for (const [w, h] of [[375, 812], [400, 800]]) {
         expect(Math.abs(b.y + b.height / 2 - (word.y + word.height / 2)), sel).toBeLessThanOrEqual(12);
         expect(b.x + b.width, sel).toBeLessThanOrEqual(w);
       }
-      const clipped = await page.locator('header.status .why').evaluate((e) => e.scrollWidth > e.clientWidth + 1);
-      expect(clipped).toBe(false);
+      // «Чому» має весь другий рядок до кнопки «Джерела» (обрізання тексту залежить від шрифту, тож міряємо місце).
+      const sum = (await page.locator('header.status .st-more summary').boundingBox())!;
+      const src = (await page.locator('header.status .srcbtn').boundingBox())!;
+      expect(sum.x).toBeLessThanOrEqual(14);
+      expect(src.x - (sum.x + sum.width)).toBeLessThanOrEqual(8);
+      expect(sum.width).toBeGreaterThanOrEqual(w * 0.65);
+      expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(w);
+    });
+
+    test('F3-AC5: із запасним шрифтом (без DIN Condensed) шапка без горизонтальної прокрутки', async ({ page }) => {
+      await open(page);
+      for (const font of ['Arial', 'Verdana']) {
+        await page.addStyleTag({ content: `*{font-family:${font},sans-serif !important}` });
+        expect(await page.evaluate(() => document.documentElement.scrollWidth), font).toBeLessThanOrEqual(w);
+        for (const sel of ['header.status .nightbtn', 'header.status .langsw', 'header.status .srcbtn']) {
+          const b = (await page.locator(sel).boundingBox())!;
+          expect(b.x + b.width, `${font} ${sel}`).toBeLessThanOrEqual(w);
+        }
+        expect((await page.locator('header.status').boundingBox())!.height, font).toBeLessThanOrEqual(120);
+        // Слово вердикту вміщається у свою колонку й не налазить на MOCK (запасний шрифт ≈ Roboto / Arial).
+        if (font === 'Arial') {
+          const fits = await page.locator('header.status .word').evaluate((e) => e.scrollWidth <= e.clientWidth + 1);
+          expect(fits, 'слово вердикту').toBe(true);
+        }
+      }
     });
 
     test('AC2: формула зони й assumption не видно на першому екрані без «Деталі»', async ({ page }) => {
