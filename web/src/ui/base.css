@@ -28,3 +28,5 @@ button:focus-visible,select:focus-visible,input:focus-visible,canvas:focus-visib
 
 /* Слово вердикту — вузький шрифт. */
 .word{font:700 var(--fs-display)/1 var(--font-display);letter-spacing:.02em}
+/* Issue #192: inline-SVG іконки в кнопках — по центру рядка, не стискаються. */
+.icon{display:inline-block;flex:none;vertical-align:middle}

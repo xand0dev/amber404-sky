@@ -30,9 +30,9 @@ describe('Given перший візит', () => {
   it('When «Далі» двічі Then картки 2 і 3, на останній — «Почати»', () => {
     view();
     fireEvent.click(screen.getByRole('button', { name: 'Далі' }));
-    expect(dialog()!.textContent).toContain('Обери дрон і висоту — карта покаже МОЖНА / ОБЕРЕЖНО / НЕ МОЖНА');
+    expect(dialog()!.textContent).toContain('Обери дрон і висоту: карта покаже МОЖНА / ОБЕРЕЖНО / НЕ МОЖНА');
     fireEvent.click(screen.getByRole('button', { name: 'Далі' }));
-    expect(dialog()!.textContent).toContain('Тапни будь-яку точку або ⌖ — вердикт, причини й вікно польоту');
+    expect(dialog()!.textContent).toContain('Тапни будь-яку точку або ⌖: вердикт, причини й вікно польоту');
     expect(screen.queryByRole('button', { name: 'Далі' })).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Почати' }));
     expect(dialog()).toBeNull();

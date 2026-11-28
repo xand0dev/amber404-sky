@@ -17,7 +17,7 @@ const show = () => render(<AppCtx.Provider value={{ data: bundle(), s: state(), 
 describe('Given карта; When 📷', () => {
   it('кнопка має доступне ім’я', () => {
     show();
-    expect(screen.getByRole('button', { name: 'Знімок карти' }).textContent).toContain('📷');
+    expect(screen.getByRole('button', { name: 'Знімок карти' }).querySelector('svg[aria-hidden="true"]')).not.toBeNull();
   });
   it('під час збирання кнопка неактивна, далі PNG іде в deliver і статус оголошено', async () => {
     show();

@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useT } from '../../app/lang';
 import { useView } from '../../app/view/view';
 import { makeProjection } from '../../core';
+import { Icon, type IconName } from '../../ui/Icon';
 import { InBar } from '../../ui/MapFrame';
 import { attribution, BASE_IDS, BASE_NAME, HI_TILES, IMAGE_BASES, imageAffine, ONLINE, type BaseId } from './basemaps';
 import { loadBaseImage, loadImage, setBasemap, useBasemap } from './basemapStore';
@@ -18,12 +19,13 @@ const ONLINE_TRANSP = 70;
 import './basemap.css';
 
 const TXT = {
-  uk: { btn: 'Підкладка', menu: 'Підкладка', op: 'Прозорість погоди', own: 'Файл і прив’язка', online: 'Онлайн — детально до вулиць',
-    warn: 'Сервер карти бачить, який район ви дивитесь. Не вмикайте там, де це небезпечно. Після перезапуску — знову офлайн.' },
-  en: { btn: 'Underlay', menu: 'Basemap', op: 'Weather transparency', own: 'File and anchors', online: 'Online — street-level detail',
+  uk: { btn: 'Підкладка', menu: 'Підкладка', op: 'Прозорість погоди', own: 'Файл і прив’язка', online: 'Онлайн: детально до вулиць',
+    warn: 'Сервер карти бачить, який район ви дивитесь. Не вмикайте там, де це небезпечно. Після перезапуску знову офлайн.' },
+  en: { btn: 'Underlay', menu: 'Basemap', op: 'Weather transparency', own: 'File and anchors', online: 'Online: street-level detail',
     warn: 'The map server sees which area you view. Do not use where that is unsafe. Back to offline after restart.' },
 };
-const ICON: Record<BaseId, string> = { none: '∅', relief: '⛰', satellite: '🛰', own: '▦', satlive: '🛰', streets: '🗺' };
+// Issue #192: іконки — inline-SVG, не емодзі.
+const ICON: Record<BaseId, IconName> = { none: 'none', relief: 'relief', satellite: 'satellite', own: 'grid', satlive: 'satellite', streets: 'map' };
 
 /** Відкрити чи закрити форму «Своя карта» (F0) її власною кнопкою — стан форми живе в Overlay. */
 function ownForm(want: boolean) {
@@ -140,7 +142,7 @@ export function Basemap() {
       <p className="baseattr">{attribution(base, lang)}</p>
       <InBar>
         <button ref={btn} type="button" className="basebtn" title={tx.btn} aria-expanded={open} onClick={toggle}>
-          <span className="tb-ico" aria-hidden="true">{ICON[base]}</span><span className="tb-txt">{tx.btn}</span>
+          <span className="tb-ico" aria-hidden="true"><Icon name={ICON[base]} /></span><span className="tb-txt">{tx.btn}</span>
         </button>
       </InBar>
       {open && (
@@ -156,18 +158,18 @@ export function Basemap() {
             {BASE_IDS.filter((id) => ONLINE.has(id)).map((id) => (
               <label key={id} className="online">
                 <input type="radio" name="basemap" value={id} checked={base === id} onChange={() => choose(id)} />
-                <span aria-hidden="true">{ICON[id]} </span>{BASE_NAME[lang][id]}
+                <Icon name={ICON[id]} />{BASE_NAME[lang][id]}
               </label>
             ))}
           </div>
-          {ONLINE.has(base) && <p className="basewarn" role="note">⚠ {tx.warn}</p>}
+          {ONLINE.has(base) && <p className="basewarn" role="note"><Icon name="warn" /> {tx.warn}</p>}
           {image && (
             <label className="baseop">{tx.op}: {wxTransp}%
               <input type="range" min="0" max="100" step="5" aria-label={tx.op} value={wxTransp}
                 onChange={(e) => setBasemap({ wxTransp: Number(e.target.value) })} />
             </label>
           )}
-          {base === 'own' && <button type="button" className="baseown" onClick={setupOwn}><span aria-hidden="true">▦ </span>{tx.own}</button>}
+          {base === 'own' && <button type="button" className="baseown" onClick={setupOwn}><Icon name="grid" /> {tx.own}</button>}
           <button type="button" className="baseclose" onClick={() => setOpen(false)}>OK</button>
         </section>
       )}

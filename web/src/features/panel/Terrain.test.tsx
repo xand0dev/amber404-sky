@@ -100,7 +100,7 @@ describe('#101: завантаження static/relief.json', () => {
 describe('#101 AC1–AC3: на екрані', () => {
   it('рівнина: «Місцевість N м н. р. м.» і «висоти польоту — над землею», без плашки', () => {
     render(<TerrainView terrain={{ kind: 'land', elevM: 169.4 }} range={20} lang="uk" />);
-    expect(screen.getByTestId('terrain').textContent).toBe('Місцевість 169 м н. р. м. · висоти польоту — над землею');
+    expect(screen.getByTestId('terrain').textContent).toBe('Місцевість 169 м н. р. м. · висоти польоту над землею');
     expect(screen.queryByTestId('terrain-mtn')).toBeNull();
   });
   it('Карпати: плашка assumption «гори…» з перепадом', () => {

@@ -99,7 +99,7 @@ describe('F4-AC4: кнопки на екрані', () => {
 describe('#101: рельєф у звіті', () => {
   it('рівнина: рядок «Місцевість …» після часу, без плашки', () => {
     const txt = reportText(E(1, { terrain: { kind: 'land', elevM: 169.4 }, reliefRange: 20 }), 'uk', 'x').split('\n');
-    expect(txt[3]).toBe('Місцевість 169 м н. р. м. · висоти польоту — над землею');
+    expect(txt[3]).toBe('Місцевість 169 м н. р. м. · висоти польоту над землею');
     expect(txt.join('\n')).not.toContain('гори');
     expect(txt).toHaveLength(9);
   });

@@ -4,6 +4,7 @@ import { useApp } from '../../app/state';
 import { useVerdicts } from '../../app/useVerdict';
 import { useT } from '../../app/lang';
 import { kyivHM, type Lang, type Level } from '../../core';
+import { Icon } from '../../ui/Icon';
 import { daySegments, nextPlayHour } from './days';
 import './timeline.css';
 
@@ -43,7 +44,7 @@ export function TimelineView({ times, levels, hour, onPick }: TimelineProps) {
   return (
     <div className="tl">
       <button className="tl-play" aria-label={playing ? L.pause : L.play} onClick={toggle}>
-        {playing ? '⏸' : '▶'}
+        <Icon name={playing ? 'pause' : 'play'} />
       </button>
       <div className="tl-scroll">
         <div className="tl-days" aria-hidden="true">
