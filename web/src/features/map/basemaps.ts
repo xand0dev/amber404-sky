@@ -26,8 +26,9 @@ export const HI_TILES = Array.from({ length: HI_GRID * HI_GRID }, (_, i) => {
 /** Вибір у браузері: підкладка й прозорість погоди над нею, %. */
 export interface BasePrefs { base: BaseId; wxTransp: number }
 export const BASE_KEY = 'amber-basemap';
-/** assumption: 40 % прозорості — рельєф і супутник видно, а поле читається. */
-export const DEFAULT_PREFS: BasePrefs = { base: 'none', wxTransp: 40 };
+/** assumption: 40 % прозорості — рельєф і супутник видно, а поле читається.
+ *  Issue #167: за замовчуванням — Рельєф (статичний файл, офлайн), щоб карта з першого екрана мала форму місцевості. */
+export const DEFAULT_PREFS: BasePrefs = { base: 'relief', wxTransp: 40 };
 
 export function parsePrefs(raw: string | null): BasePrefs {
   try {

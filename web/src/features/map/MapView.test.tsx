@@ -4,6 +4,8 @@ import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { AppCtx, type Ctx } from '../../app/state';
 import { MapView } from './MapView';
 import { LANG_KEY, LangProvider } from '../../app/lang';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { bundle, state } from './fixture.test-util';
 
 let reduce = false;
@@ -80,5 +82,25 @@ describe('Given EN (issue #116)', () => {
     localStorage.setItem(LANG_KEY, 'en');
     render(<LangProvider><AppCtx.Provider value={{ data: bundle(), s: state(), set: () => {} } as Ctx}><MapView /></AppCtx.Provider></LangProvider>);
     expect(document.querySelector('canvas.map')?.getAttribute('aria-label')).toBe('Map: tap to pick a point');
+  });
+});
+
+// Issue #167 AC4: пульсуюче бурштинове кільце обраної точки — окремий шар над картою; reduced-motion — статичне.
+describe('Given обрана точка (issue #167)', () => {
+  const CSS = readFileSync(join(process.cwd(), 'src/features/map/pulse.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+  it('шар кільця є, прихований від читачів екрана', () => {
+    reduce = false;
+    const { container } = show();
+    const p = container.querySelector('.pulse');
+    expect(p).not.toBeNull();
+    expect(p?.getAttribute('aria-hidden')).toBe('true');
+    expect(p?.querySelector('.pulse-ring')).not.toBeNull();
+  });
+  it('CSS: анімація бурштиновим токеном, reduced-motion — без анімації, уночі — червоне', () => {
+    expect(CSS).toMatch(/@keyframes/);
+    expect(CSS).toMatch(/var\(--cau\)/);
+    expect(CSS).toMatch(/prefers-reduced-motion:\s*reduce[\s\S]*animation:\s*none/);
+    expect(CSS).toMatch(/data-theme="night"[\s\S]*var\(--ink\)/);
+    expect(CSS).not.toMatch(/#[0-9a-f]{3,6}\b/i); // лише токени (#88)
   });
 });

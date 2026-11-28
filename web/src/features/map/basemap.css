@@ -25,3 +25,8 @@
 .baseonline{grid-column:1/-1;margin:var(--sp-1) 0 0;font-size:var(--fs-s);color:var(--dim)}
 .basegroup label.online{border-style:dashed}
 .basewarn{margin:0;padding:var(--sp-1) var(--sp-2);font-size:var(--fs-s);line-height:1.35;color:var(--ink);background:var(--btn-bg);border-left:3px solid var(--cau)}
+/* Issue #167: Рельєф типово → у вікні одразу є повзунок; повзунок і OK — в одному ряду, щоб вікно на 400 px
+   займало менше половини карти (#130). Решта рядків — на всю ширину. */
+.basepanel{grid-template-columns:1fr auto;align-items:end}
+.basepanel>:not(.baseop):not(.baseclose){grid-column:1/-1}
+.basepanel>.baseclose{min-width:var(--btn-h)}

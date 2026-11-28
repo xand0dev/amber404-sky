@@ -38,3 +38,13 @@ export function placeLabels(items: LabelItem[], W: number, H: number, avoid: Box
     return null;
   });
 }
+
+/** Столиця — найбільший підпис (issue #167). */
+const CAPITAL = 'Київ';
+
+/** Шрифт підпису міста: усі 16 міст cities.json — обласні центри (і Сімферополь), Київ — найбільший.
+ *  Розміри — з токенів #88: --fs-l (16 px) для Києва, --fs-m (14 px) для решти; h — висота рамки для placeLabels. */
+export function labelStyle(name: string): { size: number; font: string; h: number } {
+  const size = name === CAPITAL ? 16 : 14;
+  return { size, font: `${name === CAPITAL ? 700 : 600} ${size}px system-ui`, h: size + 2 };
+}
