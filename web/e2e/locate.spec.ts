@@ -2,6 +2,9 @@
 // OPSEC (AC6): після «Де я» жоден запит не несе координат.
 import { expect, test } from '@playwright/test';
 
+// Онбординг першого відкриття (#166) лягає поверх карти — у цих тестах його вже пройдено.
+test.beforeEach(({ page }) => page.addInitScript(() => localStorage.setItem('amber404.tour', '1')));
+
 // Львів: у межах карти, найближче місто в cities.json — «Львів» (панель покаже його назву).
 const LVIV = { latitude: 49.842, longitude: 24.031, accuracy: 40 };
 

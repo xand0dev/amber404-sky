@@ -1,6 +1,9 @@
 // Issue #145: «Деталі ▾» у згорнутому підписі зони видно завжди — навіть коли зони немає й підпис найдовший.
 import { expect, test, type Page } from '@playwright/test';
 
+// Онбординг першого відкриття (#166) лягає поверх карти — у цих тестах його вже пройдено.
+test.beforeEach(({ page }) => page.addInitScript(() => localStorage.setItem('amber404.tour', '1')));
+
 /** Вітер 30 м/с скрізь (×10 у profile.json) — понад ліміт будь-якого дрона: «зона відсутня» + причина. */
 async function stormy(page: Page) {
   await page.route('**/data/profile.json', async (route) => {

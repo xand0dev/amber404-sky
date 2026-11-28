@@ -1,6 +1,9 @@
 // Шапка й вердикт (issue #87, F3): на телефоні плашка ≤ 120 px, технічне — у «Деталі» й «Джерела».
 import { expect, test, type Page } from '@playwright/test';
 
+// Онбординг першого відкриття (#166) лягає поверх карти — у цих тестах його вже пройдено.
+test.beforeEach(({ page }) => page.addInitScript(() => localStorage.setItem('amber404.tour', '1')));
+
 async function open(page: Page) {
   await page.goto('./');
   await expect(page.locator('header.status')).toBeVisible();

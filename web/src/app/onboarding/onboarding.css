@@ -1,0 +1,11 @@
+/* Issue #166 AC2–AC3: онбординг. Лише токени (#88). Тло ловить кліки; рамка — навколо підсвіченого місця. */
+.tour{position:fixed;inset:0;z-index:90}
+.tour-back{position:absolute;inset:0}
+.tour-spot{position:fixed;border:3px solid var(--cau);border-radius:var(--r);box-shadow:0 0 0 100vmax var(--scrim);pointer-events:none;transition:all .25s ease-out}
+.tour-on{outline:3px solid var(--cau);outline-offset:-3px}
+.tour-card{position:fixed;width:min(384px,calc(100vw - 16px));display:grid;gap:var(--sp-2);padding:var(--sp-3);background:var(--panel);color:var(--ink);border:1px solid var(--cau);border-radius:var(--r)}
+.tour-n{font-size:var(--fs-s);color:var(--dim)}
+.tour-t{font-size:var(--fs-l);font-weight:600;line-height:1.35}
+.tour-act{display:flex;justify-content:space-between;gap:var(--sp-2)}
+.tour-act button{flex:1 1 0}
+@media (prefers-reduced-motion: reduce){.tour-spot{transition:none}}
